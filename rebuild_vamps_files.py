@@ -612,7 +612,7 @@ if __name__ == '__main__':
     if os.path.exists(args.json_file_path):
         print '** Validated json_file_path **'
     else:
-        print usage
+        print myusage
         print "Could not find json directory: '",args.json_file_path,"'-Exiting"
         sys.exit(-1)
     print "ARGS: units =",args.units   
