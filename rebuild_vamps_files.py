@@ -55,7 +55,6 @@ where dataset_id = '426'
 GROUP BY dataset_id, domain_id, phylum_id
 """
 
-
 parser = argparse.ArgumentParser(description="") 
 query_coreA = " FROM sequence_pdr_info" 
 # query_coreA += " JOIN sequence_uniq_info USING(sequence_id)"
@@ -539,7 +538,7 @@ if __name__ == '__main__':
         -pids/--pids  [list of comma separated pids]
         
                         
-        -l/  --list         List: list all projects in the DATABASE [default]
+        -l/  --list   List: list all projects in the DATABASE [default]
         
         -json_file_path/--json_file_path   json files path [Default: ../json]
         -host/--host        vampsdb, vampsdev    dbhost:  [Default: localhost]
@@ -558,7 +557,7 @@ if __name__ == '__main__':
 
     """
     parser.add_argument("-pids", "--pids", 
-                required=False, action="store", dest = "pids_str", default='', 
+                required=True, action="store", dest = "pids_str", default='',
                 help="""ProjectID (used with -add) no response if -list also included""") 
         
     
@@ -585,9 +584,9 @@ if __name__ == '__main__':
     parser.add_argument("-dco", "--dco", 
                 required=False, action='store_true', dest = "dco", default=False, 
                 help="")   
-    if len(sys.argv[1:]) == 0:
-        print myusage
-        sys.exit() 
+    # if len(sys.argv[1:]) == 0:
+    #     print myusage
+    #     sys.exit()
     args = parser.parse_args()
     
     
@@ -659,8 +658,8 @@ if __name__ == '__main__':
         go_list(args)
     elif args.pids_str:
         go_add(NODE_DATABASE, args.pids_str)
-    else:
-        print myusage 
-        sys.exit('need command line parameter(s)')
+    # else:
+    #     print myusage
+    #     sys.exit('need command line parameter(s)')
         
 
