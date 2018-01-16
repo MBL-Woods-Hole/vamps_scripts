@@ -122,77 +122,6 @@ def convert_keys_to_string(dictionary):
         return dictionary
     return dict((str(k), convert_keys_to_string(v)) 
         for k, v in dictionary.items())
-        
-def go_list(args):
-    
-    #
-    file_dids = []
-    if args.units == 'silva119':
-        #dids from big file
-        counts_lookup = convert_keys_to_string(read_original_taxcounts())
-        file_dids = counts_lookup.keys()
-    elif args.units == 'rdp2.6':
-        #dids from individual files
-        files_prefix = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_rdp2.6')
-        for file in os.listdir(files_prefix):
-            if file.endswith(".json"):
-                file_dids.append(os.path.splitext(file)[0])
-    metadata_lookup = convert_keys_to_string(read_original_metadata())
-    metadata_dids = metadata_lookup.keys()
-    #
-    #print file_dids
-    #print len(file_dids)           
-    q =  "SELECT dataset_id, dataset.project_id, project from project"
-    q += " JOIN dataset using(project_id) order by project"
-    
-    num = 0
-    cur.execute(q)
-    #print 'List of projects in: '+in_file
-    projects = {}
-    missing_bulk_silva119 = {}
-    missing_files = {}
-    
-    missing_metadata = {}
-    for row in cur.fetchall():
-        did = str(row[0])
-        pid = row[1]
-        project = row[2]
-        projects[project] = pid
-        if did not in metadata_dids:
-            missing_metadata[project] = pid
-        if did not in file_dids:
-            missing_files[project] = pid
-        if args.units == 'silva119':
-            file_path = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119', did+'.json')
-            #file_path = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets', did+'.json')
-            if not os.path.isfile(file_path):
-                missing_bulk_silva119[project] = pid
-        #print 'project:', row[0], ' --project_id:', row[1]
-    sort_p = sorted(projects.keys())
-    print 'UNITS:', args.units
-    for project in sort_p:  
-        if project not in missing_files and project not in missing_bulk_silva119:
-            print 'ID:', projects[project], "-", project
-        num += 1
-    print
-    print args.units, 'MISSING from metadata bulk file:'
-    sort_md = sorted(missing_metadata.keys())
-    for project in sort_md:
-        print 'ID:', missing_metadata[project], "project:", project
-    print
-    
-    print args.units, 'MISSING from taxcount(silva119 only) bulk file:'
-    sort_m = sorted(missing_bulk_silva119.keys())
-    for project in sort_m:
-        print 'ID:', missing_bulk_silva119[project], "project:", project
-    print
-    print args.units, 'MISSING '+args.units+' files:'
-    sort_m = sorted(missing_files.keys())
-    for project in sort_m:
-        print 'ID:', missing_files[project], "project:", project
-    print
-    print 'Number of Projects:', num
-    
 
 def get_dco_pids(args):
 
@@ -535,10 +464,7 @@ if __name__ == '__main__':
 
     myusage = """
         -pids/--pids  [list of comma separated pids]
-        
-                        
-        -l/  --list   List: list all projects in the DATABASE [default]
-        
+                
         -json_file_path/--json_file_path   json files path [Default: ../json]
         -host/--host        vampsdb, vampsdev    dbhost:  [Default: localhost]
         -units/--tax-units  silva119, or rdp2.6   [Default:silva119]
@@ -560,7 +486,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-pids", "--pids", 
                 required=True, action="store", dest = "pids_str", default='',
-                help="""ProjectID (used with -add) no response if -list also included""") 
+                help="""ProjectID (used with -add)""")
         
     
     parser.add_argument("-no_backup", "--no_backup", 
@@ -568,11 +494,7 @@ if __name__ == '__main__':
                 help="""no_backup of group files: taxcounts and metadata""")  
     parser.add_argument("-metadata_warning_only", "--metadata_warning_only", 
                 required=False, action="store_true", dest = "metadata_warning_only", default=False, 
-                help="""warns of datasets with no metadata""")           
-    parser.add_argument("-list", "--list", 
-                required=False, action="store_true", dest = "list", default='', 
-                help="""list IDs, projects grouped for missing from taxcounts file, metadata file or individual json files""")
-  
+                help="""warns of datasets with no metadata""")
     parser.add_argument("-json_file_path", "--json_file_path", 
                 required=False, action='store', dest = "json_file_path", default='../../json', 
                 help="Not usually needed if -host is accurate")
@@ -655,13 +577,8 @@ if __name__ == '__main__':
     
     if args.dco:
         args.pids_str = get_dco_pids(args)
-             
-    if args.list:
-        go_list(args)
-    elif args.pids_str:
-        go_add(NODE_DATABASE, args.pids_str)
-    # else:
-    #     print myusage
-    #     sys.exit('need command line parameter(s)')
+
+    go_add(NODE_DATABASE, args.pids_str)
+
         
 
