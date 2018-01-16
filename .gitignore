@@ -1,0 +1,17 @@
+.idea/
+newrelic.js
+
+HLSU/
+HSSU/
+SLM/
+SPINGO/
+data-spingo/
+data/
+data_JCM/
+data_sgun/
+obsolete/
+rdp/
+
+*.log
+*.txt
+
