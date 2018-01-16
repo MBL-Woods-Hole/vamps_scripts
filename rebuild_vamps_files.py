@@ -55,8 +55,7 @@ where dataset_id = '426'
 GROUP BY dataset_id, domain_id, phylum_id
 """
 
-parser = argparse.ArgumentParser(description="") 
-query_coreA = " FROM sequence_pdr_info" 
+query_coreA = " FROM sequence_pdr_info"
 # query_coreA += " JOIN sequence_uniq_info USING(sequence_id)"
 
 query_core_join_silva119 = " JOIN silva_taxonomy_info_per_seq USING(sequence_id)"
@@ -556,6 +555,9 @@ if __name__ == '__main__':
          use py_mbl_sequencing_pipeline custom scripts
 
     """
+
+    parser = argparse.ArgumentParser(description="", usage=myusage)
+
     parser.add_argument("-pids", "--pids", 
                 required=True, action="store", dest = "pids_str", default='',
                 help="""ProjectID (used with -add) no response if -list also included""") 
