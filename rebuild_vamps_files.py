@@ -8,7 +8,13 @@
 
 import sys,os,io
 import argparse
-import pymysql as MySQLdb
+try:
+  import pymysql as MySQLdb
+except ImportError:
+  import MySQLdb
+except:
+  raise
+
 import json
 import shutil
 import datetime
