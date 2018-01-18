@@ -196,16 +196,8 @@ def convert_keys_to_string(dictionary):
 def get_dco_pids():
     query = "select project_id from project where project like 'DCO%'"
     rows = myconn.execute_fetch_select(query)
-    # cur.execute(query)
-    # rows = cur.fetchall()
-
-    pid_list1 = [str(row[0]) for row in rows]
-    pid_list = []
-    for row in rows:
-        pid_list.append(str(row[0]))
-
+    pid_list = [str(row[0]) for row in rows]
     return ', '.join(pid_list)
-
 
 def go_add(node_database, pids_str):
     from random import randrange
