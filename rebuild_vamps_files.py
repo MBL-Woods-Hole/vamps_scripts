@@ -506,12 +506,11 @@ def get_dataset_ids(pid):
     return dids
 
 def ask_current_database(databases):
-    dbs = []
     print myusage
-    db_str = ''
-    for i, row in enumerate(databases):
-        dbs.append(row[0])
-        db_str += str(i) + '-' + row[0] + ';  '
+
+    dbs = [str(i) + '-' + str(row[0]) for i, row in enumerate(databases)]
+    db_str = ';  '.join(dbs)
+
     print db_str
     db_no = input("\nchoose database number: ")
     if int(db_no) < len(dbs):
@@ -615,28 +614,16 @@ if __name__ == '__main__':
                          read_default_file="~/.my.cnf_node")
     cur = db.cursor()
 
+    # args.NODE_DATABASE = ""
     if args.NODE_DATABASE:
         NODE_DATABASE = args.NODE_DATABASE
     else:
         databases = myconn.execute_fetch_select("SHOW databases like 'vamps%'")
         NODE_DATABASE = ask_current_database(databases)
 
-        cur.execute("SHOW databases like 'vamps%'")
-        dbs = []
-        print myusage
-        db_str = ''
-        for i, row in enumerate(cur.fetchall()):
-            dbs.append(row[0])
-            db_str += str(i) + '-' + row[0] + ';  '
-        print db_str
-        db_no = input("\nchoose database number: ")
-        if int(db_no) < len(dbs):
-            NODE_DATABASE = dbs[db_no]
-        else:
-            sys.exit("unrecognized number -- Exiting")
 
-    print
-    cur.execute("USE " + NODE_DATABASE)
+    myconn.execute_no_fetch("USE " + NODE_DATABASE)
+    # cur.execute("USE " + NODE_DATABASE)
 
     # out_file = "tax_counts--"+NODE_DATABASE+".json"
     # in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
