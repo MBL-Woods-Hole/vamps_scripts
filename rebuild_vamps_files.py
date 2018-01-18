@@ -22,33 +22,35 @@ import datetime
 import socket
 from collections import defaultdict
 
+
 class MyConnection:
     """
     Takes parameters from ~/.my.cnf, default host = "vampsdev", db="test"
     if different use my_conn = MyConnection(host, db)
     """
-    def __init__(self, host="bpcweb7", db="test", read_default_file=""):
-# , read_default_file=os.path.expanduser("~/.my.cnf"), port = 3306
 
-        self.conn   = None
+    def __init__(self, host="bpcweb7", db="test", read_default_file=""):
+        # , read_default_file=os.path.expanduser("~/.my.cnf"), port = 3306
+
+        self.conn = None
         self.cursor = None
         self.cursorD = None
-        self.rows   = 0
+        self.rows = 0
         self.new_id = None
         self.lastrowid = None
 
+        port_env = 3306
         try:
-            print "host = " + str(host) + ", db = "  + str(db)
+            print "host = " + str(host) + ", db = " + str(db)
             print "=" * 40
             read_default_file = os.path.expanduser("~/.my.cnf")
-            port_env = 3306
 
             if is_local():
                 host = "127.0.0.1"
                 read_default_file = "~/.my.cnf_local"
-            self.conn   = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
+            self.conn = MySQLdb.connect(host=host, db=db, read_default_file=read_default_file, port=port_env)
             self.cursor = self.conn.cursor()
-            self.cursorD = self.conn.cursor (MySQLdb.cursors.DictCursor)
+            self.cursorD = self.conn.cursor(MySQLdb.cursors.DictCursor)
 
         except (AttributeError, MySQLdb.OperationalError):
             self.conn = MySQLdb.connect(host=host, db=db, read_default_file=read_default_file, port=port_env)
@@ -56,25 +58,23 @@ class MyConnection:
         except MySQLdb.Error, e:
             print "Error %d: %s" % (e.args[0], e.args[1])
             raise
-        except:                       # catch everything
+        except:  # catch everything
             print "Unexpected:"
             print sys.exc_info()[0]
-            raise                       # re-throw caught exception
+            raise  # re-throw caught exception
 
-
-    def connect(self, host, db, read_default_file, port_env):
-        return MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
-
+    @staticmethod
+    def connect(host, db, read_default_file, port_env):
+        return MySQLdb.connect(host=host, db=db, read_default_file=read_default_file, port=port_env)
 
     def execute_fetch_select(self, sql):
         if self.cursor:
             try:
                 self.cursor.execute(sql)
-                res = self.cursor.fetchall ()
+                return self.cursor.fetchall()
             except:
-                print ("ERROR: query = %s") % sql
+                print "ERROR: query = %s" % sql
                 raise
-        return res
 
     def execute_no_fetch(self, sql):
         if self.cursor:
@@ -85,7 +85,8 @@ class MyConnection:
 
 def is_local():
     print os.uname()[1]
-    dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local", "Annas-MacBook-new.local", "Annas-MacBook.local"]
+    dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local",
+                 "Annas-MacBook-new.local", "Annas-MacBook.local"]
     if os.uname()[1] in dev_comps:
         return True
     else:
@@ -185,7 +186,6 @@ queries = [{"rank": "domain", "queryA": domain_queryA, "queryB": domain_queryB},
            ]
 
 
-
 def convert_keys_to_string(dictionary):
     """Recursively converts dictionary keys to strings."""
     if not isinstance(dictionary, dict):
@@ -207,14 +207,14 @@ def get_dco_pids():
     return ', '.join(pid_list)
 
 
-def go_add(NODE_DATABASE, pids_str):
+def go_add(node_database, pids_str):
     from random import randrange
     counts_lookup = {}
     prefix = ""
     if args.units == 'silva119':
-        prefix = os.path.join(args.json_file_path, NODE_DATABASE + '--datasets_silva119')
+        prefix = os.path.join(args.json_file_path, node_database + '--datasets_silva119')
     elif args.units == 'rdp2.6':
-        prefix = os.path.join(args.json_file_path, NODE_DATABASE + '--datasets_rdp2.6')
+        prefix = os.path.join(args.json_file_path, node_database + '--datasets_rdp2.6')
 
     if not os.path.exists(prefix):
         os.makedirs(prefix)
@@ -240,9 +240,9 @@ def go_add(NODE_DATABASE, pids_str):
         # print counts_lookup
         for q in queries:
             if args.units == 'rdp2.6':
-                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % (did_sql)
+                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql
             elif args.units == 'silva119':
-                query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % (did_sql)
+                query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql
             print 'PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')'
             print query
 
@@ -250,22 +250,14 @@ def go_add(NODE_DATABASE, pids_str):
 
             rows = myconn.execute_fetch_select(query)
             for row in rows:
-            # cur.execute(query)
-            # for row in cur.fetchall():
+                # cur.execute(query)
+                # for row in cur.fetchall():
                 # print row
                 count = int(row[0])
                 did = str(row[1])
-                # if args.separate_taxcounts_files:
-                #      dir = prefix + str(ds_id)
-                #
-                #      if not os.path.isdir(dir):
-                #          os.mkdir(dir)
-
-                # tax_id = row[2]
-                # rank = q["rank"]
                 tax_id_str = ''
-                for k in range(2, len(row)):
-                    tax_id_str += '_' + str(row[k])
+                for x in range(2, len(row)):
+                    tax_id_str += '_' + str(row[x])
                 # print 'tax_id_str', tax_id_str
                 if did in counts_lookup:
                     # sys.exit('We should not be here - Exiting')
@@ -284,7 +276,6 @@ def go_add(NODE_DATABASE, pids_str):
     print('all_dids', all_dids)
     all_did_sql = "', '".join(all_dids)
     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
-
 
     if args.metadata_warning_only:
         for did in dids:
@@ -388,12 +379,12 @@ def go_required_metadata(did_sql, metadata_lookup):
     required_metadata_fields = get_required_metadata_fields()
     req_query = "SELECT dataset_id, " + ', '.join(
         required_metadata_fields) + " from required_metadata_info WHERE dataset_id in ('%s')"
-    query = req_query % (did_sql)
+    query = req_query % did_sql
     print(query)
     rows = myconn.execute_fetch_select(query)
     for row in rows:
-    # cur.execute(query)
-    # for row in cur.fetchall():
+        # cur.execute(query)
+        # for row in cur.fetchall():
         did = str(row[0])
         if did not in metadata_lookup:
             metadata_lookup[did] = {}
@@ -411,7 +402,7 @@ def get_required_metadata_fields():
     md_fields = []
     fields_not_wanted = ['required_metadata_id', 'dataset_id', 'created_at', 'updated_at']
     for row in rows:
-    # for row in cur.fetchall():
+        # for row in cur.fetchall():
         if row[0] not in fields_not_wanted:
             md_fields.append(row[0])
     return md_fields
@@ -430,11 +421,11 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
 
     field_collection = ['dataset_id']
     cust_metadata_lookup = {}
-    query = cust_pquery % (pid)
+    query = cust_pquery % pid
     rows = myconn.execute_fetch_select(query)
     for row in rows:
         # cur.execute(query)
-    # for row in cur.fetchall():
+        # for row in cur.fetchall():
         pid = str(row[0])
         field = row[1]
         if field != 'dataset_id':
@@ -523,6 +514,7 @@ def get_dataset_ids(pid):
 
     return dids
 
+
 def ask_current_database(databases):
     print myusage
 
@@ -535,6 +527,7 @@ def ask_current_database(databases):
         return dbs[db_no]
     else:
         sys.exit("unrecognized number -- Exiting")
+
 
 #
 #
@@ -628,20 +621,13 @@ if __name__ == '__main__':
     database = args.NODE_DATABASE
     myconn = MyConnection(dbhost, database, read_default_file="~/.my.cnf_node")
 
-    # db = MySQLdb.connect(host=dbhost,  # your host, usually localhost
-    #                      read_default_file="~/.my.cnf_node")
-    # cur = db.cursor()
-
-    # args.NODE_DATABASE = ""
     if args.NODE_DATABASE:
         NODE_DATABASE = args.NODE_DATABASE
     else:
         databases = myconn.execute_fetch_select("SHOW databases like 'vamps%'")
         NODE_DATABASE = ask_current_database(databases)
 
-
     myconn.execute_no_fetch("USE " + NODE_DATABASE)
-    # cur.execute("USE " + NODE_DATABASE)
 
     # out_file = "tax_counts--"+NODE_DATABASE+".json"
     # in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
