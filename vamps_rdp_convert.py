@@ -22,8 +22,6 @@ import time
 import random
 import csv
 from time import sleep
-#import ConfigParser
-
 from simple_fasta_reader import SimpleFastaReader
 import run_rdp as rdp
 import datetime
@@ -31,47 +29,10 @@ import datetime
 today = str(datetime.date.today())
 import subprocess
 import pymysql as MySQLdb
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
+
 #print 'sys.path'
 #print sys.path
 """
-New Table:
-CREATE TABLE `summed_counts` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `dataset_id` int(11) unsigned DEFAULT NULL,
-  `domain_id` int(11) unsigned DEFAULT NULL,
-  `phylum_id` int(11) unsigned DEFAULT NULL,
-  `klass_id` int(11) unsigned DEFAULT NULL,
-  `order_id` int(11) unsigned DEFAULT NULL,
-  `family_id` int(11) unsigned DEFAULT NULL,
-  `genus_id` int(11) unsigned DEFAULT NULL,
-  `species_id` int(11) unsigned DEFAULT NULL,
-  `strain_id` int(11) unsigned DEFAULT NULL,
-  `rank_id` tinyint(11) unsigned DEFAULT NULL,
-  `count` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `summed_counts_ibfk_11` (`dataset_id`),
-  KEY `summed_counts_ibfk_1` (`strain_id`),
-  KEY `summed_counts_ibfk_3` (`genus_id`),
-  KEY `summed_counts_ibfk_4` (`domain_id`),
-  KEY `summed_counts_ibfk_5` (`family_id`),
-  KEY `summed_counts_ibfk_6` (`klass_id`),
-  KEY `summed_counts_ibfk_7` (`order_id`),
-  KEY `summed_counts_ibfk_8` (`phylum_id`),
-  KEY `summed_counts_ibfk_9` (`species_id`),
-  KEY `summed_counts_ibfk_10` (`rank_id`),
-  CONSTRAINT `summed_counts_ibfk_11` FOREIGN KEY (`dataset_id`) REFERENCES `dataset` (`dataset_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_1` FOREIGN KEY (`strain_id`) REFERENCES `strain` (`strain_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_3` FOREIGN KEY (`genus_id`) REFERENCES `genus` (`genus_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_4` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`domain_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_5` FOREIGN KEY (`family_id`) REFERENCES `family` (`family_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_6` FOREIGN KEY (`klass_id`) REFERENCES `klass` (`klass_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_7` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_8` FOREIGN KEY (`phylum_id`) REFERENCES `phylum` (`phylum_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_9` FOREIGN KEY (`species_id`) REFERENCES `species` (`species_id`) ON UPDATE CASCADE,
-  CONSTRAINT `summed_counts_ibfk_10` FOREIGN KEY (`rank_id`) REFERENCES `rank` (`rank_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=464 DEFAULT CHARSET=latin1;
 
 
 """
@@ -488,7 +449,7 @@ if __name__ == '__main__':
     
     myusage = """usage: vamps_rdp_convert.py  [options]
         
-    This script will take all of the sequences from vamps2 database and find RDP taxonomy for it.
+    This script will take all of the sequences BY PROJECT (pid) from vamps2 database and find RDP taxonomy for it.
     Then put that taxonomy back into the rdp_taxonomy and rdp_taxonomy_info_per_seq tables.
          
        updates new vamps  

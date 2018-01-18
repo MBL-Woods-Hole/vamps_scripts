@@ -17,24 +17,20 @@ import os
 from stat import * # ST_SIZE etc
 import sys
 import shutil
-import math
 import types
 import time
 import random
 import csv
 from time import sleep
-import ConfigParser
-from IlluminaUtils.lib import fastalib
-import rdp.rdp as rdp
+from simple_fasta_reader import SimpleFastaReader
+import run_rdp as rdp
 import datetime
 today = str(datetime.date.today())
 import subprocess
 import pymysql as MySQLdb
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
+
 
 """
-
 
 """
 # Global:
@@ -45,23 +41,11 @@ classifiers = {"GAST":{'ITS1':1,'SILVA108_FULL_LENGTH':2,'GG_FEB2011':3,'GG_MAY2
 ranks =['domain','phylum','klass','order','family','genus','species','strain']
 tax_ids = ['domain_id','phylum_id','klass_id','order_id','family_id','genus_id','species_id','strain_id']
 accepted_domains = ['bacteria','archaea','eukarya','fungi','organelle','unknown']
-# ranks =[{'name':'domain', 'id':1,'num':0},
-#         {'name':'phylum', 'id':4,'num':1},
-#         {'name':'klass',  'id':5,'num':2},
-#         {'name':'order',  'id':6,'num':3},
-#         {'name':'family', 'id':8,'num':4},
-#         {'name':'genus',  'id':9,'num':5},
-#         {'name':'species','id':10,'num':6},
-#         {'name':'strain', 'id':11,'num':7}]
+
 q = "SELECT %s from sequence"
-q += " JOIN sequence_uniq_info using(sequence_id)"
-q += " WHERE rdp_taxonomy_info_per_seq_id is null"
-"""
-run @ 500,000
-SELECT count(sequence.sequence_id) from sequence
-JOIN sequence_uniq_info using(sequence_id)
-WHERE rdp_taxonomy_info_per_seq_id is null    
-"""
+q += " join sequence_uniq_info using(sequence_id)"
+q += " where rdp_taxonomy_info_per_seq_id is null"
+
 def get_seq_count(args):
     global q
     global mysql_conn, cur 
@@ -70,11 +54,11 @@ def get_seq_count(args):
     print('Count Query',q_count)
     cur.execute(q_count)
     rows = cur.fetchone()    
-    total_count = int(rows[0])
+    count = int(rows[0])
     #print('here0',count,args.limit)
-    #if args.limit and count > int(args.limit):
-    #    count = int(args.limit)
-    return total_count
+    if args.limit and count > int(args.limit):
+        count = int(args.limit)
+    return count
     
 def start(args):
   
@@ -85,37 +69,27 @@ def start(args):
    
     RANK_COLLECTOR={}
    
-    print "SELECT count(sequence.sequence_id) as seq from sequence JOIN sequence_uniq_info using(sequence_id) WHERE rdp_taxonomy_info_per_seq_id is null"
+    
     print 'CMD> ',sys.argv
     
     global mysql_conn, cur    
    
     
-    
     get_ranks()
     max_per_fasta = args.max_seqs_per_file
-    if args.count > int(max_per_fasta):
-        number_of_files = int(math.ceil(args.count / float(max_per_fasta)))
+    if args.total_seq_count > int(max_per_fasta):
+        number_of_files = int(args.total_seq_count / int(max_per_fasta))
         count_per_fasta = max_per_fasta
     else:
         number_of_files = 1
-        count_per_fasta = args.count
-     
+        count_per_fasta = args.total_seq_count
     if number_of_files > args.max_file_count:
-        print('Too many files (max set at'+str(args.max_file_count)+'):', number_of_files, 'try -limit 100000')
-        sys.exit()
+        print('Too many files', number_of_files)
          
-    pdir = './seqs_rdp' 
-    if not os.path.exists(pdir):
-        os.makedirs(pdir)
-    else:
-        shutil.rmtree(pdir)           
-        os.makedirs(pdir)
-        
-    
+
     file_pointers = [] 
-    for n in range(1,number_of_files+1):   
-        unique_file = os.path.join(pdir,str(n)+'-fasta.fa.unique')
+    for n in range(number_of_files):   
+        unique_file = os.path.join(args.project_dir,str(n)+'-fasta.fa.unique')
         file_pointers.append(open(unique_file,'w'))
     
     q_seq = q % (select)
@@ -124,9 +98,8 @@ def start(args):
     print(q_seq)
     cur.execute(q_seq)
     rows = cur.fetchall()
-    
     print 'num files',number_of_files
-    print 'using count',args.count
+    print 'tcount',args.total_seq_count
     print 'count per fa file',count_per_fasta
     
     for i,row in enumerate(rows):
@@ -143,13 +116,13 @@ def start(args):
         fp.close()
         
     SEQ_COLLECTOR = {}     
-    for n in range(1,number_of_files+1):
+    for n in range(number_of_files):
         SEQ_COLLECTOR[n] = {}    
-        unique_file  = os.path.join(pdir,str(n)+'-fasta.fa.unique')
-        rdp_out_file = os.path.join(pdir, str(n)+'-rdp.out') # to be created
+        unique_file  = os.path.join(args.project_dir,str(n)+'-fasta.fa.unique')
+        rdp_out_file = os.path.join(args.project_dir, str(n)+'-rdp.out') # to be created
         print
         print "starting rdp; file#",n,'of',number_of_files
-        rdp.run_rdp( unique_file, rdp_out_file, args.path_to_classifier, args.gene )
+        rdp.run_rdp( unique_file, rdp_out_file, args.path_to_classifier, args.gene, args.host )
         print
         print "starting taxonomy; file#",n,'of',number_of_files
         push_taxonomy(args, n)
@@ -172,7 +145,6 @@ def get_ranks():
     for row in rows:
         RANK_COLLECTOR[row[1]] = row[0]
         
-
 #
 #
 #
@@ -180,23 +152,19 @@ def push_taxonomy(args, file_index):
     
     #global SUMMED_TAX_COLLECTOR
     global mysql_conn, cur
-        
-    
-    pdir = 'seqs_rdp'  
          
-    tax_file = os.path.join(pdir,  str(file_index)+'-rdp.out')
-    unique_file=os.path.join(pdir, str(file_index)+'-fasta.fa.unique')
+    tax_file = os.path.join(args.project_dir,  str(file_index)+'-rdp.out')
+    unique_file=os.path.join(args.project_dir, str(file_index)+'-fasta.fa.unique')
     if os.path.exists(tax_file):
         run_rdp_tax_file(args, file_index, tax_file, unique_file)
         
-
 #
 #
 #                
 def run_rdp_tax_file(args, file_index, tax_file, seq_file): 
     
     print 'reading seqfile',seq_file
-    f = fastalib.SequenceSource(seq_file)
+    f = SimpleFastaReader(seq_file)
     
     #print tax_file
     #print seq_file
@@ -224,7 +192,7 @@ def run_rdp_tax_file(args, file_index, tax_file, seq_file):
             boot_to_report = ''
             for i in range(0,len(tax_line),3):
                   #print i,tax_line[i]
-                  tax_name = tax_line[i].strip('"').strip("'").replace('"','').replace(' ','_')
+                  tax_name = tax_line[i].strip('"').strip("'")
                   rank = tax_line[i+1]
                   boot = float(tax_line[i+2])*100
                   #print boot,args.boot_score
@@ -367,11 +335,9 @@ def push_sequences(args, file_index):
     global SEQ_COLLECTOR
     global mysql_conn, cur
     for seqid in SEQ_COLLECTOR[file_index]:
-        print        
-        if SEQ_COLLECTOR[file_index][seqid]:
-            print(SEQ_COLLECTOR[file_index][seqid])
-        else:
-            print(seqid,'too short')
+    
+        print 
+        print SEQ_COLLECTOR[file_index][seqid]
         if 'taxonomy' in SEQ_COLLECTOR[file_index][seqid]:
             rdp_tax_id = str(SEQ_COLLECTOR[file_index][seqid]['rdp_tax_id'])
             
@@ -416,20 +382,21 @@ if __name__ == '__main__':
     
     
     myusage = """usage: vamps_rdp_convert_by_seq.py  [options]
-         
-       converts null sequences to taxonomy
+        
+      This script will take all of the sequences (BY SEQUENCE) from vamps2 database and find RDP taxonomy for it.
+      Then put that taxonomy back into the rdp_taxonomy and rdp_taxonomy_info_per_seq tables.
+     
          where
             -path_to_classifier/--path_to_classifier   REQUIRED
-                Location of rdp_classifier diectory 
-                vamps:    /groups/vampsweb/vamps/seqinfobin/rdp_classifier_2.6
-                vampsdev: /groups/vampsweb/vampsdev/seqinfobin/rdp_classifier_2.6
-                or try    /groups/vampsweb/seqinfobin/rdp_classifier_2.6
+                Location of rdp_classifier jar file 
+                vamps & vampsdev:    /groups/vampsweb/seqinfobin/rdp_classifier_2.12/dist/classifier.jar
+                or try    /groups/vampsweb/seqinfobin/rdp_classifier_2.6/dist/classifier.jar
 
             -db/--NODE_DATABASE   [Default:vamps_development]
                 For vamps and vampsdev this will default to be 'vamps2'
 
-            -site/--site   [Default:local]
-                vamps vampsdev or localhost
+            -host/--host   [Default:localhost]
+                vamps, vampsdev or localhost
 
             -boot/--boot   [Default:80]
                 RDP minimum boot score
@@ -438,11 +405,6 @@ if __name__ == '__main__':
                 See RDP README: 16srrna, fungallsu, fungalits_warcup, fungalits_unite
             
             -limit/--limit  limits the size of the mysql select queriy [Default:no-limit]
-            
-        Query used to retrieve empty rdp ids:    
-            SELECT count(sequence.sequence_id) from sequence
-            JOIN sequence_uniq_info using(sequence_id)
-            WHERE rdp_taxonomy_info_per_seq_id is null
            
 """
 
@@ -451,12 +413,16 @@ if __name__ == '__main__':
     
     parser.add_argument('-db', '--NODE_DATABASE',         
                 required=False,   action="store",  dest = "NODE_DATABASE", default='vamps_development',           
-                help = 'node database')      
+                help = 'node database') 
+    
+    parser.add_argument("-project_dir", "--project_dir",    
+                required=False,  action="store",   dest = "project_dir", default='rdp_convert',
+                help = '')         
     parser.add_argument("-path_to_classifier", "--path_to_classifier",    
-                required=False,  action="store",   dest = "path_to_classifier", 
+                required=True,  action="store",   dest = "path_to_classifier", 
                 help = '') 
     parser.add_argument("-host", "--host",    
-                required=True,  action='store',  dest = "host",
+                required=False,  action='store',  dest = "host",  default='localhost',
                 help="")            
     parser.add_argument("-boot", "--boot",    
                 required=False,  action='store',  dest = "boot_score",  default=80,
@@ -473,43 +439,33 @@ if __name__ == '__main__':
     parser.add_argument("-spf", "--seqs_per_file",    
                  required=False,  action="store",   dest = "max_seqs_per_file", default=10000,
                  help = '')                           
-    if len(sys.argv[1:]) == 0:
-        print myusage
-        sys.exit() 
-    args = parser.parse_args() 
     
+    args = parser.parse_args() 
+
     # get_pids
     if args.host == 'vamps' or args.host == 'vampsdb':
         hostname = 'vampsdb'
         NODE_DATABASE = 'vamps2'
-        args.path_to_classifier = '/groups/vampsweb/seqinfobin/rdp_classifier_2.6'
     elif args.host == 'vampsdev':
         hostname = 'bpcweb7'
         NODE_DATABASE = 'vamps2'
-        args.path_to_classifier = '/groups/vampsweb/seqinfobin/rdp_classifier_2.6'
     else:
         hostname = 'localhost'
         NODE_DATABASE = args.NODE_DATABASE
-        if not args.path_to_classifier:
-            sys.exit('You must supply a path_to_classifier (ie:/programming/rdp_classifier_2.6)')
 
     mysql_conn = MySQLdb.connect(db = NODE_DATABASE, host=hostname, read_default_file=os.path.expanduser("~/.my.cnf_node")  )
     # socket=/tmp/mysql.sock
     cur = mysql_conn.cursor()
     
-    total_seq_count = get_seq_count(args)
-    if args.limit:        
-        if total_seq_count > int(args.limit):
-            args.count = int(args.limit)
-            print 'Total Count:',total_seq_count,';  Using Limit Count:',args.limit
-        else:
-            args.count = total_seq_count
-            print 'Using Total Count:',total_seq_count,';  Requested Limit Count:',args.limit
-    else:
-        print 'Using Total Count:',total_seq_count
-        args.count = total_seq_count
-    ans = raw_input("Do you want to continue? (type 'Y' to continue): ")
-    if ans.upper() == 'Y':
-        start(args)
+    # make clean project directory if not exist:
+    if os.path.exists(args.project_dir):
+        shutil.rmtree(args.project_dir)
+    os.makedirs(args.project_dir)
+    
+    
+    args.total_seq_count = get_seq_count(args)
+    print 'count',args.total_seq_count
+    
+    start(args)
 
 
