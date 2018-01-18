@@ -195,8 +195,11 @@ def convert_keys_to_string(dictionary):
 
 def get_dco_pids():
     query = "select project_id from project where project like 'DCO%'"
-    cur.execute(query)
-    rows = cur.fetchall()
+    rows = myconn.execute_fetch_select(query)
+    # cur.execute(query)
+    # rows = cur.fetchall()
+
+    pid_list1 = [str(row[0]) for row in rows]
     pid_list = []
     for row in rows:
         pid_list.append(str(row[0]))
@@ -244,8 +247,11 @@ def go_add(NODE_DATABASE, pids_str):
             print query
 
             dirs = []
-            cur.execute(query)
-            for row in cur.fetchall():
+
+            rows = myconn.execute_fetch_select(query)
+            for row in rows:
+            # cur.execute(query)
+            # for row in cur.fetchall():
                 # print row
                 count = int(row[0])
                 did = str(row[1])
@@ -384,8 +390,10 @@ def go_required_metadata(did_sql, metadata_lookup):
         required_metadata_fields) + " from required_metadata_info WHERE dataset_id in ('%s')"
     query = req_query % (did_sql)
     print(query)
-    cur.execute(query)
-    for row in cur.fetchall():
+    rows = myconn.execute_fetch_select(query)
+    for row in rows:
+    # cur.execute(query)
+    # for row in cur.fetchall():
         did = str(row[0])
         if did not in metadata_lookup:
             metadata_lookup[did] = {}
@@ -397,11 +405,13 @@ def go_required_metadata(did_sql, metadata_lookup):
 
 
 def get_required_metadata_fields():
-    q = "SHOW fields from required_metadata_info"
-    cur.execute(q)
+    query = "SHOW fields from required_metadata_info"
+    rows = myconn.execute_fetch_select(query)
+    # cur.execute(q)
     md_fields = []
     fields_not_wanted = ['required_metadata_id', 'dataset_id', 'created_at', 'updated_at']
-    for row in cur.fetchall():
+    for row in rows:
+    # for row in cur.fetchall():
         if row[0] not in fields_not_wanted:
             md_fields.append(row[0])
     return md_fields
@@ -409,17 +419,22 @@ def get_required_metadata_fields():
 
 def go_custom_metadata(did_list, pid, metadata_lookup):
     custom_table = 'custom_metadata_' + pid
-    q = "show tables like '" + custom_table + "'"
-    cur.execute(q)
-    table_exists = cur.fetchall()
+    query = "show tables like '" + custom_table + "'"
+
+    table_exists = myconn.execute_fetch_select(query)
+
+    # cur.execute(q)
+    # table_exists = cur.fetchall()
     if not table_exists:
         return metadata_lookup
 
     field_collection = ['dataset_id']
     cust_metadata_lookup = {}
     query = cust_pquery % (pid)
-    cur.execute(query)
-    for row in cur.fetchall():
+    rows = myconn.execute_fetch_select(query)
+    for row in rows:
+        # cur.execute(query)
+    # for row in cur.fetchall():
         pid = str(row[0])
         field = row[1]
         if field != 'dataset_id':
@@ -431,10 +446,9 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
     # print cust_dquery
     # try:
-    cur.execute(cust_dquery)
-
-    # print 'metadata_lookup1', metadata_lookup
-    for row in cur.fetchall():
+    # cur.execute(cust_dquery)
+    rows = myconn.execute_fetch_select(cust_dquery)
+    for row in rows:
         # print row
         did = str(row[0])
         if did in did_list:
@@ -493,14 +507,18 @@ def read_original_metadata():
 
 
 def get_dataset_ids(pid):
-    q = "SELECT dataset_id from dataset where project_id='" + str(pid) + "'"
+    query = "SELECT dataset_id from dataset where project_id='" + str(pid) + "'"
+
+    rows = myconn.execute_fetch_select(query)
+
     # print q
-    cur.execute(q)
+    # cur.execute(q)
     dids = []
-    numrows = cur.rowcount
+    numrows = len(rows)
     if numrows == 0:
         sys.exit('No data found for pid ' + str(pid))
-    for row in cur.fetchall():
+    # that was somewhere already
+    for row in rows:
         dids.append(str(row[0]))
 
     return dids
@@ -610,9 +628,9 @@ if __name__ == '__main__':
     database = args.NODE_DATABASE
     myconn = MyConnection(dbhost, database, read_default_file="~/.my.cnf_node")
 
-    db = MySQLdb.connect(host=dbhost,  # your host, usually localhost
-                         read_default_file="~/.my.cnf_node")
-    cur = db.cursor()
+    # db = MySQLdb.connect(host=dbhost,  # your host, usually localhost
+    #                      read_default_file="~/.my.cnf_node")
+    # cur = db.cursor()
 
     # args.NODE_DATABASE = ""
     if args.NODE_DATABASE:
