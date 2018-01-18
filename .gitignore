@@ -1,4 +1,5 @@
 .idea/
+.DS_Store
 newrelic.js
 
 HLSU/
@@ -14,6 +15,5 @@ rdp/
 
 *.log
 *.txt
-
 metadata_conversion.README
 

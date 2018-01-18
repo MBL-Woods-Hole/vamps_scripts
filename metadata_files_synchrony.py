@@ -93,7 +93,7 @@ def go_list(args):
                         db_val = str(row[i+1])
                         if str(metadata_lookup[did][item]) != db_val :
                             if args.verbose:
-                                print project_lookup[pid]+' -- ' +did+'  no match for', item+':',metadata_lookup[did][item],' - ',db_val
+                                print project_lookup[pid]+' -- ' +did+'  no match-1 for', item+':',metadata_lookup[did][item],' - ',db_val
                             if pid not in mismatch_data:
                                 mismatch_data[pid] = project_lookup[pid]
                             clean_project = False
@@ -114,7 +114,7 @@ def go_list(args):
             for row in rows:    
                 #print row
                 field = str(row[0])
-                if field !=  custom_metadata_file+'_id' and field != 'dataset_id': 
+                if field !=  custom_metadata_file+'_id' and field != 'dataset_id' and field != 'project_id': 
                     fields.append(field) # starts with idx 2
             #print 'fields',fields
         
@@ -122,15 +122,19 @@ def go_list(args):
             cur.execute(q2)
             rows = cur.fetchall()
             for row in rows:
-                did = str(row[1]) # first is custom_metadata_<pid>_id
+                did = str(row[2]) # first is custom_metadata_<pid>_id, second is pid
+                #print
+                #print 'row',row
                 for i,item in enumerate(fields):
+                    
+                    #print 'pid:',pid,'did:',did, 'item:',item,metadata_lookup[did], project_lookup[pid]
                     if item in metadata_lookup[did]:
                         #print item,row[i+2]
-                        db_val = str(row[i+2])
+                        db_val = str(row[i+3])
                         
                         if str(metadata_lookup[did][item]) != db_val:
                             if args.verbose:
-                                print project_lookup[pid]+' -- ' +did+'  no match for', item+':',metadata_lookup[did][item],' - ',db_val
+                                print project_lookup[pid]+' -- ' +did+'  no match-2 for', item+':',metadata_lookup[did][item],'!=',db_val
                             if pid not in mismatch_data:
                                 mismatch_data[pid] = project_lookup[pid]
                             clean_project = False
@@ -232,7 +236,7 @@ if __name__ == '__main__':
     """
    
     parser.add_argument("-json_file_path", "--json_file_path",        
-                required=False,  action='store', dest = "json_file_path",  default='../../json', 
+                required=False,  action='store', dest = "json_file_path",  default='json', 
                 help="Not usually needed if -host is accurate")
                 # for vampsdev"  /groups/vampsweb/vampsdev_node_data/json
     parser.add_argument("-host", "--host",    
@@ -273,7 +277,7 @@ if __name__ == '__main__':
     if os.path.exists(args.json_file_path):
         print 'Validated: json file path'
     else:
-        print usage
+        print myusage
         print "Could not find json directory: '",args.json_file_path,"'-Exiting"
         sys.exit(-1)
     print "\nARGS: dbhost  =",dbhost

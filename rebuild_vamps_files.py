@@ -344,6 +344,7 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
     cur.execute(query)
     for row in cur.fetchall():
         pid = str(row[0])
+        #print 'pid:',pid
         field = row[1]
         if field != 'dataset_id':
             field_collection.append(field.strip())
@@ -381,7 +382,7 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
         # except:
         #    print 'could not find or read', table, 'Skipping'
     print
-    # print 'metadata_lookup2', metadata_lookup
+    print 'metadata_lookup2', metadata_lookup
     # sys.exit()
     return metadata_lookup
 
