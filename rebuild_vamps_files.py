@@ -241,9 +241,9 @@ def go_add(node_database, pids_str):
         # print counts_lookup
         for q in queries:
             if args.units == 'rdp2.6':
-                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql
+                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
             elif args.units == 'silva119':
-                query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql
+                query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
             print 'PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')'
             print query
 
