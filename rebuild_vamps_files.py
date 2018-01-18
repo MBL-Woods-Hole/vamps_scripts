@@ -83,6 +83,15 @@ class MyConnection:
             return self.cursor._info
 
 
+    def execute_fetch_select_dict(self, sql):
+        if self.cursorD:
+            try:
+                self.cursorD.execute(sql)
+                return self.cursorD.fetchall()
+            except:
+                print "ERROR: query = %s" % sql
+                raise
+
 def is_local():
     print os.uname()[1]
     dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local",
@@ -214,10 +223,10 @@ def go_add(node_database, pids_str):
     all_dids = []
     metadata_lookup = {}
 
-    pid_list = pids_str.split(', ')
+    pid_list = pids_str.split(',')
+    map(str.strip, pid_list) # rm spaces if any
     # Uniquing list here
-    pid_set = set(pid_list)
-    pid_list = list(pid_set)
+    pid_list = list(set(pid_list))
     for k, pid in enumerate(pid_list):
         dids = get_dataset_ids(pid)
         all_dids += dids
@@ -228,7 +237,7 @@ def go_add(node_database, pids_str):
                 os.remove(pth)
             except:
                 pass
-        did_sql = "', '".join(dids)
+        did_sql = ', '.join(dids)
         # print counts_lookup
         for q in queries:
             if args.units == 'rdp2.6':
@@ -406,57 +415,40 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
 
     table_exists = myconn.execute_fetch_select(query)
 
-    # cur.execute(q)
-    # table_exists = cur.fetchall()
     if not table_exists:
         return metadata_lookup
 
     field_collection = ['dataset_id']
     cust_metadata_lookup = {}
     query = cust_pquery % pid
+
+    r_d = myconn.execute_fetch_select_dict(query)
     rows = myconn.execute_fetch_select(query)
     for row in rows:
-        # cur.execute(query)
-        # for row in cur.fetchall():
+
         pid = str(row[0])
         field = row[1]
         if field != 'dataset_id':
             field_collection.append(field.strip())
 
-    # print 'did_list', did_list
-    # print 'field_collection', field_collection
 
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
-    # print cust_dquery
-    # try:
-    # cur.execute(cust_dquery)
+
     rows = myconn.execute_fetch_select(cust_dquery)
     for row in rows:
-        # print row
         did = str(row[0])
         if did in did_list:
 
             for y, f in enumerate(field_collection):
-                # cnt = i
 
                 if f != 'dataset_id':
-                    # if row[i]:
                     value = str(row[y])
-                    # else:
-                    #    value = None
-                    # print 'XXX', did, i, f, value
 
                     if did in metadata_lookup:
                         metadata_lookup[did][f] = value
                     else:
                         metadata_lookup[did] = {}
                         metadata_lookup[did][f] = value
-
-        # except:
-        #    print 'could not find or read', table, 'Skipping'
-    print
-    # print 'metadata_lookup2', metadata_lookup
-    # sys.exit()
     return metadata_lookup
 
 
@@ -493,19 +485,12 @@ def get_dataset_ids(pid):
     query = "SELECT dataset_id from dataset where project_id='" + str(pid) + "'"
 
     rows = myconn.execute_fetch_select(query)
-
-    # print q
-    # cur.execute(q)
-    dids = []
     numrows = len(rows)
     if numrows == 0:
         sys.exit('No data found for pid ' + str(pid))
-    # that was somewhere already
-    for row in rows:
-        dids.append(str(row[0]))
+    dids = [str(row[0]) for row in rows]
 
     return dids
-
 
 def ask_current_database(databases):
     print myusage
