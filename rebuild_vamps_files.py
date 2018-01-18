@@ -20,6 +20,77 @@ import json
 import shutil
 import datetime
 import socket
+from collections import defaultdict
+
+class MyConnection:
+    """
+    Takes parameters from ~/.my.cnf, default host = "vampsdev", db="test"
+    if different use my_conn = MyConnection(host, db)
+    """
+    def __init__(self, host="bpcweb7", db="test", read_default_file=""):
+# , read_default_file=os.path.expanduser("~/.my.cnf"), port = 3306
+
+        self.conn   = None
+        self.cursor = None
+        self.cursorD = None
+        self.rows   = 0
+        self.new_id = None
+        self.lastrowid = None
+
+        try:
+            print "host = " + str(host) + ", db = "  + str(db)
+            print "=" * 40
+            read_default_file = os.path.expanduser("~/.my.cnf")
+            port_env = 3306
+
+            if is_local():
+                host = "127.0.0.1"
+                read_default_file = "~/.my.cnf_local"
+            self.conn   = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
+            self.cursor = self.conn.cursor()
+            self.cursorD = self.conn.cursor (MySQLdb.cursors.DictCursor)
+
+        except (AttributeError, MySQLdb.OperationalError):
+            self.conn = MySQLdb.connect(host=host, db=db, read_default_file=read_default_file, port=port_env)
+            self.cursor = self.conn.cursor()
+        except MySQLdb.Error, e:
+            print "Error %d: %s" % (e.args[0], e.args[1])
+            raise
+        except:                       # catch everything
+            print "Unexpected:"
+            print sys.exc_info()[0]
+            raise                       # re-throw caught exception
+
+
+    def connect(self, host, db, read_default_file, port_env):
+        return MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
+
+
+    def execute_fetch_select(self, sql):
+        if self.cursor:
+            try:
+                self.cursor.execute(sql)
+                res = self.cursor.fetchall ()
+            except:
+                print ("ERROR: query = %s") % sql
+                raise
+        return res
+
+    def execute_no_fetch(self, sql):
+        if self.cursor:
+            self.cursor.execute(sql)
+            self.conn.commit()
+            return self.cursor._info
+
+
+def is_local():
+    print os.uname()[1]
+    dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local", "Annas-MacBook-new.local", "Annas-MacBook.local"]
+    if os.uname()[1] in dev_comps:
+        return True
+    else:
+        return False
+
 
 today = str(datetime.date.today())
 
@@ -60,43 +131,48 @@ query_coreA = " FROM sequence_pdr_info"
 
 query_core_join_silva119 = " JOIN silva_taxonomy_info_per_seq USING(sequence_id)"
 query_core_join_silva119 += " JOIN silva_taxonomy USING(silva_taxonomy_id)"
+
 query_core_join_rdp = " JOIN rdp_taxonomy_info_per_seq USING(rdp_taxonomy_info_per_seq_id)"
 query_core_join_rdp += " JOIN rdp_taxonomy USING(rdp_taxonomy_id)"
 
+where_part = " WHERE dataset_id in ('%s')"
+
 domain_queryA = "SELECT sum(seq_count), dataset_id, domain_id"
 
-domain_queryB = " WHERE dataset_id in ('%s')"
+domain_queryB = where_part
 domain_queryB += " GROUP BY dataset_id, domain_id"
 
 phylum_queryA = "SELECT sum(seq_count), dataset_id, domain_id, phylum_id"
-phylum_queryB = " WHERE dataset_id in ('%s')"
+phylum_queryB = where_part
 phylum_queryB += " GROUP BY dataset_id, domain_id, phylum_id"
 
 class_queryA = "SELECT sum(seq_count), dataset_id, domain_id, phylum_id, klass_id"
-class_queryB = " WHERE dataset_id in ('%s')"
+class_queryB = where_part
 class_queryB += " GROUP BY dataset_id, domain_id, phylum_id, klass_id"
 
 order_queryA = "SELECT sum(seq_count), dataset_id, domain_id, phylum_id, klass_id, order_id"
-order_queryB = " WHERE dataset_id in ('%s')"
+order_queryB = where_part
 order_queryB += " GROUP BY dataset_id, domain_id, phylum_id, klass_id, order_id"
 
 family_queryA = "SELECT sum(seq_count), dataset_id, domain_id, phylum_id, klass_id, order_id, family_id"
-family_queryB = " WHERE dataset_id in ('%s')"
+family_queryB = where_part
 family_queryB += " GROUP BY dataset_id, domain_id, phylum_id, klass_id, order_id, family_id"
 
 genus_queryA = "SELECT sum(seq_count), dataset_id, domain_id, phylum_id, klass_id, order_id, family_id, genus_id"
-genus_queryB = " WHERE dataset_id in ('%s')"
+genus_queryB = where_part
 genus_queryB += " GROUP BY dataset_id, domain_id, phylum_id, klass_id, order_id, family_id, genus_id"
 
 species_queryA = "SELECT sum(seq_count), dataset_id, domain_id, phylum_id, klass_id, order_id, family_id, genus_id, species_id"
-species_queryB = " WHERE dataset_id in ('%s')"
+species_queryB = where_part
 species_queryB += " GROUP BY dataset_id, domain_id, phylum_id, klass_id, order_id, family_id, genus_id, species_id"
 
 strain_queryA = "SELECT sum(seq_count), dataset_id, domain_id, phylum_id, klass_id, order_id, family_id, genus_id, species_id, strain_id"
-strain_queryB = " WHERE dataset_id in ('%s')"
+strain_queryB = where_part
 strain_queryB += " GROUP BY dataset_id, domain_id, phylum_id, klass_id, order_id, family_id, genus_id, species_id, strain_id"
 
 cust_pquery = "SELECT project_id, field_name from custom_metadata_fields WHERE project_id = '%s'"
+
+end_group_query = " ORDER BY NULL"
 
 queries = [{"rank": "domain", "queryA": domain_queryA, "queryB": domain_queryB},
            {"rank": "phylum", "queryA": phylum_queryA, "queryB": phylum_queryB},
@@ -107,6 +183,7 @@ queries = [{"rank": "domain", "queryA": domain_queryA, "queryB": domain_queryB},
            {"rank": "species", "queryA": species_queryA, "queryB": species_queryB},
            {"rank": "strain", "queryA": strain_queryA, "queryB": strain_queryB}
            ]
+
 
 
 def convert_keys_to_string(dictionary):
@@ -428,6 +505,19 @@ def get_dataset_ids(pid):
 
     return dids
 
+def ask_current_database(databases):
+    dbs = []
+    print myusage
+    db_str = ''
+    for i, row in enumerate(databases):
+        dbs.append(row[0])
+        db_str += str(i) + '-' + row[0] + ';  '
+    print db_str
+    db_no = input("\nchoose database number: ")
+    if int(db_no) < len(dbs):
+        return dbs[db_no]
+    else:
+        sys.exit("unrecognized number -- Exiting")
 
 #
 #
@@ -518,12 +608,19 @@ if __name__ == '__main__':
         sys.exit(-1)
     print "ARGS: units =", args.units
 
+    database = args.NODE_DATABASE
+    myconn = MyConnection(dbhost, database, read_default_file="~/.my.cnf_node")
+
     db = MySQLdb.connect(host=dbhost,  # your host, usually localhost
                          read_default_file="~/.my.cnf_node")
     cur = db.cursor()
+
     if args.NODE_DATABASE:
         NODE_DATABASE = args.NODE_DATABASE
     else:
+        databases = myconn.execute_fetch_select("SHOW databases like 'vamps%'")
+        NODE_DATABASE = ask_current_database(databases)
+
         cur.execute("SHOW databases like 'vamps%'")
         dbs = []
         print myusage
