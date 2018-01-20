@@ -453,6 +453,12 @@ def get_required_metadata_fields():
     return md_fields
 
 
+def make_field_names_by_pid_list(pid):
+    query = cust_pquery % pid
+
+    rows = myconn.execute_fetch_select(query)
+    return set([x[0] for x in rows] + ['dataset_id'])
+
 def go_custom_metadata(did_list, pid, metadata_lookup):
     custom_table = 'custom_metadata_' + pid
     query = "show tables like '" + custom_table + "'"
@@ -462,10 +468,7 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
     if not table_exists:
         return metadata_lookup
 
-    query = cust_pquery % pid
-
-    rows = myconn.execute_fetch_select(query)
-    field_collection = set([x[0] for x in rows] + ['dataset_id'])
+    field_collection = make_field_names_by_pid_list(pid)
 
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
 
