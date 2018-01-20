@@ -247,7 +247,7 @@ def go_add(node_database, pids_str):
     elapsed1 = (time.time() - start1)
     print "get_all_dids_per_pid_dict time: %s s" % elapsed1
 
-    counts_lookup = {}
+    counts_lookup = defaultdict(dict)
 
     start2 = time.time()
     prefix = make_prefix(args, node_database)
@@ -296,24 +296,15 @@ def go_add(node_database, pids_str):
             rows = myconn.execute_fetch_select(query)
 
             for row in rows:
-                # cur.execute(query)
-                # for row in cur.fetchall():
-                # print row
+
                 count = int(row[0])
                 did = str(row[1])
                 tax_id_str = ''
 
                 start8 = time.time()
-                for x in range(2, len(row)):
-                    tax_id_str += '_' + str(row[x])
-
-                elapsed8 = (time.time() - start8)
-                print "8) x in range(2, len(row) time: %s s" % elapsed8
-
-                start81 = time.time()
                 tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
-                elapsed81 = (time.time() - start81)
-                print "81) tax_id_str time: %s s" % elapsed81
+                elapsed8 = (time.time() - start8)
+                print "8) tax_id_str time: %s s" % elapsed8
 
                 if tax_id_str in counts_lookup[did]:
                     # unless pid was duplicated on CL
