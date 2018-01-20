@@ -202,14 +202,27 @@ def convert_keys_to_string(dictionary):
     return dict((str(k), convert_keys_to_string(v)) for k, v in dictionary.items())
 
 
+def get_all_dids_per_pid_dict():
+    query = "SELECT project_id, group_concat(dataset_id) AS dids FROM dataset GROUP BY project_id ORDER BY NULL"
+    res = myconn.execute_fetch_select(query)
+    return dict((str(x[0]), str(x[1])) for x in res)
+
 def get_dco_pids():
     query = "select project_id from project where project like 'DCO%'"
     rows = myconn.execute_fetch_select(query)
     pid_list = [str(row[0]) for row in rows]
     return ', '.join(pid_list)
 
+def make_list_from_c_str(comma_string):
+    m_list = comma_string.split(',')
+    m_list = map(str.strip, m_list) # trim spaces if any
+    # Uniquing list here
+    return list(set(m_list))
+
 def go_add(node_database, pids_str):
     from random import randrange
+    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
+
     counts_lookup = {}
     prefix = ""
     if args.units == 'silva119':
@@ -223,12 +236,10 @@ def go_add(node_database, pids_str):
     all_dids = []
     metadata_lookup = {}
 
-    pid_list = pids_str.split(',')
-    map(str.strip, pid_list) # rm spaces if any
-    # Uniquing list here
-    pid_list = list(set(pid_list))
+    pid_list = make_list_from_c_str(pids_str)
+
     for k, pid in enumerate(pid_list):
-        dids = get_dataset_ids(pid)
+        dids = make_list_from_c_str(all_dids_per_pid_dict[pid])
         all_dids += dids
         # delete old did files if any
         for did in dids:
