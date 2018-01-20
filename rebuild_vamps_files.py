@@ -145,7 +145,7 @@ query_core_join_silva119 += " JOIN silva_taxonomy USING(silva_taxonomy_id)"
 query_core_join_rdp = " JOIN rdp_taxonomy_info_per_seq USING(rdp_taxonomy_info_per_seq_id)"
 query_core_join_rdp += " JOIN rdp_taxonomy USING(rdp_taxonomy_id)"
 
-where_part = " WHERE dataset_id in ('%s')"
+where_part = " WHERE dataset_id in (%s)"
 
 domain_queryA = "SELECT sum(seq_count), dataset_id, domain_id"
 
@@ -260,7 +260,7 @@ def go_add(node_database, pids_str):
     start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
     elapsed3 = (time.time() - start3)
-    print "make_list_from_c_str time: %s s" % elapsed3
+    print "3) make_list_from_c_str time: %s s" % elapsed3
 
     start4 = time.time()
 
@@ -268,16 +268,18 @@ def go_add(node_database, pids_str):
         start5 = time.time()
         dids = make_list_from_c_str(all_dids_per_pid_dict[pid])
         elapsed5 = (time.time() - start5)
-        print "make_list_from_c_str time: %s s" % elapsed5
+        print "5) make_list_from_c_str time: %s s" % elapsed5
 
         all_dids += dids
 
         start7 = time.time()
         delete_old_did_files(dids, prefix)
         elapsed7 = (time.time() - start7)
-        print "delete_old_did_files time: %s s" % elapsed7
+        print "7) delete_old_did_files time: %s s" % elapsed7
 
         did_sql = ', '.join(dids)
+            #", ".join('%s' % w for w in set(dids) if w is not None)
+
 
         start6 = time.time()
         # print counts_lookup
@@ -292,6 +294,7 @@ def go_add(node_database, pids_str):
             dirs = []
 
             rows = myconn.execute_fetch_select(query)
+
             for row in rows:
                 # cur.execute(query)
                 # for row in cur.fetchall():
@@ -299,20 +302,25 @@ def go_add(node_database, pids_str):
                 count = int(row[0])
                 did = str(row[1])
                 tax_id_str = ''
+
+                start8 = time.time()
                 for x in range(2, len(row)):
                     tax_id_str += '_' + str(row[x])
-                # print 'tax_id_str', tax_id_str
-                if did in counts_lookup:
-                    # sys.exit('We should not be here - Exiting')
-                    if tax_id_str in counts_lookup[did]:
-                        # unless pid was duplicated on CL
-                        sys.exit('We should not be here - Exiting')
-                    else:
-                        counts_lookup[did][tax_id_str] = count
 
+                elapsed8 = (time.time() - start8)
+                print "8) x in range(2, len(row) time: %s s" % elapsed8
+
+                start81 = time.time()
+                tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
+                elapsed81 = (time.time() - start81)
+                print "81) tax_id_str time: %s s" % elapsed81
+
+                if tax_id_str in counts_lookup[did]:
+                    # unless pid was duplicated on CL
+                    sys.exit('We should not be here - Exiting')
                 else:
-                    counts_lookup[did] = {}
                     counts_lookup[did][tax_id_str] = count
+
         elapsed6 = (time.time() - start6)
         print "for q in queries (print counts_lookup) time: %s s" % elapsed6
 
