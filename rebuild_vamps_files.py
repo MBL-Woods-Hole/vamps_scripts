@@ -180,7 +180,7 @@ strain_queryA = "SELECT sum(seq_count), dataset_id, domain_id, phylum_id, klass_
 strain_queryB = where_part
 strain_queryB += " GROUP BY dataset_id, domain_id, phylum_id, klass_id, order_id, family_id, genus_id, species_id, strain_id"
 
-cust_pquery = "SELECT project_id, field_name from custom_metadata_fields WHERE project_id = '%s'"
+cust_pquery = "SELECT field_name from custom_metadata_fields WHERE project_id = '%s'"
 
 end_group_query = " ORDER BY NULL"
 
@@ -247,15 +247,14 @@ def go_add(node_database, pids_str):
     elapsed1 = (time.time() - start1)
     print "get_all_dids_per_pid_dict time: %s s" % elapsed1
 
+    all_dids = []
     counts_lookup = defaultdict(dict)
+    metadata_lookup = defaultdict(dict)
 
     start2 = time.time()
     prefix = make_prefix(args, node_database)
     elapsed2 = (time.time() - start2)
     print "make_prefix time: %s s" % elapsed2
-    
-    all_dids = []
-    metadata_lookup = {}
 
     start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
@@ -463,19 +462,10 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
     if not table_exists:
         return metadata_lookup
 
-    field_collection = ['dataset_id']
-    cust_metadata_lookup = {}
     query = cust_pquery % pid
 
-    r_d = myconn.execute_fetch_select_dict(query)
     rows = myconn.execute_fetch_select(query)
-    for row in rows:
-
-        pid = str(row[0])
-        field = row[1]
-        if field != 'dataset_id':
-            field_collection.append(field.strip())
-
+    field_collection = set([x[0] for x in rows] + ['dataset_id'])
 
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
 
