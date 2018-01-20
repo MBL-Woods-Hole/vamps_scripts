@@ -21,7 +21,7 @@ import shutil
 import datetime
 import socket
 from collections import defaultdict
-
+import time
 
 class MyConnection:
     """
@@ -219,11 +219,7 @@ def make_list_from_c_str(comma_string):
     # Uniquing list here
     return list(set(m_list))
 
-def go_add(node_database, pids_str):
-    from random import randrange
-    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
-
-    counts_lookup = {}
+def make_prefix(args, node_database):
     prefix = ""
     if args.units == 'silva119':
         prefix = os.path.join(args.json_file_path, node_database + '--datasets_silva119')
@@ -233,10 +229,29 @@ def go_add(node_database, pids_str):
     if not os.path.exists(prefix):
         os.makedirs(prefix)
     print prefix
+    return prefix
+
+def go_add(node_database, pids_str):
+    from random import randrange
+    start1 = time.time()
+    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
+    elapsed1 = (time.time() - start1)
+    print "get_all_dids_per_pid_dict time: %s s" % elapsed1
+
+    counts_lookup = {}
+
+    start2 = time.time()
+    prefix = make_prefix(args, node_database)
+    elapsed2 = (time.time() - start2)
+    print "make_prefix time: %s s" % elapsed2
+    
     all_dids = []
     metadata_lookup = {}
 
+    start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
+    elapsed3 = (time.time() - start3)
+    print "go(args) time: %s s" % elapsed3
 
     for k, pid in enumerate(pid_list):
         dids = make_list_from_c_str(all_dids_per_pid_dict[pid])
@@ -521,6 +536,7 @@ def ask_current_database(databases):
 #
 #
 if __name__ == '__main__':
+    start0 = time.time()
 
     myusage = """
         -pids/--pids  [list of comma separated pids]
@@ -625,4 +641,8 @@ if __name__ == '__main__':
     if args.dco:
         args.pids_str = get_dco_pids()
 
+
+
     go_add(NODE_DATABASE, args.pids_str)
+    elapsed0 = (time.time() - start0)
+    print "total time: %s s" % elapsed0
