@@ -314,7 +314,7 @@ def go_add(node_database, pids_str):
         elapsed6 = (time.time() - start6)
         print "for q in queries (print counts_lookup) time: %s s" % elapsed6
 
-        metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
+        metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup, metadata_lookup)
     elapsed4 = (time.time() - start4)
     print "for k, pid in enumerate(pid_list) time: %s s" % elapsed4
 
@@ -459,7 +459,7 @@ def make_field_names_by_pid_list(pid):
     rows = myconn.execute_fetch_select(query)
     return set([x[0] for x in rows] + ['dataset_id'])
 
-def go_custom_metadata(did_list, pid, metadata_lookup):
+def go_custom_metadata(did_list, pid, metadata_lookup, metadata_lookup):
     custom_table = 'custom_metadata_' + pid
     query = "show tables like '" + custom_table + "'"
 
@@ -468,25 +468,26 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
     if not table_exists:
         return metadata_lookup
 
+    start9 = time.time()
     field_collection = make_field_names_by_pid_list(pid)
+    elapsed9 = (time.time() - start9)
+    print "9) make_field_names_by_pid_list time: %s s" % elapsed9
+
 
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
 
     rows = myconn.execute_fetch_select(cust_dquery)
-    for row in rows:
-        did = str(row[0])
+    rows_dict = myconn.execute_fetch_select_dict(cust_dquery)
+
+    start10 = time.time()
+    for row in rows_dict:
+        did = str(row['dataset_id'])
         if did in did_list:
+            for field, val in row.items():
+                metadata_lookup[did][field] = val
+    elapsed10 = (time.time() - start10)
+    print "10) metadata_lookup time: %s s" % elapsed10
 
-            for y, f in enumerate(field_collection):
-
-                if f != 'dataset_id':
-                    value = str(row[y])
-
-                    if did in metadata_lookup:
-                        metadata_lookup[did][f] = value
-                    else:
-                        metadata_lookup[did] = {}
-                        metadata_lookup[did][f] = value
     return metadata_lookup
 
 
