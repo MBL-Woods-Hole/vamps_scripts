@@ -314,7 +314,7 @@ def go_add(node_database, pids_str):
         elapsed6 = (time.time() - start6)
         print "for q in queries (print counts_lookup) time: %s s" % elapsed6
 
-        metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup, metadata_lookup)
+        metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
     elapsed4 = (time.time() - start4)
     print "for k, pid in enumerate(pid_list) time: %s s" % elapsed4
 
@@ -459,7 +459,7 @@ def make_field_names_by_pid_list(pid):
     rows = myconn.execute_fetch_select(query)
     return set([x[0] for x in rows] + ['dataset_id'])
 
-def go_custom_metadata(did_list, pid, metadata_lookup, metadata_lookup):
+def go_custom_metadata(did_list, pid, metadata_lookup):
     custom_table = 'custom_metadata_' + pid
     query = "show tables like '" + custom_table + "'"
 
