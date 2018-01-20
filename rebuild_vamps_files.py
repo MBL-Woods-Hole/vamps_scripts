@@ -231,6 +231,15 @@ def make_prefix(args, node_database):
     print prefix
     return prefix
 
+def delete_old_did_files(dids, prefix):
+    # delete old did files if any
+    for did in dids:
+        pth = os.path.join(prefix, did + '.json')
+        try:
+            os.remove(pth)
+        except:
+            pass
+
 def go_add(node_database, pids_str):
     from random import randrange
     start1 = time.time()
@@ -251,19 +260,26 @@ def go_add(node_database, pids_str):
     start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
     elapsed3 = (time.time() - start3)
-    print "go(args) time: %s s" % elapsed3
+    print "make_list_from_c_str time: %s s" % elapsed3
+
+    start4 = time.time()
 
     for k, pid in enumerate(pid_list):
+        start5 = time.time()
         dids = make_list_from_c_str(all_dids_per_pid_dict[pid])
+        elapsed5 = (time.time() - start5)
+        print "make_list_from_c_str time: %s s" % elapsed5
+
         all_dids += dids
-        # delete old did files if any
-        for did in dids:
-            pth = os.path.join(prefix, did + '.json')
-            try:
-                os.remove(pth)
-            except:
-                pass
+
+        start7 = time.time()
+        delete_old_did_files(dids, prefix)
+        elapsed7 = (time.time() - start7)
+        print "delete_old_did_files time: %s s" % elapsed7
+
         did_sql = ', '.join(dids)
+
+        start6 = time.time()
         # print counts_lookup
         for q in queries:
             if args.units == 'rdp2.6':
@@ -297,8 +313,12 @@ def go_add(node_database, pids_str):
                 else:
                     counts_lookup[did] = {}
                     counts_lookup[did][tax_id_str] = count
+        elapsed6 = (time.time() - start6)
+        print "for q in queries (print counts_lookup) time: %s s" % elapsed6
 
         metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
+    elapsed4 = (time.time() - start4)
+    print "for k, pid in enumerate(pid_list) time: %s s" % elapsed4
 
     print('all_dids', all_dids)
     all_did_sql = "', '".join(all_dids)
