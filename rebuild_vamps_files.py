@@ -472,8 +472,6 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
     field_collection = make_field_names_by_pid_list(pid)
     elapsed9 = (time.time() - start9)
     print "9) make_field_names_by_pid_list time: %s s" % elapsed9
-
-
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
 
     rows = myconn.execute_fetch_select(cust_dquery)
