@@ -486,7 +486,7 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
             for field, val in row.items():
                 metadata_lookup[did][field] = val
     elapsed10 = (time.time() - start10)
-    print "10) metadata_lookup time: %s s" % elapsed10
+    print "10) metadata_lookup time: %s s, pid = %s" % (elapsed10, pid)
 
     return metadata_lookup
 
