@@ -41,8 +41,8 @@ class MyConnection:
 
         port_env = 3306
         try:
-            print "host = " + str(host) + ", db = " + str(db)
-            print "=" * 40
+            print("host = " + str(host) + ", db = " + str(db))
+            print("=" * 40)
             read_default_file = os.path.expanduser("~/.my.cnf")
 
             if is_local():
