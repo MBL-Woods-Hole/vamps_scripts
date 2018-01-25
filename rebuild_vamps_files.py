@@ -23,13 +23,14 @@ import socket
 from collections import defaultdict
 import time
 
+
 class MyConnection:
     """
     Takes parameters from ~/.my.cnf, default host = "vampsdev", db="test"
     if different use my_conn = MyConnection(host, db)
     """
 
-    def __init__(self, host="bpcweb7", db="test", read_default_file=""):
+    def __init__(self, host = "bpcweb7", db = "test", read_default_file = ""):
         # , read_default_file=os.path.expanduser("~/.my.cnf"), port = 3306
 
         self.conn = None
@@ -48,24 +49,24 @@ class MyConnection:
             if is_local():
                 host = "127.0.0.1"
                 read_default_file = "~/.my.cnf_local"
-            self.conn = MySQLdb.connect(host=host, db=db, read_default_file=read_default_file, port=port_env)
+            self.conn = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
             self.cursor = self.conn.cursor()
             self.cursorD = self.conn.cursor(MySQLdb.cursors.DictCursor)
 
         except (AttributeError, MySQLdb.OperationalError):
-            self.conn = MySQLdb.connect(host=host, db=db, read_default_file=read_default_file, port=port_env)
+            self.conn = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
             self.cursor = self.conn.cursor()
         except MySQLdb.Error, e:
-            print "Error %d: %s" % (e.args[0], e.args[1])
+            print("Error %d: %s" % (e.args[0], e.args[1]))
             raise
         except:  # catch everything
-            print "Unexpected:"
-            print sys.exc_info()[0]
+            print("Unexpected:")
+            print(sys.exc_info()[0])
             raise  # re-throw caught exception
 
     @staticmethod
     def connect(host, db, read_default_file, port_env):
-        return MySQLdb.connect(host=host, db=db, read_default_file=read_default_file, port=port_env)
+        return MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
 
     def execute_fetch_select(self, sql):
         if self.cursor:
@@ -73,7 +74,7 @@ class MyConnection:
                 self.cursor.execute(sql)
                 return self.cursor.fetchall()
             except:
-                print "ERROR: query = %s" % sql
+                print("ERROR: query = %s" % sql)
                 raise
 
     def execute_no_fetch(self, sql):
@@ -82,18 +83,18 @@ class MyConnection:
             self.conn.commit()
             return self.cursor._info
 
-
     def execute_fetch_select_dict(self, sql):
         if self.cursorD:
             try:
                 self.cursorD.execute(sql)
                 return self.cursorD.fetchall()
             except:
-                print "ERROR: query = %s" % sql
+                print("ERROR: query = %s" % sql)
                 raise
 
+
 def is_local():
-    print os.uname()[1]
+    print(os.uname()[1])
     dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local",
                  "Annas-MacBook-new.local", "Annas-MacBook.local"]
     if os.uname()[1] in dev_comps:
@@ -207,17 +208,20 @@ def get_all_dids_per_pid_dict():
     res = myconn.execute_fetch_select(query)
     return dict((str(x[0]), str(x[1])) for x in res)
 
+
 def get_dco_pids():
     query = "select project_id from project where project like 'DCO%'"
     rows = myconn.execute_fetch_select(query)
     pid_list = [str(row[0]) for row in rows]
     return ', '.join(pid_list)
 
+
 def make_list_from_c_str(comma_string):
     m_list = comma_string.split(',')
-    m_list = map(str.strip, m_list) # trim spaces if any
+    m_list = map(str.strip, m_list)  # trim spaces if any
     # Uniquing list here
     return list(set(m_list))
+
 
 def make_prefix(args, node_database):
     prefix = ""
@@ -228,8 +232,9 @@ def make_prefix(args, node_database):
 
     if not os.path.exists(prefix):
         os.makedirs(prefix)
-    print prefix
+    print(prefix)
     return prefix
+
 
 def delete_old_did_files(dids, prefix):
     # delete old did files if any
@@ -240,12 +245,13 @@ def delete_old_did_files(dids, prefix):
         except:
             pass
 
+
 def go_add(node_database, pids_str):
     from random import randrange
     start1 = time.time()
     all_dids_per_pid_dict = get_all_dids_per_pid_dict()
     elapsed1 = (time.time() - start1)
-    print "get_all_dids_per_pid_dict time: %s s" % elapsed1
+    print("get_all_dids_per_pid_dict time: %s s" % elapsed1)
 
     all_dids = []
     counts_lookup = defaultdict(dict)
@@ -254,12 +260,12 @@ def go_add(node_database, pids_str):
     start2 = time.time()
     prefix = make_prefix(args, node_database)
     elapsed2 = (time.time() - start2)
-    print "make_prefix time: %s s" % elapsed2
+    print("make_prefix time: %s s" % elapsed2)
 
     start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
     elapsed3 = (time.time() - start3)
-    print "3) make_list_from_c_str time: %s s" % elapsed3
+    print("3) make_list_from_c_str time: %s s" % elapsed3)
 
     start4 = time.time()
 
@@ -267,28 +273,27 @@ def go_add(node_database, pids_str):
         start5 = time.time()
         dids = make_list_from_c_str(all_dids_per_pid_dict[pid])
         elapsed5 = (time.time() - start5)
-        print "5) make_list_from_c_str time: %s s" % elapsed5
+        print("5) make_list_from_c_str time: %s s" % elapsed5)
 
         all_dids += dids
 
         start7 = time.time()
         delete_old_did_files(dids, prefix)
         elapsed7 = (time.time() - start7)
-        print "7) delete_old_did_files time: %s s" % elapsed7
+        print("7) delete_old_did_files time: %s s" % elapsed7)
 
         did_sql = ', '.join(dids)
-            #", ".join('%s' % w for w in set(dids) if w is not None)
-
+        # ", ".join('%s' % w for w in set(dids) if w is not None)
 
         start6 = time.time()
-        # print counts_lookup
+        # print(counts_lookup)
         for q in queries:
             if args.units == 'rdp2.6':
                 query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
             elif args.units == 'silva119':
                 query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
-            print 'PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')'
-            print query
+            print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
+            print(query)
 
             dirs = []
 
@@ -303,7 +308,7 @@ def go_add(node_database, pids_str):
                 start8 = time.time()
                 tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
                 elapsed8 = (time.time() - start8)
-                print "8) tax_id_str time: %s s" % elapsed8
+                print("8) tax_id_str time: %s s" % elapsed8)
 
                 if tax_id_str in counts_lookup[did]:
                     # unless pid was duplicated on CL
@@ -312,11 +317,11 @@ def go_add(node_database, pids_str):
                     counts_lookup[did][tax_id_str] = count
 
         elapsed6 = (time.time() - start6)
-        print "for q in queries (print counts_lookup) time: %s s" % elapsed6
+        print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
 
         metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
     elapsed4 = (time.time() - start4)
-    print "for k, pid in enumerate(pid_list) time: %s s" % elapsed4
+    print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
 
     print('all_dids', all_dids)
     all_did_sql = "', '".join(all_dids)
@@ -325,9 +330,9 @@ def go_add(node_database, pids_str):
     if args.metadata_warning_only:
         for did in dids:
             if did in metadata_lookup:
-                print 'metadata found for did', did
+                print('metadata found for did', did)
             else:
-                print 'WARNING -- no metadata for did:', did
+                print('WARNING -- no metadata for did:', did)
     else:
 
         write_json_files(prefix, all_dids, metadata_lookup, counts_lookup)
@@ -347,9 +352,9 @@ def write_all_metadata_file(metadata_lookup, rando):
 
     if not args.no_backup:
         bu_file = os.path.join(args.json_file_path, NODE_DATABASE + "--metadata_" + today + '_' + str(rando) + ".json")
-        print 'Backing up metadata file to', bu_file
+        print('Backing up metadata file to', bu_file)
         shutil.copy(md_file, bu_file)
-    # print md_file
+    # print(md_file)
     for did in metadata_lookup:
         original_metadata_lookup[did] = metadata_lookup[did]
 
@@ -360,14 +365,14 @@ def write_all_metadata_file(metadata_lookup, rando):
     #     except:
     #         json_str = json.dumps(original_metadata_lookup)
 
-    with io.open(md_file, 'w', encoding='utf-8') as f:
+    with io.open(md_file, 'w', encoding = 'utf-8') as f:
         try:
             f.write(json.dumps(original_metadata_lookup))
         except:
-            f.write(json.dumps(original_metadata_lookup, ensure_ascii=False))
+            f.write(json.dumps(original_metadata_lookup, ensure_ascii = False))
         finally:
             pass
-    print 'writing new metadata file'
+    print('writing new metadata file')
     # f.write(json_str.encode('utf-8').strip()+"\n")
     f.close()
 
@@ -379,14 +384,14 @@ def write_all_taxcounts_file(counts_lookup, rando):
     if not args.no_backup:
         bu_file = os.path.join(args.json_file_path,
                                NODE_DATABASE + "--taxcounts_silva119" + today + '_' + str(rando) + ".json")
-        print 'Backing up taxcount file to', bu_file
+        print('Backing up taxcount file to', bu_file)
         shutil.copy(tc_file, bu_file)
     for did in counts_lookup:
         original_counts_lookup[did] = counts_lookup[did]
     json_str = json.dumps(original_counts_lookup)
     # print(json_str)
     f = open(tc_file, 'w')  # this will delete taxcounts file!
-    print 'writing new taxcount file'
+    print('writing new taxcount file')
     f.write(json_str + "\n")
     f.close()
 
@@ -394,10 +399,10 @@ def write_all_taxcounts_file(counts_lookup, rando):
 def write_json_files(prefix, dids, metadata_lookup, counts_lookup):
     for did in dids:
         file_path = os.path.join(prefix, str(did) + '.json')
-        print 'writing new file', file_path
+        print('writing new file', file_path)
         f = open(file_path, 'w')
         # print
-        # print did, counts_lookup[did]
+        # print(did, counts_lookup[did])
         if did in counts_lookup:
             my_counts_str = json.dumps(counts_lookup[did])
         else:
@@ -406,9 +411,9 @@ def write_json_files(prefix, dids, metadata_lookup, counts_lookup):
             try:
                 my_metadata_str = json.dumps(metadata_lookup[did])
             except:
-                my_metadata_str = json.dumps(metadata_lookup[did], ensure_ascii=False)
+                my_metadata_str = json.dumps(metadata_lookup[did], ensure_ascii = False)
         else:
-            print 'WARNING -- no metadata for dataset:', did
+            print('WARNING -- no metadata for dataset:', did)
             my_metadata_str = json.dumps({})
         # f.write('{"'+str(did)+'":'+mystr+"}\n")
         f.write('{"taxcounts":' + my_counts_str + ', "metadata":' + my_metadata_str + '}' + "\n")
@@ -417,7 +422,7 @@ def write_json_files(prefix, dids, metadata_lookup, counts_lookup):
 
 def go_required_metadata(did_sql, metadata_lookup):
     """
-        metadata_lookup_per_dsid[dsid][metadataName] = value            
+        metadata_lookup_per_dsid[dsid][metadataName] = value
 
     """
 
@@ -459,6 +464,7 @@ def make_field_names_by_pid_list(pid):
     rows = myconn.execute_fetch_select(query)
     return set([x[0] for x in rows] + ['dataset_id'])
 
+
 def go_custom_metadata(did_list, pid, metadata_lookup):
     custom_table = 'custom_metadata_' + pid
     query = "show tables like '" + custom_table + "'"
@@ -471,7 +477,8 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
     start9 = time.time()
     field_collection = make_field_names_by_pid_list(pid)
     elapsed9 = (time.time() - start9)
-    print "9) make_field_names_by_pid_list time: %s s" % elapsed9
+    print("9) make_field_names_by_pid_list time: %s s" % elapsed9)
+
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
 
     rows = myconn.execute_fetch_select(cust_dquery)
@@ -484,7 +491,7 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
             for field, val in row.items():
                 metadata_lookup[did][field] = val
     elapsed10 = (time.time() - start10)
-    print "10) metadata_lookup time: %s s, pid = %s" % (elapsed10, pid)
+    print("10) metadata_lookup time: %s s, pid = %s" % (elapsed10, pid))
 
     return metadata_lookup
 
@@ -497,12 +504,12 @@ def read_original_taxcounts():
     except:
 
         file_path2 = os.path.join(args.json_file_path, NODE_DATABASE + '--taxcounts.json')
-        print "could not read json file", file_path1, 'Now Trying', file_path2
+        print("could not read json file", file_path1, 'Now Trying', file_path2)
         try:
             with open(file_path2) as data_file:
                 data = json.load(data_file)
         except:
-            print "could not read json file", file_path2, '--Exiting'
+            print("could not read json file", file_path2, '--Exiting')
             sys.exit(1)
     return data
 
@@ -513,7 +520,7 @@ def read_original_metadata():
         with open(file_path) as data_file:
             data = json.load(data_file)
     except:
-        print "could not read json file", file_path, '-Exiting'
+        print("could not read json file", file_path, '-Exiting')
         sys.exit(1)
     return data
 
@@ -529,13 +536,14 @@ def get_dataset_ids(pid):
 
     return dids
 
+
 def ask_current_database(databases):
-    print myusage
+    print(myusage)
 
     dbs = [str(i) + '-' + str(row[0]) for i, row in enumerate(databases)]
     db_str = ';  '.join(dbs)
 
-    print db_str
+    print(db_str)
     db_no = input("\nchoose database number: ")
     if int(db_no) < len(dbs):
         return dbs[db_no]
@@ -551,16 +559,16 @@ if __name__ == '__main__':
 
     myusage = """
         -pids/--pids  [list of comma separated pids]
-                
+
         -json_file_path/--json_file_path   json files path [Default: ../json]
         -host/--host        vampsdb, vampsdev    dbhost:  [Default: localhost]
         -units/--tax-units  silva119, or rdp2.6   [Default:silva119]
-        
+
     count_lookup_per_dsid[dsid][rank][taxid] = count
 
     This script will add a project to ../json/<NODE-DATABASE>/<DATASET-NAME>.json JSON object
     But ONLY if it is already in the MySQL database.
-    
+
     To add a new project to the MySQL database:
     If already GASTed:
         use ./upload_project_to_database.py in this directory
@@ -569,34 +577,34 @@ if __name__ == '__main__':
 
     """
 
-    parser = argparse.ArgumentParser(description="", usage=myusage)
+    parser = argparse.ArgumentParser(description = "", usage = myusage)
 
     parser.add_argument("-pids", "--pids",
-                        required=True, action="store", dest="pids_str", default='',
-                        help="""ProjectID (used with -add)""")
+                        required = True, action = "store", dest = "pids_str", default = '',
+                        help = """ProjectID (used with -add)""")
 
     parser.add_argument("-no_backup", "--no_backup",
-                        required=False, action="store_true", dest="no_backup", default=False,
-                        help="""no_backup of group files: taxcounts and metadata""")
+                        required = False, action = "store_true", dest = "no_backup", default = False,
+                        help = """no_backup of group files: taxcounts and metadata""")
     parser.add_argument("-metadata_warning_only", "--metadata_warning_only",
-                        required=False, action="store_true", dest="metadata_warning_only", default=False,
-                        help="""warns of datasets with no metadata""")
+                        required = False, action = "store_true", dest = "metadata_warning_only", default = False,
+                        help = """warns of datasets with no metadata""")
     parser.add_argument("-json_file_path", "--json_file_path",
-                        required=False, action='store', dest="json_file_path", default='../../json',
-                        help="Not usually needed if -host is accurate")
+                        required = False, action = 'store', dest = "json_file_path", default = '../../json',
+                        help = "Not usually needed if -host is accurate")
     # for vampsdev"  /groups/vampsweb/vampsdev_node_data/json
     parser.add_argument("-host", "--host",
-                        required=False, action='store', dest="dbhost", default='localhost',
-                        help="choices=['vampsdb', 'vampsdev', 'localhost']")
+                        required = False, action = 'store', dest = "dbhost", default = 'localhost',
+                        help = "choices=['vampsdb', 'vampsdev', 'localhost']")
     parser.add_argument("-units", "--tax_units",
-                        required=False, action='store', choices=['silva119', 'rdp2.6'], dest="units",
-                        default='silva119',
-                        help="Default: 'silva119'; only other choice available is 'rdp2.6'")
+                        required = False, action = 'store', choices = ['silva119', 'rdp2.6'], dest = "units",
+                        default = 'silva119',
+                        help = "Default: 'silva119'; only other choice available is 'rdp2.6'")
     parser.add_argument("-dco", "--dco",
-                        required=False, action='store_true', dest="dco", default=False,
-                        help="")
+                        required = False, action = 'store_true', dest = "dco", default = False,
+                        help = "")
     # if len(sys.argv[1:]) == 0:
-    #     print myusage
+    #     print(myusage)
     #     sys.exit()
     args = parser.parse_args()
 
@@ -622,19 +630,19 @@ if __name__ == '__main__':
         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_rdp2.6")
     else:
         sys.exit('UNITS ERROR: ' + args.units)
-    print "\nARGS: dbhost  =", dbhost
-    print "\nARGS: NODE_DATABASE  =", args.NODE_DATABASE
-    print "ARGS: json_file_path =", args.json_file_path
+    print("\nARGS: dbhost  =", dbhost)
+    print("\nARGS: NODE_DATABASE  =", args.NODE_DATABASE)
+    print("ARGS: json_file_path =", args.json_file_path)
     if os.path.exists(args.json_file_path):
-        print '** Validated json_file_path **'
+        print('** Validated json_file_path **')
     else:
-        print myusage
-        print "Could not find json directory: '", args.json_file_path, "'-Exiting"
+        print(myusage)
+        print("Could not find json directory: '", args.json_file_path, "'-Exiting")
         sys.exit(-1)
-    print "ARGS: units =", args.units
+    print("ARGS: units =", args.units)
 
     database = args.NODE_DATABASE
-    myconn = MyConnection(dbhost, database, read_default_file="~/.my.cnf_node")
+    myconn = MyConnection(dbhost, database, read_default_file = "~/.my.cnf_node")
 
     if args.NODE_DATABASE:
         NODE_DATABASE = args.NODE_DATABASE
@@ -647,13 +655,11 @@ if __name__ == '__main__':
     # out_file = "tax_counts--"+NODE_DATABASE+".json"
     # in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
 
-    print 'DATABASE:', NODE_DATABASE
+    print('DATABASE:', NODE_DATABASE)
 
     if args.dco:
         args.pids_str = get_dco_pids()
 
-
-
     go_add(NODE_DATABASE, args.pids_str)
     elapsed0 = (time.time() - start0)
-    print "total time: %s s" % elapsed0
+    print("total time: %s s" % elapsed0)
