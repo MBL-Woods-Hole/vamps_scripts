@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" 
+"""
   create_counts_lookup.py
 
 
@@ -27,32 +27,32 @@ today     = str(datetime.date.today())
 """
 
 
-parser = argparse.ArgumentParser(description="") 
+parser = argparse.ArgumentParser(description="")
 
 
 def convert_keys_to_string(dictionary):
     """Recursively converts dictionary keys to strings."""
     if not isinstance(dictionary, dict):
         return dictionary
-    return dict((str(k), convert_keys_to_string(v)) 
+    return dict((str(k), convert_keys_to_string(v))
         for k, v in dictionary.items())
-        
+
 def go_list(args):
-    
+
     #
     file_dids = []
- 
+
     metadata_lookup = convert_keys_to_string(read_original_metadata())
     (projects_by_did, project_id_lookup, project_lookup) = get_project_lookup(args)
     #print(project_lookup)
     required_metadata_fields = get_required_metadata_fields(args)
     #print('file_dids')
     #print(metadata_lookup['3938'])
-    
+
     #metadata_dids = metadata_lookup.keys()
     #
     #print file_dids
-    #print len(file_dids)           
+    #print len(file_dids)
     #q =  "SELECT dataset_id,dataset.project_id,project from project"
     #q += " JOIN dataset using(project_id) order by project"
     failed_projects = []
@@ -77,12 +77,12 @@ def go_list(args):
             if pid not in no_req_metadata:
                     no_req_metadata[pid] = project_lookup[pid]
             continue
-        
+
         for row in cur.fetchall():
             did = str(row[0])
             #print 'did',did
             #if did == '3938':
-            if did not in metadata_lookup:                
+            if did not in metadata_lookup:
                 if pid not in no_file_found:
                     no_file_found[pid] = project_lookup[pid]
                 clean_project = False
@@ -99,25 +99,25 @@ def go_list(args):
                             clean_project = False
                     else:
                          if args.verbose:
-                            print( str(pid) +'--'+project_lookup[pid]+' -- ' +did+' -- '+item+' item not found in req metadata file-1\n')                         
+                            print( str(pid) +'--'+project_lookup[pid]+' -- ' +did+' -- '+item+' item not found in req metadata file-1\n')
                          if pid not in other_problem:
                             other_problem[pid] = project_lookup[pid]
                          clean_project = False
         custom_metadata_file = 'custom_metadata_'+str(pid)
         q1 = "SHOW fields from "+custom_metadata_file
         q2 = "SELECT * from "+custom_metadata_file
-        
+
         fields = []
         try:
             cur.execute(q1)
             rows = cur.fetchall()
-            for row in rows:    
+            for row in rows:
                 #print row
                 field = str(row[0])
-                if field !=  custom_metadata_file+'_id' and field != 'dataset_id' and field != 'project_id': 
+                if field !=  custom_metadata_file+'_id' and field != 'dataset_id' and field != 'project_id':
                     fields.append(field) # starts with idx 2
             #print 'fields',fields
-        
+
             #print q2
             cur.execute(q2)
             rows = cur.fetchall()
@@ -126,12 +126,12 @@ def go_list(args):
                 #print
                 #print 'row',row
                 for i,item in enumerate(fields):
-                    
+
                     #print 'pid:',pid,'did:',did, 'item:',item,metadata_lookup[did], project_lookup[pid]
                     if item in metadata_lookup[did]:
                         #print item,row[i+2]
                         db_val = str(row[i+3])
-                        
+
                         if str(metadata_lookup[did][item]) != db_val:
                             if args.verbose:
                                 print(project_lookup[pid]+' -- ' +did+'  no match-2 for', item+':',metadata_lookup[did][item],'!=',db_val)
@@ -140,18 +140,22 @@ def go_list(args):
                             clean_project = False
                     else:
                         if args.verbose:
-                            print( str(pid) +'--'+project_lookup[pid]+' -- ' +did+' -- '+item+' item not found in cust metadata file-2\n')                         
+                            print( str(pid) +'--'+project_lookup[pid]+' -- ' +did+' -- '+item+' item not found in cust metadata file-2\n')
                         if pid not in other_problem:
                             other_problem[pid] = project_lookup[pid]
                         clean_project = False
         except:
             #print "FYI: No Custom Metadata:",custom_metadata_file,"is missing"
             pass
-        #sys.exit() 
+        #sys.exit()
         #if not clean_project:
         #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
     print()
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     print('failed projects that need to have the metadata files rebuilt:')
     print()
     print('OTHER (rare):')
@@ -174,43 +178,52 @@ def go_list(args):
         print('pid:',pid,' -- ',no_req_metadata[pid])
     print('PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
     print()
+<<<<<<< HEAD
     
     
     print("Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found))
 
      
 def read_original_metadata():    
+=======
+
+
+    print("Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found))
+
+
+def read_original_metadata():
+>>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     file_path = os.path.join(args.json_file_path,NODE_DATABASE+'--metadata.json')
     try:
-        with open(file_path) as data_file:    
+        with open(file_path) as data_file:
             data = json.load(data_file)
     except:
         print("could not read json file",file_path,'-Exiting')
         sys.exit(1)
-    return data 
+    return data
 
-    
+
 def get_required_metadata_fields(args):
-    q =  "SHOW fields from required_metadata_info"   
+    q =  "SHOW fields from required_metadata_info"
     cur.execute(q)
     md_fields = []
-    fields_not_wanted = ['required_metadata_id','dataset_id','created_at','updated_at']    
+    fields_not_wanted = ['required_metadata_id','dataset_id','created_at','updated_at']
     for row in cur.fetchall():
         if row[0] not in fields_not_wanted:
             md_fields.append(row[0])
     return md_fields
-    
+
 def get_project_lookup(args):
     q =  "SELECT dataset_id,dataset.project_id,project from project"
     q += " JOIN dataset using(project_id) order by project"
-    
+
     num = 0
     cur.execute(q)
     #print 'List of projects in: '+in_file
     projects_by_did = {}
     project_id_lookup = {}
     project_lookup = {}
-    
+
     for row in cur.fetchall():
         did = row[0]
         pid = row[1]
@@ -218,10 +231,10 @@ def get_project_lookup(args):
         project_lookup[pid]  =pj
         projects_by_did[did] = pj
         if pid in project_id_lookup:
-            project_id_lookup[pid].append(str(did))            
+            project_id_lookup[pid].append(str(did))
         else:
             project_id_lookup[pid] = [str(did)]
-    
+
     return (projects_by_did, project_id_lookup, project_lookup)
 #
 #
@@ -229,33 +242,37 @@ def get_project_lookup(args):
 if __name__ == '__main__':
 
     myusage = """
-        
+
         -host/--host        vampsdb, vampsdev    dbhost:  [Default: localhost]
-        
+
 
     """
-   
-    parser.add_argument("-json_file_path", "--json_file_path",        
-                required=False,  action='store', dest = "json_file_path",  default='json', 
+
+    parser.add_argument("-json_file_path", "--json_file_path",
+                required=False,  action='store', dest = "json_file_path",  default='json',
                 help="Not usually needed if -host is accurate")
                 # for vampsdev"  /groups/vampsweb/vampsdev_node_data/json
-    parser.add_argument("-host", "--host",    
+    parser.add_argument("-host", "--host",
                 required=False,  action='store', dest = "dbhost",  default='localhost',
-                help="choices=['vampsdb','vampsdev','localhost']") 
-    parser.add_argument("-v", "--verbose",    
+                help="choices=['vampsdb','vampsdev','localhost']")
+    parser.add_argument("-v", "--verbose",
                 required=False,  action='store_true',  dest = "verbose",  default=False,
-                help="")                
+                help="")
     if len(sys.argv[1:]) == 0:
         print(myusage)
+<<<<<<< HEAD
         sys.exit() 
+=======
+        sys.exit()
+>>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     args = parser.parse_args()
-    
-    
+
+
     if args.dbhost == 'vamps' or args.dbhost == 'vampsdb':
         args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
         dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
-         
+
     elif args.dbhost == 'vampsdev':
         args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
         args.NODE_DATABASE = 'vamps2'
@@ -273,7 +290,7 @@ if __name__ == '__main__':
          args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_rdp2.6")
     else:
         sys.exit('UNITS ERROR: '+args.units)
-    
+
     if os.path.exists(args.json_file_path):
         print('Validated: json file path')
     else:
@@ -282,8 +299,13 @@ if __name__ == '__main__':
         sys.exit(-1)
     print("\nARGS: dbhost  =",dbhost)
     print("ARGS: json_dir=",args.json_file_path)
+<<<<<<< HEAD
       
     
+=======
+
+
+>>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     db = MySQLdb.connect(host=dbhost, # your host, usually localhost
                              read_default_file="~/.my.cnf_node"  )
     cur = db.cursor()
@@ -303,16 +325,27 @@ if __name__ == '__main__':
             NODE_DATABASE = dbs[db_no]
         else:
             sys.exit("unrecognized number -- Exiting")
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     print()
     cur.execute("USE "+NODE_DATABASE)
-    
+
     #out_file = "tax_counts--"+NODE_DATABASE+".json"
     #in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
+<<<<<<< HEAD
     
     print('DATABASE:',NODE_DATABASE)
        
          
     
+=======
+
+    print('DATABASE:',NODE_DATABASE)
+
+
+
+>>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     go_list(args)
-    
