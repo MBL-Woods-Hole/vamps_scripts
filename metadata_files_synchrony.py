@@ -66,7 +66,7 @@ def go_list(args):
         sql_dids =  "','".join(project_id_lookup[pid])
         q = "SELECT dataset_id, "+ ', '.join(required_metadata_fields) +" from required_metadata_info WHERE dataset_id in ('%s')" % (sql_dids)
         if args.verbose:
-            print q
+            print(q)
         clean_project = True
         num = 0
         cur.execute(q)
@@ -93,7 +93,7 @@ def go_list(args):
                         db_val = str(row[i+1])
                         if str(metadata_lookup[did][item]) != db_val :
                             if args.verbose:
-                                print project_lookup[pid]+' -- ' +did+'  no match-1 for', item+':',metadata_lookup[did][item],' - ',db_val
+                                print(project_lookup[pid]+' -- ' +did+'  no match-1 for', item+':',metadata_lookup[did][item],' - ',db_val)
                             if pid not in mismatch_data:
                                 mismatch_data[pid] = project_lookup[pid]
                             clean_project = False
@@ -134,7 +134,7 @@ def go_list(args):
                         
                         if str(metadata_lookup[did][item]) != db_val:
                             if args.verbose:
-                                print project_lookup[pid]+' -- ' +did+'  no match-2 for', item+':',metadata_lookup[did][item],'!=',db_val
+                                print(project_lookup[pid]+' -- ' +did+'  no match-2 for', item+':',metadata_lookup[did][item],'!=',db_val)
                             if pid not in mismatch_data:
                                 mismatch_data[pid] = project_lookup[pid]
                             clean_project = False
@@ -150,33 +150,33 @@ def go_list(args):
         #sys.exit() 
         #if not clean_project:
         #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
-    print
+    print()
     
-    print 'failed projects that need to have the metadata files rebuilt:'
-    print
-    print 'OTHER (rare):'
+    print('failed projects that need to have the metadata files rebuilt:')
+    print()
+    print('OTHER (rare):')
     for pid in other_problem:
-        print  'pid:',pid,' -- ',other_problem[pid]
+        print('pid:',pid,' -- ',other_problem[pid])
     print  ('PID List:',','.join([str(n) for n in other_problem.keys()]))
-    print
-    print 'DATA MIS-MATCHES BETWEEN FILE AND DBASE:'
+    print()
+    print('DATA MIS-MATCHES BETWEEN FILE AND DBASE:')
     for pid in mismatch_data:
-        print  'pid:',pid,' -- ',mismatch_data[pid]
+        print( 'pid:',pid,' -- ',mismatch_data[pid])
     print ('PID List:',','.join([str(n) for n in mismatch_data.keys()]))
-    print
-    print 'NO FILE(s) FOUND:'
+    print()
+    print('NO FILE(s) FOUND:')
     for pid in no_file_found:
-        print  'pid:',pid,' -- ',no_file_found[pid]
-    print  ('PID List:',','.join([str(n) for n in no_file_found.keys()]))
-    print    
-    print 'NO REQUIRED METADATA (re-install project or add by hand?):'
+        print('pid:',pid,' -- ',no_file_found[pid])
+    print('PID List:',','.join([str(n) for n in no_file_found.keys()]))
+    print()
+    print('NO REQUIRED METADATA (re-install project or add by hand?):')
     for pid in no_req_metadata:
-        print  'pid:',pid,' -- ',no_req_metadata[pid]
-    print  ('PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
-    print
+        print('pid:',pid,' -- ',no_req_metadata[pid])
+    print('PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
+    print()
     
     
-    print "Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found)
+    print("Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found))
 
      
 def read_original_metadata():    
@@ -185,7 +185,7 @@ def read_original_metadata():
         with open(file_path) as data_file:    
             data = json.load(data_file)
     except:
-        print "could not read json file",file_path,'-Exiting'
+        print("could not read json file",file_path,'-Exiting')
         sys.exit(1)
     return data 
 
@@ -246,7 +246,7 @@ if __name__ == '__main__':
                 required=False,  action='store_true',  dest = "verbose",  default=False,
                 help="")                
     if len(sys.argv[1:]) == 0:
-        print myusage
+        print(myusage)
         sys.exit() 
     args = parser.parse_args()
     
@@ -275,13 +275,13 @@ if __name__ == '__main__':
         sys.exit('UNITS ERROR: '+args.units)
     
     if os.path.exists(args.json_file_path):
-        print 'Validated: json file path'
+        print('Validated: json file path')
     else:
-        print myusage
-        print "Could not find json directory: '",args.json_file_path,"'-Exiting"
+        print(myusage)
+        print("Could not find json directory: '",args.json_file_path,"'-Exiting")
         sys.exit(-1)
-    print "\nARGS: dbhost  =",dbhost
-    print "ARGS: json_dir=",args.json_file_path 
+    print("\nARGS: dbhost  =",dbhost)
+    print("ARGS: json_dir=",args.json_file_path)
       
     
     db = MySQLdb.connect(host=dbhost, # your host, usually localhost
@@ -292,25 +292,25 @@ if __name__ == '__main__':
     else:
         cur.execute("SHOW databases like 'vamps%'")
         dbs = []
-        print myusage
+        print(myusage)
         db_str = ''
         for i, row in enumerate(cur.fetchall()):
             dbs.append(row[0])
             db_str += str(i)+'-'+row[0]+';  '
-        print db_str
+        print(db_str)
         db_no = input("\nchoose database number: ")
         if int(db_no) < len(dbs):
             NODE_DATABASE = dbs[db_no]
         else:
             sys.exit("unrecognized number -- Exiting")
         
-    print
+    print()
     cur.execute("USE "+NODE_DATABASE)
     
     #out_file = "tax_counts--"+NODE_DATABASE+".json"
     #in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
     
-    print 'DATABASE:',NODE_DATABASE
+    print('DATABASE:',NODE_DATABASE)
        
          
     
