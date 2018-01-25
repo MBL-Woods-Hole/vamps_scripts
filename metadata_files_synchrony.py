@@ -151,11 +151,6 @@ def go_list(args):
         #if not clean_project:
         #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
     print()
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     print('failed projects that need to have the metadata files rebuilt:')
     print()
     print('OTHER (rare):')
@@ -178,21 +173,10 @@ def go_list(args):
         print('pid:',pid,' -- ',no_req_metadata[pid])
     print('PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
     print()
-<<<<<<< HEAD
-    
-    
-    print("Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found))
-
-     
-def read_original_metadata():    
-=======
-
-
     print("Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found))
 
 
 def read_original_metadata():
->>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     file_path = os.path.join(args.json_file_path,NODE_DATABASE+'--metadata.json')
     try:
         with open(file_path) as data_file:
@@ -260,11 +244,7 @@ if __name__ == '__main__':
                 help="")
     if len(sys.argv[1:]) == 0:
         print(myusage)
-<<<<<<< HEAD
-        sys.exit() 
-=======
         sys.exit()
->>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     args = parser.parse_args()
 
 
@@ -299,13 +279,7 @@ if __name__ == '__main__':
         sys.exit(-1)
     print("\nARGS: dbhost  =",dbhost)
     print("ARGS: json_dir=",args.json_file_path)
-<<<<<<< HEAD
-      
-    
-=======
 
-
->>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     db = MySQLdb.connect(host=dbhost, # your host, usually localhost
                              read_default_file="~/.my.cnf_node"  )
     cur = db.cursor()
@@ -325,27 +299,13 @@ if __name__ == '__main__':
             NODE_DATABASE = dbs[db_no]
         else:
             sys.exit("unrecognized number -- Exiting")
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     print()
     cur.execute("USE "+NODE_DATABASE)
 
     #out_file = "tax_counts--"+NODE_DATABASE+".json"
     #in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
-<<<<<<< HEAD
     
     print('DATABASE:',NODE_DATABASE)
-       
-         
-    
-=======
 
-    print('DATABASE:',NODE_DATABASE)
-
-
-
->>>>>>> aa72c0bed82046f21b8b5bc5df895cb7c2371b00
     go_list(args)
