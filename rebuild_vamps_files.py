@@ -56,7 +56,8 @@ class MyConnection:
         except (AttributeError, MySQLdb.OperationalError):
             self.conn = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
             self.cursor = self.conn.cursor()
-        except MySQLdb.Error, e:
+        except MySQLdb.Error:
+            e = sys.exc_info()[1]
             print("Error %d: %s" % (e.args[0], e.args[1]))
             raise
         except:  # catch everything
