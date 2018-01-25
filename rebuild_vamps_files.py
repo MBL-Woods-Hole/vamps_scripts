@@ -82,8 +82,11 @@ class MyConnection:
         if self.cursor:
             self.cursor.execute(sql)
             self.conn.commit()
-            return self.cursor._info
-
+            try:
+                return self.cursor._result.message
+            except:
+                return self.cursor._info
+            
     def execute_fetch_select_dict(self, sql):
         if self.cursorD:
             try:
