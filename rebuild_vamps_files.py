@@ -268,13 +268,12 @@ def update_counts_lookup(query, counts_lookup):
     return counts_lookup
 
 def go_add(node_database, pids_str):
-    from random import randrange
     start1 = time.time()
     all_dids_per_pid_dict = get_all_dids_per_pid_dict()
     elapsed1 = (time.time() - start1)
     print("get_all_dids_per_pid_dict time: %s s" % elapsed1)
 
-    all_dids = []
+    all_used_dids = []
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
 
@@ -291,12 +290,7 @@ def go_add(node_database, pids_str):
         elapsed5 = (time.time() - start5)
         print("5) make_list_from_c_str time: %s s" % elapsed5)
 
-        all_dids += dids #Probably don't need this, can get by pid_list from all_dids_per_pid_dict
-
-        start7 = time.time()
-        delete_old_did_files(dids, prefix)
-        elapsed7 = (time.time() - start7)
-        print("7) delete_old_did_files time: %s s" % elapsed7)
+        all_used_dids += dids #Probably don't need this, can get by pid_list from all_dids_per_pid_dict
 
         did_sql = ', '.join(dids)
         # ", ".join('%s' % w for w in set(dids) if w is not None)
@@ -320,9 +314,11 @@ def go_add(node_database, pids_str):
     elapsed4 = (time.time() - start4)
     print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
 
-    print('all_dids', all_dids)
-    all_did_sql = "', '".join(all_dids)
+    print('all_used_dids', all_used_dids)
+    all_did_sql = "', '".join(all_used_dids)
     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
+
+    show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
 
     if args.metadata_warning_only:
         for did in dids:
@@ -332,7 +328,45 @@ def go_add(node_database, pids_str):
                 print('WARNING -- no metadata for did:', did)
     else:
 
-        write_json_files(prefix, all_dids, metadata_lookup, counts_lookup)
+        start2 = time.time()
+        prefix = make_prefix(args, node_database)
+        elapsed2 = (time.time() - start2)
+        print("make_prefix time: %s s" % elapsed2)
+
+        write_json_files(prefix, all_used_dids, metadata_lookup, counts_lookup)
+        from random import randrange
+
+        rando = randrange(10000, 99999)
+        write_all_metadata_file(metadata_lookup, rando)
+
+        # only write here for default taxonomy: silva119
+        # discovered this file is not used
+        # if args.units == 'silva119':
+        #    write_all_taxcounts_file(counts_lookup, rando)
+
+
+def show_result(node_database, metadata_lookup, counts_lookup, all_used_dids):
+    from random import randrange
+
+    start2 = time.time()
+    prefix = make_prefix(args, node_database)
+    elapsed2 = (time.time() - start2)
+    print("make_prefix time: %s s" % elapsed2)
+
+    start7 = time.time()
+    delete_old_did_files(all_used_dids, prefix)
+    elapsed7 = (time.time() - start7)
+    print("7) delete_old_did_files time: %s s" % elapsed7)
+
+    if args.metadata_warning_only:
+        for did in all_used_dids:
+            if did in metadata_lookup:
+                print('metadata found for did', did)
+            else:
+                print('WARNING -- no metadata for did:', did)
+    else:
+
+        write_json_files(prefix, all_used_dids, metadata_lookup, counts_lookup)
 
         rando = randrange(10000, 99999)
         write_all_metadata_file(metadata_lookup, rando)
