@@ -246,6 +246,27 @@ def delete_old_did_files(dids, prefix):
             pass
 
 
+def update_counts_lookup(query, counts_lookup):
+    rows = myconn.execute_fetch_select(query)
+
+    for row in rows:
+
+        count = int(row[0])
+        did = str(row[1])
+
+        start8 = time.time()
+        tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
+        elapsed8 = (time.time() - start8)
+        print("8) tax_id_str time: %s s" % elapsed8)
+
+        if tax_id_str in counts_lookup[did]:
+            # unless pid was duplicated on CL
+            sys.exit('We should not be here - Exiting')
+        else:
+            counts_lookup[did][tax_id_str] = count
+
+    return counts_lookup
+
 def go_add(node_database, pids_str):
     from random import randrange
     start1 = time.time()
@@ -256,11 +277,6 @@ def go_add(node_database, pids_str):
     all_dids = []
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
-
-    start2 = time.time()
-    prefix = make_prefix(args, node_database)
-    elapsed2 = (time.time() - start2)
-    print("make_prefix time: %s s" % elapsed2)
 
     start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
@@ -275,7 +291,7 @@ def go_add(node_database, pids_str):
         elapsed5 = (time.time() - start5)
         print("5) make_list_from_c_str time: %s s" % elapsed5)
 
-        all_dids += dids
+        all_dids += dids #Probably don't need this, can get by pid_list from all_dids_per_pid_dict
 
         start7 = time.time()
         delete_old_did_files(dids, prefix)
@@ -288,33 +304,14 @@ def go_add(node_database, pids_str):
         start6 = time.time()
         # print(counts_lookup)
         for q in queries:
-            if args.units == 'rdp2.6':
-                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
-            elif args.units == 'silva119':
+            if args.units == 'silva119':
                 query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
+            elif args.units == 'rdp2.6':
+                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
             print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
             print(query)
 
-            dirs = []
-
-            rows = myconn.execute_fetch_select(query)
-
-            for row in rows:
-
-                count = int(row[0])
-                did = str(row[1])
-                tax_id_str = ''
-
-                start8 = time.time()
-                tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
-                elapsed8 = (time.time() - start8)
-                print("8) tax_id_str time: %s s" % elapsed8)
-
-                if tax_id_str in counts_lookup[did]:
-                    # unless pid was duplicated on CL
-                    sys.exit('We should not be here - Exiting')
-                else:
-                    counts_lookup[did][tax_id_str] = count
+            counts_lookup = update_counts_lookup(query, counts_lookup)
 
         elapsed6 = (time.time() - start6)
         print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
