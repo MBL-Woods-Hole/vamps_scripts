@@ -151,7 +151,6 @@ def go_list(args):
         #if not clean_project:
         #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
     print()
-
     print('failed projects that need to have the metadata files rebuilt:')
     print()
     print('OTHER (rare):')
@@ -174,8 +173,6 @@ def go_list(args):
         print('pid:',pid,' -- ',no_req_metadata[pid])
     print('PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
     print()
-
-
     print("Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found))
 
 
@@ -283,7 +280,6 @@ if __name__ == '__main__':
     print("\nARGS: dbhost  =",dbhost)
     print("ARGS: json_dir=",args.json_file_path)
 
-
     db = MySQLdb.connect(host=dbhost, # your host, usually localhost
                              read_default_file="~/.my.cnf_node"  )
     cur = db.cursor()
@@ -309,9 +305,7 @@ if __name__ == '__main__':
 
     #out_file = "tax_counts--"+NODE_DATABASE+".json"
     #in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
-
+    
     print('DATABASE:',NODE_DATABASE)
-
-
 
     go_list(args)

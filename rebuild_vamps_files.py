@@ -56,7 +56,8 @@ class MyConnection:
         except (AttributeError, mysql.OperationalError):
             self.conn = mysql.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
             self.cursor = self.conn.cursor()
-        except mysql.Error, e:
+        except mysql.Error:
+            e = sys.exc_info()[1]
             print("Error %d: %s" % (e.args[0], e.args[1]))
             raise
         except:  # catch everything
@@ -81,7 +82,10 @@ class MyConnection:
         if self.cursor:
             self.cursor.execute(sql)
             self.conn.commit()
-            return self.cursor._info
+            try:
+                return self.cursor._result.message
+            except:
+                return self.cursor._info
 
     def execute_fetch_select_dict(self, sql):
         if self.cursorD:
