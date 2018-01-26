@@ -266,19 +266,13 @@ def update_counts_lookup(query, counts_lookup):
 
     return counts_lookup
 
+
+
 def go_add(node_database, pids_str):
     start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
     elapsed3 = (time.time() - start3)
     print("3) make_list_from_c_str time: %s s" % elapsed3)
-
-    start1 = time.time()
-    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
-    all_used_dids = []
-    for pid in pid_list:
-        all_used_dids.extend(all_dids_per_pid_dict[pid])
-    elapsed1 = (time.time() - start1)
-    print("get_all_dids_per_pid_dict time: %s s" % elapsed1)
 
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
@@ -287,10 +281,8 @@ def go_add(node_database, pids_str):
     start4 = time.time()
 
     for k, pid in enumerate(pid_list):
-        start5 = time.time()
+        all_dids_per_pid_dict = get_all_dids_per_pid_dict()
         dids = all_dids_per_pid_dict[pid]
-        elapsed5 = (time.time() - start5)
-        print("5) make_list_from_c_str time: %s s" % elapsed5)
 
         did_sql = ', '.join(dids)
         # ", ".join('%s' % w for w in set(dids) if w is not None)
@@ -314,6 +306,7 @@ def go_add(node_database, pids_str):
     elapsed4 = (time.time() - start4)
     print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
 
+    all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
     print('all_used_dids', all_used_dids)
     all_did_sql = "', '".join(all_used_dids)
     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
@@ -322,6 +315,16 @@ def go_add(node_database, pids_str):
     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
     elapsed2 = (time.time() - start2)
     print("show_result time: %s s" % elapsed2)
+
+def get_all_used_dicts(all_dids_per_pid_dict, pid_list):
+    start1 = time.time()
+    all_used_dids = []
+    for pid in pid_list:
+        all_used_dids.extend(all_dids_per_pid_dict[pid])
+    elapsed1 = (time.time() - start1)
+    print("get_all_dids_per_pid_dict time: %s s" % elapsed1)
+    return all_used_dids
+
 
 def show_result(node_database, metadata_lookup, counts_lookup, all_used_dids):
     from random import randrange
