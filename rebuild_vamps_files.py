@@ -10,9 +10,9 @@ import sys, os, io
 import argparse
 
 try:
-    import pymysql as MySQLdb
+    import pymysql as mysql
 except ImportError:
-    import MySQLdb
+    import MySQLdb as mysql
 except:
     raise
 
@@ -49,14 +49,14 @@ class MyConnection:
             if is_local():
                 host = "127.0.0.1"
                 read_default_file = "~/.my.cnf_local"
-            self.conn = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
+            self.conn = mysql.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
             self.cursor = self.conn.cursor()
-            self.cursorD = self.conn.cursor(MySQLdb.cursors.DictCursor)
+            self.cursorD = self.conn.cursor(mysql.cursors.DictCursor)
 
-        except (AttributeError, MySQLdb.OperationalError):
-            self.conn = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
+        except (AttributeError, mysql.OperationalError):
+            self.conn = mysql.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
             self.cursor = self.conn.cursor()
-        except MySQLdb.Error, e:
+        except mysql.Error, e:
             print("Error %d: %s" % (e.args[0], e.args[1]))
             raise
         except:  # catch everything
@@ -66,7 +66,7 @@ class MyConnection:
 
     @staticmethod
     def connect(host, db, read_default_file, port_env):
-        return MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
+        return mysql.connect(host = host, db = db, read_default_file = read_default_file, port = port_env)
 
     def execute_fetch_select(self, sql):
         if self.cursor:
@@ -208,6 +208,7 @@ def get_all_dids_per_pid_dict():
     res = myconn.execute_fetch_select(query)
     return dict((str(x[0]), make_list_from_c_str(x[1])) for x in res)
 
+
 def get_dco_pids():
     query = "select project_id from project where project like 'DCO%'"
     rows = myconn.execute_fetch_select(query)
@@ -267,7 +268,6 @@ def update_counts_lookup(query, counts_lookup):
     return counts_lookup
 
 
-
 def go_add(node_database, pids_str):
     start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
@@ -277,10 +277,10 @@ def go_add(node_database, pids_str):
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
 
-
     start4 = time.time()
 
     for k, pid in enumerate(pid_list):
+        all_dids_per_pid_dict = {}
         all_dids_per_pid_dict = get_all_dids_per_pid_dict()
         dids = all_dids_per_pid_dict[pid]
 
@@ -315,6 +315,7 @@ def go_add(node_database, pids_str):
     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
     elapsed2 = (time.time() - start2)
     print("show_result time: %s s" % elapsed2)
+
 
 def get_all_used_dicts(all_dids_per_pid_dict, pid_list):
     start1 = time.time()
@@ -479,7 +480,6 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
 
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
 
-    rows = myconn.execute_fetch_select(cust_dquery)
     rows_dict = myconn.execute_fetch_select_dict(cust_dquery)
 
     start10 = time.time()
