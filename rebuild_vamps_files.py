@@ -258,10 +258,7 @@ def update_counts_lookup(query, counts_lookup):
         count = int(row[0])
         did = str(row[1])
 
-        # start8 = time.time()
         tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
-        # elapsed8 = (time.time() - start8)
-        # print("8) tax_id_str time: %s s" % elapsed8)
 
         if tax_id_str in counts_lookup[did]:
             # unless pid was duplicated on CL
@@ -273,10 +270,7 @@ def update_counts_lookup(query, counts_lookup):
 
 
 def go_add(node_database, pids_str):
-    start3 = time.time()
     pid_list = make_list_from_c_str(pids_str)
-    elapsed3 = (time.time() - start3)
-    print("3) make_list_from_c_str time: %s s" % elapsed3)
 
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
@@ -315,19 +309,13 @@ def go_add(node_database, pids_str):
     all_did_sql = "', '".join(all_used_dids)
     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
 
-    start2 = time.time()
     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
-    elapsed2 = (time.time() - start2)
-    print("show_result time: %s s" % elapsed2)
 
 
 def get_all_used_dicts(all_dids_per_pid_dict, pid_list):
-    start1 = time.time()
     all_used_dids = []
     for pid in pid_list:
         all_used_dids.extend(all_dids_per_pid_dict[pid])
-    elapsed1 = (time.time() - start1)
-    print("get_all_dids_per_pid_dict time: %s s" % elapsed1)
     return all_used_dids
 
 
@@ -477,23 +465,17 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
     if not table_exists:
         return metadata_lookup
 
-    start9 = time.time()
     field_collection = make_field_names_by_pid_list(pid)
-    elapsed9 = (time.time() - start9)
-    print("9) make_field_names_by_pid_list time: %s s" % elapsed9)
 
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
 
     rows_dict = myconn.execute_fetch_select_dict(cust_dquery)
 
-    start10 = time.time()
     for row in rows_dict:
         did = str(row['dataset_id'])
         if did in did_list:
             for field, val in row.items():
                 metadata_lookup[did][field] = val
-    elapsed10 = (time.time() - start10)
-    print("10) metadata_lookup time: %s s, pid = %s" % (elapsed10, pid))
 
     return metadata_lookup
 
