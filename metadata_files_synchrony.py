@@ -9,11 +9,11 @@
 import sys,os,io
 import argparse
 try:
-  import pymysql as MySQLdb
+    import pymysql as mysql
 except ImportError:
-  import MySQLdb
+    import MySQLdb as mysql
 except:
-  raise
+    raise
 import json
 import shutil
 import datetime
@@ -280,7 +280,7 @@ if __name__ == '__main__':
     print("\nARGS: dbhost  =",dbhost)
     print("ARGS: json_dir=",args.json_file_path)
 
-    db = MySQLdb.connect(host=dbhost, # your host, usually localhost
+    db = mysql.connect(host=dbhost, # your host, usually localhost
                              read_default_file="~/.my.cnf_node"  )
     cur = db.cursor()
     if args.NODE_DATABASE:

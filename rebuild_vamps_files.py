@@ -646,4 +646,4 @@ if __name__ == '__main__':
 
     go_add(NODE_DATABASE, args.pids_str)
     elapsed0 = (time.time() - start0)
-    print("total time: %s s" % elapsed0)
+    print("total time: %s s (~ %s m)" % (elapsed0, float(elapsed0)/60))
