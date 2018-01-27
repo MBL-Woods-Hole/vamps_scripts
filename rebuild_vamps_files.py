@@ -321,7 +321,7 @@ def go_add(node_database, pids_str, all_pids):
     pid_list_group = make_pid_list_group(pid_list, all_dids_per_pid_dict, all_pids)
 
     for short_list in pid_list_group:
-        for k, pid in enumerate(short_list):
+        for pid in short_list:
             if pid is not None:
                 try:
                     dids = all_dids_per_pid_dict[pid]
