@@ -293,7 +293,7 @@ def go_add(node_database, pids_str, all_pids):
     if all_pids:
         pid_list_group = grouper(pid_group_size, all_dids_per_pid_dict.keys())
     else:
-        if len(pid_list) > 100:
+        if len(pid_list) > pid_group_size:
             pid_list_group = grouper(pid_group_size, pid_list)
         else:
             pid_list_group = grouper(1, pid_list)
