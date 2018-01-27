@@ -23,6 +23,17 @@ import socket
 from collections import defaultdict
 import time
 
+def it_is_py3():
+    if sys.version_info[0] < 3:
+        return False
+    if sys.version_info[0] >= 3:
+        return True
+
+if it_is_py3():
+    from itertools import zip_longest as izip_longest
+else:
+    from itertools import izip_longest as izip_longest
+
 
 class MyConnection:
     """
@@ -269,38 +280,60 @@ def update_counts_lookup(query, counts_lookup):
     return counts_lookup
 
 
-def go_add(node_database, pids_str):
+def grouper(n, iterable, fillvalue=None):
+  "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
+  return izip_longest(*[iter(iterable)]*n, fillvalue=fillvalue)
+
+def go_add(node_database, pids_str, all_pids):
+    all_dids_per_pid_dict = {}
+    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
+
     pid_list = make_list_from_c_str(pids_str)
+    pid_group_size = 2
+    if all_pids:
+        pid_list_group = grouper(pid_group_size, all_dids_per_pid_dict.keys())
+    else:
+        if len(pid_list) > 100:
+            pid_list_group = grouper(pid_group_size, pid_list)
+        else:
+            pid_list_group = grouper(1, pid_list)
 
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
 
     start4 = time.time()
 
-    for k, pid in enumerate(pid_list):
-        all_dids_per_pid_dict = {}
-        all_dids_per_pid_dict = get_all_dids_per_pid_dict()
-        dids = all_dids_per_pid_dict[pid]
 
-        did_sql = ', '.join(dids)
-        # ", ".join('%s' % w for w in set(dids) if w is not None)
+    for short_list in pid_list_group:
+        for k, pid in enumerate(short_list):
+            try:
+                dids = all_dids_per_pid_dict[pid]
+            except KeyError:
+                print("WARNING: There is no project with id = %s" % pid)
+                continue
+            except:
+                raise
 
-        start6 = time.time()
-        # print(counts_lookup)
-        for q in queries:
-            if args.units == 'silva119':
-                query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
-            elif args.units == 'rdp2.6':
-                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
-            print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
-            print(query)
+            did_sql = ', '.join(dids)
+            # ", ".join('%s' % w for w in set(dids) if w is not None)
 
-            counts_lookup = update_counts_lookup(query, counts_lookup)
+            start6 = time.time()
+            # make_counts_lookup
+            # print(counts_lookup)
+            for q in queries:
+                if args.units == 'silva119':
+                    query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
+                elif args.units == 'rdp2.6':
+                    query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
+                print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
+                print(query)
 
-        elapsed6 = (time.time() - start6)
-        print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
+                counts_lookup = update_counts_lookup(query, counts_lookup)
 
-        metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
+            elapsed6 = (time.time() - start6)
+            print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
+
+            metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
     elapsed4 = (time.time() - start4)
     print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
 
@@ -315,7 +348,13 @@ def go_add(node_database, pids_str):
 def get_all_used_dicts(all_dids_per_pid_dict, pid_list):
     all_used_dids = []
     for pid in pid_list:
-        all_used_dids.extend(all_dids_per_pid_dict[pid])
+        try:
+            all_used_dids.extend(all_dids_per_pid_dict[pid])
+        except KeyError:
+            print("WARNING: There is no project with id = %s" % pid)
+            continue
+        except:
+            raise
     return all_used_dids
 
 
@@ -562,10 +601,18 @@ if __name__ == '__main__':
     """
 
     parser = argparse.ArgumentParser(description = "", usage = myusage)
-
-    parser.add_argument("-pids", "--pids",
-                        required = True, action = "store", dest = "pids_str", default = '',
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-pids", "--pids",
+                        action = "store", dest = "pids_str", default = '',
                         help = """ProjectID (used with -add)""")
+    group.add_argument("-all", "--all",
+                        action = 'store_true', dest = "all_pids", default = False,
+                        help = "All project and dataset files will be updated")
+
+
+    # parser.add_argument("-pids", "--pids",
+    #                     required = True, action = "store", dest = "pids_str", default = '',
+    #                     help = """ProjectID (used with -add)""")
 
     parser.add_argument("-no_backup", "--no_backup",
                         required = False, action = "store_true", dest = "no_backup", default = False,
@@ -587,6 +634,7 @@ if __name__ == '__main__':
     parser.add_argument("-dco", "--dco",
                         required = False, action = 'store_true', dest = "dco", default = False,
                         help = "")
+
     # if len(sys.argv[1:]) == 0:
     #     print(myusage)
     #     sys.exit()
@@ -623,7 +671,7 @@ if __name__ == '__main__':
         print(myusage)
         print("Could not find json directory: '", args.json_file_path, "'-Exiting")
         sys.exit(-1)
-    print("ARGS: units =", args.units)
+    print("ARGS: units = ", args.units)
 
     database = args.NODE_DATABASE
     myconn = MyConnection(dbhost, database, read_default_file = "~/.my.cnf_node")
@@ -634,7 +682,7 @@ if __name__ == '__main__':
         databases = myconn.execute_fetch_select("SHOW databases like 'vamps%'")
         NODE_DATABASE = ask_current_database(databases)
 
-    myconn.execute_no_fetch("USE " + NODE_DATABASE)
+    # myconn.execute_no_fetch("USE " + NODE_DATABASE)
 
     # out_file = "tax_counts--"+NODE_DATABASE+".json"
     # in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
@@ -644,6 +692,6 @@ if __name__ == '__main__':
     if args.dco:
         args.pids_str = get_dco_pids()
 
-    go_add(NODE_DATABASE, args.pids_str)
+    go_add(NODE_DATABASE, args.pids_str,  args.all_pids)
     elapsed0 = (time.time() - start0)
     print("total time: %s s (~ %s m)" % (elapsed0, float(elapsed0)/60))
