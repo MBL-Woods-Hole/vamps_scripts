@@ -284,11 +284,20 @@ def grouper(n, iterable, fillvalue=None):
   "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
   return izip_longest(*[iter(iterable)]*n, fillvalue=fillvalue)
 
-def go_add(node_database, pids_str, all_pids):
-    all_dids_per_pid_dict = {}
-    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
 
-    pid_list = make_list_from_c_str(pids_str)
+def make_counts_lookup(units, did_sql, counts_lookup):
+    # print(counts_lookup)
+    for q in queries:
+        if units == 'silva119':
+            query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
+        elif units == 'rdp2.6':
+            query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
+        print(query)
+
+        counts_lookup = update_counts_lookup(query, counts_lookup)
+    return counts_lookup
+
+def make_pid_list_group(pid_list, all_dids_per_pid_dict, all_pids):
     pid_group_size = 2
     if all_pids:
         pid_list_group = grouper(pid_group_size, all_dids_per_pid_dict.keys())
@@ -297,43 +306,42 @@ def go_add(node_database, pids_str, all_pids):
             pid_list_group = grouper(pid_group_size, pid_list)
         else:
             pid_list_group = grouper(1, pid_list)
+    return pid_list_group
+
+def go_add(node_database, pids_str, all_pids):
+    all_dids_per_pid_dict = {}
+    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
+    pid_list = make_list_from_c_str(pids_str)
 
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
 
     start4 = time.time()
 
+    pid_list_group = make_pid_list_group(pid_list, all_dids_per_pid_dict, all_pids)
 
     for short_list in pid_list_group:
         for k, pid in enumerate(short_list):
-            try:
-                dids = all_dids_per_pid_dict[pid]
-            except KeyError:
-                print("WARNING: There is no project with id = %s" % pid)
-                continue
-            except:
-                raise
+            if pid is not None:
+                try:
+                    dids = all_dids_per_pid_dict[pid]
+                except KeyError:
+                    print("WARNING: There is no project with id = %s" % pid)
+                    continue
+                except:
+                    raise
 
-            did_sql = ', '.join(dids)
-            # ", ".join('%s' % w for w in set(dids) if w is not None)
+                did_sql = ', '.join(dids)
+                # ", ".join('%s' % w for w in set(dids) if w is not None)
 
-            start6 = time.time()
-            # make_counts_lookup
-            # print(counts_lookup)
-            for q in queries:
-                if args.units == 'silva119':
-                    query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
-                elif args.units == 'rdp2.6':
-                    query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
-                print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
-                print(query)
+                start6 = time.time()
+                counts_lookup = make_counts_lookup(args.units, did_sql, counts_lookup)
+                # print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
 
-                counts_lookup = update_counts_lookup(query, counts_lookup)
+                elapsed6 = (time.time() - start6)
+                print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
 
-            elapsed6 = (time.time() - start6)
-            print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
-
-            metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
+                metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
     elapsed4 = (time.time() - start4)
     print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
 
