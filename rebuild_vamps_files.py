@@ -98,6 +98,7 @@ class MyConnection:
             except:
                 return self.cursor._info
 
+
     def execute_fetch_select_dict(self, sql):
         if self.cursorD:
             try:
