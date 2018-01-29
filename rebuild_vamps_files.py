@@ -365,9 +365,14 @@ def make_counts_lookup_by_did(did_list_group, units):
 
     return counts_lookup
 
-def make_metadata_by_pid(pid_list_group):
+def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
+    metadata_lookup = defaultdict(dict)
+
     for short_list in pid_list_group:
-        pass
+        for pid in short_list:
+            dids = all_dids_per_pid_dict[pid]
+            metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
+
 
 def go_add(node_database, pids_str, all_pids):
     all_dids_per_pid_dict = {}
@@ -380,16 +385,13 @@ def go_add(node_database, pids_str, all_pids):
     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
     did_list_group = make_list_chunks(all_used_dids, group_size)
 
-    counts_lookup = defaultdict(dict)
-    metadata_lookup = defaultdict(dict)
-
     start1 = time.time()
     counts_lookup = make_counts_lookup_by_did(did_list_group, args.units)
     elapsed1 = (time.time() - start1)
     print("1) make_counts_lookup_by_did time: %s s" % elapsed1)
 
     start2 = time.time()
-    metadata_lookup = make_metadata_by_pid(pid_list_group)
+    metadata_lookup = make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict)
     elapsed2 = (time.time() - start1)
     print("2) make_metadata_by_pid time: %s s" % elapsed2)
 
