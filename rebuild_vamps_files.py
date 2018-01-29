@@ -22,6 +22,7 @@ import datetime
 import socket
 from collections import defaultdict
 import time
+import logging
 
 def it_is_py3():
     if sys.version_info[0] < 3:
@@ -285,53 +286,84 @@ def update_counts_lookup(query, counts_lookup):
 #   "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
 #   return zip_longest(*[iter(iterable)] * n, fillvalue=fillvalue)
 
-def grouper(iterable, obj_len, fillvalue=None):
-    n = 10 ** obj_len
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
+def make_list_chunks(my_list, chunk_size):
+    chunk_size = int(chunk_size)
+    return [my_list[x:x + chunk_size] for x in range(0, len(my_list), chunk_size)]
 
-def make_counts_lookup(units, did_sql, counts_lookup):
-    # print(counts_lookup)
+
+# def make_counts_lookup(units, did_sql, counts_lookup):
+#     # print(counts_lookup)
+#     for q in queries:
+#         if units == 'silva119':
+#             query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
+#         elif units == 'rdp2.6':
+#             query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
+#         print(query)
+#
+#         counts_lookup = update_counts_lookup(query, counts_lookup)
+#     return counts_lookup
+
+
+# def make_counts_lookup(counts_per_tax_dict):
+#     # TODO: clean up
+#     counts_lookup = defaultdict(dict)
+#     for rank, res in counts_per_tax_dict.items():
+#         for row in res:
+#             count = int(row[0])
+#             ds_id = row[1]
+#             tax_id_str = ''
+#
+#             tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
+#
+#             if tax_id_str in counts_lookup[ds_id]: #? Andy
+#                     sys.exit('We should not be here - Exiting')
+#             counts_lookup[ds_id][tax_id_str] = count
+#
+#     return counts_lookup
+
+
+def get_counts_per_tax(did_sql, units):
+    counts_per_tax_dict = {}
     for q in queries:
         if units == 'silva119':
             query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
         elif units == 'rdp2.6':
             query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
-        print(query)
+        try:
+            logging.debug("running mysql query for: "+q['rank'])
 
-        counts_lookup = update_counts_lookup(query, counts_lookup)
+            rows = myconn.execute_fetch_select(query)
+            rank = q['rank']
+            counts_per_tax_dict[rank] = rows
+        except:
+            logging.debug("Failing to query with: "+query)
+            sys.exit("This Database Doesn't Look Right -- Exiting")
+    return counts_per_tax_dict
+
+def make_counts_lookup(counts_per_tax_dict, counts_lookup):
+
+    for rank, res in counts_per_tax_dict.items():
+        for row in res:
+            count = int(row[0])
+            ds_id = row[1]
+            tax_id_str = ''
+
+            tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
+
+            if tax_id_str in counts_lookup[ds_id]: #? Andy
+                    sys.exit('We should not be here - Exiting')
+            counts_lookup[ds_id][tax_id_str] = count
     return counts_lookup
 
-# def grouper(iterable, group_size, fillvalue=None):
-#     args = [iter(iterable)] * group_size
-#     res =  zip_longest(*args, fillvalue=fillvalue)
-#     ll = len(list(res))
-#     return res
-
-
-# def make_list_group(big_list, group_size):
-#     group_size = 2
-#     if all_pids:
-#         pid_list_group = grouper(pid_group_size, all_dids_per_pid_dict.keys())
-#     else:
-#         if len(pid_list) > pid_group_size:
-#             pid_list_group = grouper(pid_group_size, pid_list)
-#         else:
-#             pid_list_group = grouper(1, pid_list)
-#     return pid_list_group
-
 def make_counts_lookup_by_did(did_list_group, units):
+    counts_lookup = defaultdict(dict)
 
     for short_list in did_list_group:
-        did_sql = ", ".join('%s' % w for w in set(short_list) if w is not None)
-        for q in queries:
-            if units == 'silva119':
-                query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
-            elif units == 'rdp2.6':
-                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
-            print(query)
+        did_sql = ', '.join(short_list)
+        counts_per_tax_dict = get_counts_per_tax(did_sql, units)
+        counts_lookup = make_counts_lookup(counts_per_tax_dict, counts_lookup)
 
-            counts_lookup = update_counts_lookup(query, counts_lookup)
+    return counts_lookup
 
 def make_metadata_by_pid(pid_list_group):
     for short_list in pid_list_group:
@@ -340,59 +372,54 @@ def make_metadata_by_pid(pid_list_group):
 def go_add(node_database, pids_str, all_pids):
     all_dids_per_pid_dict = {}
     pid_list = make_list_from_c_str(pids_str)
-    group_size = 2
-    # pid_list_group = list(zip_longest(pid_list, 2, fillvalue='-'))
-    # pid_list_group = grouper(set(pid_list), len(pid_list))
-    pid_list_group = [pid_list[x:x + 2] for x in range(0, len(pid_list), 2)]
+    group_size = 4
 
-
-    # pid_list_group = grouper(group_size, pid_list)
-    print("PPP")
-    for gr in pid_list_group:
-        print(gr)
+    pid_list_group = make_list_chunks(pid_list, group_size)
 
     all_dids_per_pid_dict = get_all_dids_per_pid_dict()
     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
-    did_list_group = grouper(group_size, all_used_dids)
-    print("DDD")
-    for gr in did_list_group:
-        print(gr)
-
-    print("OOO")
+    did_list_group = make_list_chunks(all_used_dids, group_size)
 
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
 
-    make_counts_lookup_by_did(did_list_group, args.units)
-    make_metadata_by_pid(pid_list_group)
+    start1 = time.time()
+    counts_lookup = make_counts_lookup_by_did(did_list_group, args.units)
+    elapsed1 = (time.time() - start1)
+    print("1) make_counts_lookup_by_did time: %s s" % elapsed1)
 
-    start4 = time.time()
+    start2 = time.time()
+    metadata_lookup = make_metadata_by_pid(pid_list_group)
+    elapsed2 = (time.time() - start1)
+    print("2) make_metadata_by_pid time: %s s" % elapsed2)
+
+    # start4 = time.time()
 
 
-    for short_list in pid_list_group:
-        for pid in short_list:
-            if pid is not None:
-                try:
-                    dids = all_dids_per_pid_dict[pid]
-                except KeyError:
-                    print("WARNING: There is no project with id = %s" % pid)
-                    continue
-                except:
-                    raise
-
-                did_sql = ', '.join(dids)
-                # ", ".join('%s' % w for w in set(dids) if w is not None)
-
-                start6 = time.time()
-                counts_lookup = make_counts_lookup(args.units, did_sql, counts_lookup)
-                # print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
-
-                elapsed6 = (time.time() - start6)
-                print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
-
-                metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
-    elapsed4 = (time.time() - start4)
-    print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
+    # for short_list in pid_list_group:
+    #     for pid in short_list:
+    #         if pid is not None:
+    #             try:
+    #                 dids = all_dids_per_pid_dict[pid]
+    #             except KeyError:
+    #                 print("WARNING: There is no project with id = %s" % pid)
+    #                 continue
+    #             except:
+    #                 raise
+    #
+    #             did_sql = ', '.join(dids)
+    #             # ", ".join('%s' % w for w in set(dids) if w is not None)
+    #
+    #             start6 = time.time()
+    #             counts_lookup = make_counts_lookup(args.units, did_sql, counts_lookup)
+    #             # print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
+    #
+    #             elapsed6 = (time.time() - start6)
+    #             print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
+    #
+    #             metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
+    # elapsed4 = (time.time() - start4)
+    # print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
 
 
     print('all_used_dids', all_used_dids)
