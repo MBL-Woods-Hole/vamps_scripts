@@ -281,9 +281,9 @@ def update_counts_lookup(query, counts_lookup):
     return counts_lookup
 
 
-def grouper(n, iterable, fillvalue=None):
-  "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
-  return izip_longest(*[iter(iterable)]*n, fillvalue=fillvalue)
+# def grouper(n, iterable, fillvalue=None):
+#   "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
+#   return izip_longest(*[iter(iterable)]*n, fillvalue=fillvalue)
 
 
 def make_counts_lookup(units, did_sql, counts_lookup):
@@ -298,28 +298,51 @@ def make_counts_lookup(units, did_sql, counts_lookup):
         counts_lookup = update_counts_lookup(query, counts_lookup)
     return counts_lookup
 
-def make_pid_list_group(pid_list, all_dids_per_pid_dict, all_pids):
-    pid_group_size = 2
-    if all_pids:
-        pid_list_group = grouper(pid_group_size, all_dids_per_pid_dict.keys())
-    else:
-        if len(pid_list) > pid_group_size:
-            pid_list_group = grouper(pid_group_size, pid_list)
-        else:
-            pid_list_group = grouper(1, pid_list)
-    return pid_list_group
+def grouper(iterable, group_size, fillvalue=None):
+    args = [iter(iterable)] * group_size
+    return izip_longest(*args, fillvalue=fillvalue)
+
+
+# def make_list_group(big_list, group_size):
+#     group_size = 2
+#     if all_pids:
+#         pid_list_group = grouper(pid_group_size, all_dids_per_pid_dict.keys())
+#     else:
+#         if len(pid_list) > pid_group_size:
+#             pid_list_group = grouper(pid_group_size, pid_list)
+#         else:
+#             pid_list_group = grouper(1, pid_list)
+#     return pid_list_group
+
+def make_counts_lookup_by_did(did_list_group):
+    for short_list in did_list_group:
+        pass
+
+def make_did_list_groups(pid_list):
+    pass
+
+def make_metadata_by_pid(pid_list_group):
+    for short_list in pid_list_group:
+        pass
 
 def go_add(node_database, pids_str, all_pids):
     all_dids_per_pid_dict = {}
-    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
     pid_list = make_list_from_c_str(pids_str)
+    group_size = 2
+    pid_list_group = grouper(pid_list, group_size)
+
+    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
+    all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
+    did_list_group = grouper(all_used_dids, group_size)
 
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
 
+    make_counts_lookup_by_did(did_list_group)
+    make_metadata_by_pid(pid_list_group)
+
     start4 = time.time()
 
-    pid_list_group = make_pid_list_group(pid_list, all_dids_per_pid_dict, all_pids)
 
     for short_list in pid_list_group:
         for pid in short_list:
@@ -346,12 +369,58 @@ def go_add(node_database, pids_str, all_pids):
     elapsed4 = (time.time() - start4)
     print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
 
-    all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
+
     print('all_used_dids', all_used_dids)
     all_did_sql = "', '".join(all_used_dids)
     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
 
     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
+
+
+
+# def go_add(node_database, pids_str, all_pids):
+#     all_dids_per_pid_dict = {}
+#     all_dids_per_pid_dict = get_all_dids_per_pid_dict()
+#     pid_list = make_list_from_c_str(pids_str)
+#
+#     counts_lookup = defaultdict(dict)
+#     metadata_lookup = defaultdict(dict)
+#
+#     start4 = time.time()
+#
+#     pid_list_group = make_pid_list_group(pid_list, all_dids_per_pid_dict, all_pids)
+#
+#     for short_list in pid_list_group:
+#         for pid in short_list:
+#             if pid is not None:
+#                 try:
+#                     dids = all_dids_per_pid_dict[pid]
+#                 except KeyError:
+#                     print("WARNING: There is no project with id = %s" % pid)
+#                     continue
+#                 except:
+#                     raise
+#
+#                 did_sql = ', '.join(dids)
+#                 # ", ".join('%s' % w for w in set(dids) if w is not None)
+#
+#                 start6 = time.time()
+#                 counts_lookup = make_counts_lookup(args.units, did_sql, counts_lookup)
+#                 # print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
+#
+#                 elapsed6 = (time.time() - start6)
+#                 print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
+#
+#                 metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
+#     elapsed4 = (time.time() - start4)
+#     print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
+#
+#     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
+#     print('all_used_dids', all_used_dids)
+#     all_did_sql = "', '".join(all_used_dids)
+#     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
+#
+#     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
 
 
 def get_all_used_dicts(all_dids_per_pid_dict, pid_list):
