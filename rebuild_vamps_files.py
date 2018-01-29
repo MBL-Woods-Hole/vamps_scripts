@@ -30,9 +30,9 @@ def it_is_py3():
         return True
 
 if it_is_py3():
-    from itertools import zip_longest as izip_longest
+    from itertools import zip_longest
 else:
-    from itertools import izip_longest as izip_longest
+    from itertools import izip_longest as zip_longest
 
 
 class MyConnection:
@@ -283,8 +283,12 @@ def update_counts_lookup(query, counts_lookup):
 
 # def grouper(n, iterable, fillvalue=None):
 #   "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
-#   return izip_longest(*[iter(iterable)]*n, fillvalue=fillvalue)
+#   return zip_longest(*[iter(iterable)] * n, fillvalue=fillvalue)
 
+def grouper(iterable, obj_len, fillvalue=None):
+    n = 10 ** obj_len
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
 
 def make_counts_lookup(units, did_sql, counts_lookup):
     # print(counts_lookup)
@@ -298,9 +302,11 @@ def make_counts_lookup(units, did_sql, counts_lookup):
         counts_lookup = update_counts_lookup(query, counts_lookup)
     return counts_lookup
 
-def grouper(iterable, group_size, fillvalue=None):
-    args = [iter(iterable)] * group_size
-    return izip_longest(*args, fillvalue=fillvalue)
+# def grouper(iterable, group_size, fillvalue=None):
+#     args = [iter(iterable)] * group_size
+#     res =  zip_longest(*args, fillvalue=fillvalue)
+#     ll = len(list(res))
+#     return res
 
 
 # def make_list_group(big_list, group_size):
@@ -314,12 +320,18 @@ def grouper(iterable, group_size, fillvalue=None):
 #             pid_list_group = grouper(1, pid_list)
 #     return pid_list_group
 
-def make_counts_lookup_by_did(did_list_group):
-    for short_list in did_list_group:
-        pass
+def make_counts_lookup_by_did(did_list_group, units):
 
-def make_did_list_groups(pid_list):
-    pass
+    for short_list in did_list_group:
+        did_sql = ", ".join('%s' % w for w in set(short_list) if w is not None)
+        for q in queries:
+            if units == 'silva119':
+                query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
+            elif units == 'rdp2.6':
+                query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
+            print(query)
+
+            counts_lookup = update_counts_lookup(query, counts_lookup)
 
 def make_metadata_by_pid(pid_list_group):
     for short_list in pid_list_group:
@@ -329,16 +341,29 @@ def go_add(node_database, pids_str, all_pids):
     all_dids_per_pid_dict = {}
     pid_list = make_list_from_c_str(pids_str)
     group_size = 2
-    pid_list_group = grouper(pid_list, group_size)
+    # pid_list_group = list(zip_longest(pid_list, 2, fillvalue='-'))
+    # pid_list_group = grouper(set(pid_list), len(pid_list))
+    pid_list_group = [pid_list[x:x + 2] for x in range(0, len(pid_list), 2)]
+
+
+    # pid_list_group = grouper(group_size, pid_list)
+    print("PPP")
+    for gr in pid_list_group:
+        print(gr)
 
     all_dids_per_pid_dict = get_all_dids_per_pid_dict()
     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
-    did_list_group = grouper(all_used_dids, group_size)
+    did_list_group = grouper(group_size, all_used_dids)
+    print("DDD")
+    for gr in did_list_group:
+        print(gr)
+
+    print("OOO")
 
     counts_lookup = defaultdict(dict)
     metadata_lookup = defaultdict(dict)
 
-    make_counts_lookup_by_did(did_list_group)
+    make_counts_lookup_by_did(did_list_group, args.units)
     make_metadata_by_pid(pid_list_group)
 
     start4 = time.time()
