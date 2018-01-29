@@ -373,6 +373,7 @@ def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
             dids = all_dids_per_pid_dict[pid]
             metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
 
+    return metadata_lookup
 
 def go_add(node_database, pids_str, all_pids):
     all_dids_per_pid_dict = {}
