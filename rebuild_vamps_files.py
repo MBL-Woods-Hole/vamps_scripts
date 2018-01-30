@@ -382,7 +382,7 @@ def go_add(node_database, pids_str, all_pids):
     pid_list = make_list_from_c_str(pids_str)
     if all_pids:
         pid_list = list(all_dids_per_pid_dict.keys())
-    group_size = 4
+    group_size = 500
 
     pid_list_group = make_list_chunks(pid_list, group_size)
     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
@@ -642,13 +642,17 @@ if __name__ == '__main__':
     start0 = time.time()
 
     myusage = """
-        -pids/--pids  [list of comma separated pids]
+        Required:
+        -pids  [list of comma separated pids]
+        OR
+        -a (All project and dataset files will be updated)
+        
+        Optional:
+        -json_file_path  json files path [Default: ../json]
+        -host            vampsdb, vampsdev    dbhost:  [Default: localhost]
+        -units           silva119, or rdp2.6   [Default:silva119]
 
-        -json_file_path/--json_file_path   json files path [Default: ../json]
-        -host/--host        vampsdb, vampsdev    dbhost:  [Default: localhost]
-        -units/--tax-units  silva119, or rdp2.6   [Default:silva119]
-
-    count_lookup_per_dsid[dsid][rank][taxid] = count
+    count_lookup_per_did[did][rank][taxid] = count
 
     This script will add a project to ../json/<NODE-DATABASE>/<DATASET-NAME>.json JSON object
     But ONLY if it is already in the MySQL database.
@@ -666,14 +670,9 @@ if __name__ == '__main__':
     group.add_argument("-pids", "--pids",
                         action = "store", dest = "pids_str", default = '',
                         help = """ProjectID (used with -add)""")
-    group.add_argument("-all", "--all",
+    group.add_argument("-a", "--all",
                         action = 'store_true', dest = "all_pids", default = False,
                         help = "All project and dataset files will be updated")
-
-
-    # parser.add_argument("-pids", "--pids",
-    #                     required = True, action = "store", dest = "pids_str", default = '',
-    #                     help = """ProjectID (used with -add)""")
 
     parser.add_argument("-no_backup", "--no_backup",
                         required = False, action = "store_true", dest = "no_backup", default = False,
