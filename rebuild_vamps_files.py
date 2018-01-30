@@ -10,11 +10,12 @@ import sys, os, io
 import argparse
 
 try:
-    import pymysql as mysql
+    import mysqlclient as mysql
 except ImportError:
-    import MySQLdb as mysql
-except:
-    raise
+    try:
+        import pymysql as mysql
+    except ImportError:
+        import MySQLdb as mysql
 
 import json
 import shutil
@@ -395,7 +396,7 @@ def go_add(node_database, pids_str, all_pids):
 
     start2 = time.time()
     metadata_lookup = make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict)
-    elapsed2 = (time.time() - start1)
+    elapsed2 = (time.time() - start2)
     print("2) make_metadata_by_pid time: %s s" % elapsed2)
 
 
@@ -403,7 +404,10 @@ def go_add(node_database, pids_str, all_pids):
     all_did_sql = "', '".join(all_used_dids)
     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
 
+    start3 = time.time()
     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
+    elapsed3 = (time.time() - start3)
+    print("3) show_result time: %s s" % elapsed3)
 
 
 def get_all_used_dicts(all_dids_per_pid_dict, pid_list):
