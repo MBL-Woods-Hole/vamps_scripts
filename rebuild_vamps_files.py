@@ -281,7 +281,7 @@ def make_counts_lookup_dict(counts_per_tax_dict, counts_lookup):
     for rank, res in counts_per_tax_dict.items():
         for row in res:
             count = int(row[0])
-            ds_id = row[1]
+            ds_id = str(row[1])
             tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
 
             if tax_id_str in counts_lookup[ds_id]:  #? Andy
@@ -411,7 +411,7 @@ def write_json_files(prefix, dids, metadata_lookup, counts_lookup):
         f = open(file_path, 'w')
         # print
         # print(did, counts_lookup[did])
-        if did in counts_lookup:
+        if did in counts_lookup.keys():
             my_counts_str = json.dumps(counts_lookup[did])
         else:
             my_counts_str = json.dumps({})
