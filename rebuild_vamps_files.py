@@ -25,16 +25,12 @@ from collections import defaultdict
 import time
 import logging
 
+
 def it_is_py3():
     if sys.version_info[0] < 3:
         return False
     if sys.version_info[0] >= 3:
         return True
-
-if it_is_py3():
-    from itertools import zip_longest
-else:
-    from itertools import izip_longest as zip_longest
 
 
 class MyConnection:
@@ -99,7 +95,6 @@ class MyConnection:
                 return self.cursor._result.message
             except:
                 return self.cursor._info
-
 
     def execute_fetch_select_dict(self, sql):
         if self.cursorD:
@@ -214,13 +209,6 @@ queries = [{"rank": "domain", "queryA": domain_queryA, "queryB": domain_queryB},
            ]
 
 
-def convert_keys_to_string(dictionary):
-    """Recursively converts dictionary keys to strings."""
-    if not isinstance(dictionary, dict):
-        return dictionary
-    return dict((str(k), convert_keys_to_string(v)) for k, v in dictionary.items())
-
-
 def get_all_dids_per_pid_dict():
     query = "SELECT project_id, group_concat(dataset_id) AS dids FROM dataset GROUP BY project_id ORDER BY NULL"
     res = myconn.execute_fetch_select(query)
@@ -264,63 +252,9 @@ def delete_old_did_files(dids, prefix):
             pass
 
 
-def update_counts_lookup(query, counts_lookup):
-    rows = myconn.execute_fetch_select(query)
-
-    for row in rows:
-
-        count = int(row[0])
-        did = str(row[1])
-
-        tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
-
-        if tax_id_str in counts_lookup[did]:
-            # unless pid was duplicated on CL
-            sys.exit('We should not be here - Exiting')
-        else:
-            counts_lookup[did][tax_id_str] = count
-
-    return counts_lookup
-
-
-# def grouper(n, iterable, fillvalue=None):
-#   "grouper(3, 'abcdefg', 'x') --> ('a','b','c'), ('d','e','f'), ('g','x','x')"
-#   return zip_longest(*[iter(iterable)] * n, fillvalue=fillvalue)
-
 def make_list_chunks(my_list, chunk_size):
     chunk_size = int(chunk_size)
     return [my_list[x:x + chunk_size] for x in range(0, len(my_list), chunk_size)]
-
-
-# def make_counts_lookup(units, did_sql, counts_lookup):
-#     # print(counts_lookup)
-#     for q in queries:
-#         if units == 'silva119':
-#             query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
-#         elif units == 'rdp2.6':
-#             query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
-#         print(query)
-#
-#         counts_lookup = update_counts_lookup(query, counts_lookup)
-#     return counts_lookup
-
-
-# def make_counts_lookup(counts_per_tax_dict):
-#     # TODO: clean up
-#     counts_lookup = defaultdict(dict)
-#     for rank, res in counts_per_tax_dict.items():
-#         for row in res:
-#             count = int(row[0])
-#             ds_id = row[1]
-#             tax_id_str = ''
-#
-#             tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
-#
-#             if tax_id_str in counts_lookup[ds_id]: #? Andy
-#                     sys.exit('We should not be here - Exiting')
-#             counts_lookup[ds_id][tax_id_str] = count
-#
-#     return counts_lookup
 
 
 def get_counts_per_tax(did_sql, units):
@@ -341,20 +275,20 @@ def get_counts_per_tax(did_sql, units):
             sys.exit("This Database Doesn't Look Right -- Exiting")
     return counts_per_tax_dict
 
-def make_counts_lookup(counts_per_tax_dict, counts_lookup):
+
+def make_counts_lookup_dict(counts_per_tax_dict, counts_lookup):
 
     for rank, res in counts_per_tax_dict.items():
         for row in res:
             count = int(row[0])
             ds_id = row[1]
-            tax_id_str = ''
-
             tax_id_str = '_' + "_".join([str(k) for k in row[2:]])
 
-            if tax_id_str in counts_lookup[ds_id]: #? Andy
+            if tax_id_str in counts_lookup[ds_id]:  #? Andy
                     sys.exit('We should not be here - Exiting')
             counts_lookup[ds_id][tax_id_str] = count
     return counts_lookup
+
 
 def make_counts_lookup_by_did(did_list_group, units):
     counts_lookup = defaultdict(dict)
@@ -362,9 +296,10 @@ def make_counts_lookup_by_did(did_list_group, units):
     for short_list in did_list_group:
         did_sql = ', '.join(short_list)
         counts_per_tax_dict = get_counts_per_tax(did_sql, units)
-        counts_lookup = make_counts_lookup(counts_per_tax_dict, counts_lookup)
+        counts_lookup = make_counts_lookup_dict(counts_per_tax_dict, counts_lookup)
 
     return counts_lookup
+
 
 def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
     metadata_lookup = defaultdict(dict)
@@ -376,14 +311,14 @@ def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
 
     return metadata_lookup
 
+
 def go_add(node_database, pids_str, all_pids):
-    all_dids_per_pid_dict = {}
     all_dids_per_pid_dict = get_all_dids_per_pid_dict()
 
     pid_list = make_list_from_c_str(pids_str)
     if all_pids:
         pid_list = list(all_dids_per_pid_dict.keys())
-    group_size = 500
+    group_size = 1000
 
     pid_list_group = make_list_chunks(pid_list, group_size)
     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
@@ -398,7 +333,6 @@ def go_add(node_database, pids_str, all_pids):
     metadata_lookup = make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict)
     elapsed2 = (time.time() - start2)
     print("2) make_metadata_by_pid time: %s s" % elapsed2)
-
 
     print('all_used_dids', all_used_dids)
     all_did_sql = "', '".join(all_used_dids)
@@ -442,11 +376,6 @@ def show_result(node_database, metadata_lookup, counts_lookup, all_used_dids):
         rando = randrange(10000, 99999)
         write_all_metadata_file(metadata_lookup, rando)
 
-        # only write here for default taxonomy: silva119
-        # discovered this file is not used
-        # if args.units == 'silva119':
-        #    write_all_taxcounts_file(counts_lookup, rando)
-
 
 def write_all_metadata_file(metadata_lookup, rando):
     original_metadata_lookup = read_original_metadata()
@@ -469,25 +398,6 @@ def write_all_metadata_file(metadata_lookup, rando):
             pass
     print('writing new metadata file')
     # f.write(json_str.encode('utf-8').strip()+"\n")
-    f.close()
-
-
-def write_all_taxcounts_file(counts_lookup, rando):
-    original_counts_lookup = read_original_taxcounts()
-
-    tc_file = os.path.join(args.json_file_path, NODE_DATABASE + "--taxcounts_silva119.json")
-    if not args.no_backup:
-        bu_file = os.path.join(args.json_file_path,
-                               NODE_DATABASE + "--taxcounts_silva119" + today + '_' + str(rando) + ".json")
-        print('Backing up taxcount file to', bu_file)
-        shutil.copy(tc_file, bu_file)
-    for did in counts_lookup:
-        original_counts_lookup[did] = counts_lookup[did]
-    json_str = json.dumps(original_counts_lookup)
-    # print(json_str)
-    f = open(tc_file, 'w')  # this will delete taxcounts file!
-    print('writing new taxcount file')
-    f.write(json_str + "\n")
     f.close()
 
 
@@ -613,18 +523,6 @@ def read_original_metadata():
     return data
 
 
-def get_dataset_ids(pid):
-    query = "SELECT dataset_id from dataset where project_id='" + str(pid) + "'"
-
-    rows = myconn.execute_fetch_select(query)
-    numrows = len(rows)
-    if numrows == 0:
-        sys.exit('No data found for pid ' + str(pid))
-    dids = [str(row[0]) for row in rows]
-
-    return dids
-
-
 def ask_current_database(databases):
     print(myusage)
 
@@ -639,9 +537,6 @@ def ask_current_database(databases):
         sys.exit("unrecognized number -- Exiting")
 
 
-#
-#
-#
 if __name__ == '__main__':
     start0 = time.time()
 
@@ -745,8 +640,6 @@ if __name__ == '__main__':
     else:
         databases = myconn.execute_fetch_select("SHOW databases like 'vamps%'")
         NODE_DATABASE = ask_current_database(databases)
-
-    # myconn.execute_no_fetch("USE " + NODE_DATABASE)
 
     # out_file = "tax_counts--"+NODE_DATABASE+".json"
     # in_file  = "../json/tax_counts--"+NODE_DATABASE+".json"
