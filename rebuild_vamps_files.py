@@ -335,7 +335,7 @@ def go_add(node_database, pids_str, all_pids):
     elapsed2 = (time.time() - start2)
     print("2) make_metadata_by_pid time: %s s" % elapsed2)
 
-    print('all_used_dids', all_used_dids)
+    # print('all_used_dids', all_used_dids)
     all_did_sql = "', '".join(all_used_dids)
     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
 
@@ -472,6 +472,13 @@ def make_field_names_by_pid_list(pid):
     rows = myconn.execute_fetch_select(query)
     return set([x[0] for x in rows] + ['dataset_id'])
 
+def metadata_lookup_update(rows_dict, metadata_lookup, did_list):
+    for row in rows_dict:
+        did = str(row['dataset_id'])
+        if did in did_list:
+            for field, val in row.items():
+                metadata_lookup[did][field] = val
+    return metadata_lookup
 
 def go_custom_metadata(did_list, pid, metadata_lookup, metadata_errors):
     custom_table = 'custom_metadata_' + pid
@@ -488,15 +495,10 @@ def go_custom_metadata(did_list, pid, metadata_lookup, metadata_errors):
 
     try:
         rows_dict = myconn.execute_fetch_select_dict(cust_dquery)
-
-        for row in rows_dict:
-            did = str(row['dataset_id'])
-            if did in did_list:
-                for field, val in row.items():
-                    metadata_lookup[did][field] = val
+        metadata_lookup_update(rows_dict, metadata_lookup, did_list)
     except:
         metadata_errors[pid].append(cust_dquery)
-
+        # raise
 
     return (metadata_lookup, metadata_errors)
 
@@ -543,6 +545,16 @@ def ask_current_database(databases):
     else:
         sys.exit("unrecognized number -- Exiting")
 
+
+def print_out_metadata_errors(metadata_errors):
+    err_pids_str = ", ".join(list(metadata_errors.keys()))
+    err_queries_arr = ["\nEXPLAIN %s" % q[0] for q in metadata_errors.values()]
+
+    print("""There were errors with project(s) %s.
+    To check the queries: %s;
+    After fixing the db you can rebuild files with the following command:
+    $ python %s -host %s -json_file_path %s -pids '%s' 
+        """ % (err_pids_str, '; '.join(err_queries_arr), os.path.basename(__file__), dbhost, args.json_file_path, err_pids_str))
 
 if __name__ == '__main__':
     start0 = time.time()
@@ -658,12 +670,8 @@ if __name__ == '__main__':
 
     metadata_errors = go_add(NODE_DATABASE, args.pids_str,  args.all_pids)
 
-    err_pids_str = ", ".join(list(metadata_errors.keys()))
-    err_queries_str = "; ".join(list(metadata_errors.values())[0])
-    print("""There was an error with project with ids = %s, queries = '%s'
-             You can rebuild it with the following command:
-             $ python %s -host %s -json_file_path %s -pids '%s'
-    
-        """ % (err_pids_str, err_queries_str, os.path.basename(__file__), dbhost, args.json_file_path, err_pids_str))
+    if len(metadata_errors) > 0:
+        print_out_metadata_errors(metadata_errors)
+
     elapsed0 = (time.time() - start0)
     print("total time: %s s (~ %s m)" % (elapsed0, float(elapsed0)/60))
