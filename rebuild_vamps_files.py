@@ -377,12 +377,14 @@ def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
 
 def go_add(node_database, pids_str, all_pids):
     all_dids_per_pid_dict = {}
+    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
+
     pid_list = make_list_from_c_str(pids_str)
+    if all_pids:
+        pid_list = list(all_dids_per_pid_dict.keys())
     group_size = 4
 
     pid_list_group = make_list_chunks(pid_list, group_size)
-
-    all_dids_per_pid_dict = get_all_dids_per_pid_dict()
     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
     did_list_group = make_list_chunks(all_used_dids, group_size)
 
@@ -396,86 +398,12 @@ def go_add(node_database, pids_str, all_pids):
     elapsed2 = (time.time() - start1)
     print("2) make_metadata_by_pid time: %s s" % elapsed2)
 
-    # start4 = time.time()
-
-
-    # for short_list in pid_list_group:
-    #     for pid in short_list:
-    #         if pid is not None:
-    #             try:
-    #                 dids = all_dids_per_pid_dict[pid]
-    #             except KeyError:
-    #                 print("WARNING: There is no project with id = %s" % pid)
-    #                 continue
-    #             except:
-    #                 raise
-    #
-    #             did_sql = ', '.join(dids)
-    #             # ", ".join('%s' % w for w in set(dids) if w is not None)
-    #
-    #             start6 = time.time()
-    #             counts_lookup = make_counts_lookup(args.units, did_sql, counts_lookup)
-    #             # print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
-    #
-    #             elapsed6 = (time.time() - start6)
-    #             print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
-    #
-    #             metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
-    # elapsed4 = (time.time() - start4)
-    # print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
-
 
     print('all_used_dids', all_used_dids)
     all_did_sql = "', '".join(all_used_dids)
     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
 
     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
-
-
-
-# def go_add(node_database, pids_str, all_pids):
-#     all_dids_per_pid_dict = {}
-#     all_dids_per_pid_dict = get_all_dids_per_pid_dict()
-#     pid_list = make_list_from_c_str(pids_str)
-#
-#     counts_lookup = defaultdict(dict)
-#     metadata_lookup = defaultdict(dict)
-#
-#     start4 = time.time()
-#
-#     pid_list_group = make_pid_list_group(pid_list, all_dids_per_pid_dict, all_pids)
-#
-#     for short_list in pid_list_group:
-#         for pid in short_list:
-#             if pid is not None:
-#                 try:
-#                     dids = all_dids_per_pid_dict[pid]
-#                 except KeyError:
-#                     print("WARNING: There is no project with id = %s" % pid)
-#                     continue
-#                 except:
-#                     raise
-#
-#                 did_sql = ', '.join(dids)
-#                 # ", ".join('%s' % w for w in set(dids) if w is not None)
-#
-#                 start6 = time.time()
-#                 counts_lookup = make_counts_lookup(args.units, did_sql, counts_lookup)
-#                 # print('PID =', pid, '(' + str(k + 1), 'of', str(len(pid_list)) + ')')
-#
-#                 elapsed6 = (time.time() - start6)
-#                 print("for q in queries (print counts_lookup) time: %s s" % elapsed6)
-#
-#                 metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
-#     elapsed4 = (time.time() - start4)
-#     print("for k, pid in enumerate(pid_list) time: %s s" % elapsed4)
-#
-#     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
-#     print('all_used_dids', all_used_dids)
-#     all_did_sql = "', '".join(all_used_dids)
-#     metadata_lookup = go_required_metadata(all_did_sql, metadata_lookup)
-#
-#     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
 
 
 def get_all_used_dicts(all_dids_per_pid_dict, pid_list):
