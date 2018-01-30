@@ -303,13 +303,14 @@ def make_counts_lookup_by_did(did_list_group, units):
 
 def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
     metadata_lookup = defaultdict(dict)
+    metadata_errors = defaultdict(list)
 
     for short_list in pid_list_group:
         for pid in short_list:
             dids = all_dids_per_pid_dict[pid]
-            metadata_lookup = go_custom_metadata(dids, pid, metadata_lookup)
+            (metadata_lookup, metadata_errors) = go_custom_metadata(dids, pid, metadata_lookup, metadata_errors)
 
-    return metadata_lookup
+    return (metadata_lookup, metadata_errors)
 
 
 def go_add(node_database, pids_str, all_pids):
@@ -330,7 +331,7 @@ def go_add(node_database, pids_str, all_pids):
     print("1) make_counts_lookup_by_did time: %s s" % elapsed1)
 
     start2 = time.time()
-    metadata_lookup = make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict)
+    (metadata_lookup, metadata_errors) = make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict)
     elapsed2 = (time.time() - start2)
     print("2) make_metadata_by_pid time: %s s" % elapsed2)
 
@@ -342,6 +343,8 @@ def go_add(node_database, pids_str, all_pids):
     show_result(node_database, metadata_lookup, counts_lookup, all_used_dids)
     elapsed3 = (time.time() - start3)
     print("3) show_result time: %s s" % elapsed3)
+
+    return metadata_errors
 
 
 def get_all_used_dicts(all_dids_per_pid_dict, pid_list):
@@ -470,28 +473,32 @@ def make_field_names_by_pid_list(pid):
     return set([x[0] for x in rows] + ['dataset_id'])
 
 
-def go_custom_metadata(did_list, pid, metadata_lookup):
+def go_custom_metadata(did_list, pid, metadata_lookup, metadata_errors):
     custom_table = 'custom_metadata_' + pid
     query = "show tables like '" + custom_table + "'"
 
     table_exists = myconn.execute_fetch_select(query)
 
     if not table_exists:
-        return metadata_lookup
+        return (metadata_lookup, metadata_errors)
 
     field_collection = make_field_names_by_pid_list(pid)
 
     cust_dquery = "SELECT `" + '`, `'.join(field_collection) + "` from " + custom_table
 
-    rows_dict = myconn.execute_fetch_select_dict(cust_dquery)
+    try:
+        rows_dict = myconn.execute_fetch_select_dict(cust_dquery)
 
-    for row in rows_dict:
-        did = str(row['dataset_id'])
-        if did in did_list:
-            for field, val in row.items():
-                metadata_lookup[did][field] = val
+        for row in rows_dict:
+            did = str(row['dataset_id'])
+            if did in did_list:
+                for field, val in row.items():
+                    metadata_lookup[did][field] = val
+    except:
+        metadata_errors[pid].append(cust_dquery)
 
-    return metadata_lookup
+
+    return (metadata_lookup, metadata_errors)
 
 
 def read_original_taxcounts():
@@ -649,6 +656,14 @@ if __name__ == '__main__':
     if args.dco:
         args.pids_str = get_dco_pids()
 
-    go_add(NODE_DATABASE, args.pids_str,  args.all_pids)
+    metadata_errors = go_add(NODE_DATABASE, args.pids_str,  args.all_pids)
+
+    err_pids_str = ", ".join(list(metadata_errors.keys()))
+    err_queries_str = "; ".join(list(metadata_errors.values())[0])
+    print("""There was an error with project with ids = %s, queries = '%s'
+             You can rebuild it with the following command:
+             $ python %s -host %s -json_file_path %s -pids '%s'
+    
+        """ % (err_pids_str, err_queries_str, os.path.basename(__file__), dbhost, args.json_file_path, err_pids_str))
     elapsed0 = (time.time() - start0)
     print("total time: %s s (~ %s m)" % (elapsed0, float(elapsed0)/60))
