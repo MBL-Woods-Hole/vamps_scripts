@@ -65,7 +65,7 @@ def clean(args):
             os.remove(did_file1)
         except OSError:
             print ("File Not Found: "+did_file1)
-        print did_file2
+        print (did_file2)
         try:
             os.remove(did_file2)
         except OSError:
@@ -131,7 +131,7 @@ def clean(args):
             print (q)
             cur.execute(q)
         else:
-            print 'DS TMP table not found',table
+            print ('DS TMP table not found',table)
 
     q = 'DELETE from dataset'
     q += " WHERE dataset_id in ('"+ "','".join(dids) +"')"
@@ -342,7 +342,7 @@ if __name__ == '__main__':
         args.json_file_path = '../../json'
         args.NODE_DATABASE = args.db
         args.dbhost = 'localhost'
-    print "ARGS: dbhost  =",args.dbhost
+    print ("ARGS: dbhost  =",args.dbhost)
     if os.path.exists(args.json_file_path):
         print ('Validated: json file path')
     else:
@@ -398,4 +398,4 @@ if __name__ == '__main__':
             print (myusage)
             sys.exit('Needs either project name (-p) or project ID (-pid) -- Exiting (OR -all to empty the database)')
         clean(args)
-    print ('Now, restart the server!')       
+    print ('Now, restart the server!')
