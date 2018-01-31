@@ -21,8 +21,6 @@ import types
 import time
 import random
 import csv
-import ConfigParser
-from IlluminaUtils.lib import fastalib
 import datetime
 today = str(datetime.date.today())
 import subprocess
