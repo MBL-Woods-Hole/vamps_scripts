@@ -37,10 +37,10 @@ sys.path.append("/bioware/pythonmodules/illumina-utils/")
 import fastqlib
 from vamps_utils import FastaReader
 
- 
-            
 
-    
+
+
+
 def load_trimmed_seqs(myobject):
     """
         Function to load trimmed sequences into trimseq table.
@@ -51,7 +51,7 @@ def load_trimmed_seqs(myobject):
     """
     infile  = myobject['infile']
     if not os.path.exists(infile):
-        print "Could not find input file - Exiting"
+        print("Could not find input file - Exiting")
         sys.exit(102)
     # should be seqfile.fa_clean
     project = myobject['project']
@@ -66,7 +66,7 @@ def load_trimmed_seqs(myobject):
     domain  = myobject['domain']
     file_base = myobject['file_base']
     status_file = os.path.join(file_base,'STATUS.txt')
-    print status_file
+    print (status_file)
     fh = open(status_file,'a')
     execute_error = False
     if not domain:
@@ -77,8 +77,8 @@ def load_trimmed_seqs(myobject):
             dna_region = dna_region[:-1]
         else:
             domain = 'bacteria'
-    
-    
+
+
     insert_table = 'vamps_upload_trimseq';
     loadquery =  "load data local infile '"+infile+" '\n"
     loadquery += " replace into table "+insert_table+" \n"
@@ -94,32 +94,32 @@ def load_trimmed_seqs(myobject):
     loadquery += " domain = '"+domain+"',           \n"
     loadquery += " countN = '0',                    \n"
     loadquery += " delete_reason = ''"
-    print loadquery
-    
+    print (loadquery)
+
     try:
         cursor.execute(loadquery)
     except:
-        db.rollback()  
+        db.rollback()
         execute_error=True
     else:
-        db.commit()  
-    
+        db.commit()
+
     if execute_error:
         fh.write("{\"status\": \"ERROR\", \"Sequence Load Error\": True}\n")
     else:
-        fh.write("{\"status\": \"SUCCESS\", \"Sequence Load Success\": True}\n")    
+        fh.write("{\"status\": \"SUCCESS\", \"Sequence Load Success\": True}\n")
     fh.close()
-    
-        
+
+
 if __name__ == '__main__':
     import argparse
-    
+
     # DEFAULTS
     site = 'vampsdev'
-    user = ''  
-    
-    
-    
+    user = ''
+
+
+
     data_object = {}
     file_type = "fasta"
     seq_file = ""
@@ -127,57 +127,57 @@ if __name__ == '__main__':
     dna_region = 'v6'
     project = ""
     dataset = ""
-    
+
     myusage = """usage: vamps_load.py [options]
-         
+
          Load user sequences into the database
-         
+
          where
             -i, --infile The name of the input file file.  [required]
-            
+
             -t, --type    raw or trim.   [required]
-            
+
             -p, --project    The name of the project.   [optional]
-            
-            -d, --dataset     The name of the dataset. 
+
+            -d, --dataset     The name of the dataset.
                                 [default: unknown]
-            -dna_region       
-                                   
+            -dna_region
+
             --site            vamps or vampsdev.
                                 [default: vampsdev]
             -r, -runcode      runcode
                                 [default: random number]
-            -u, --user       
-            
-    
-    
+            -u, --user
+
+
+
     """
     parser = argparse.ArgumentParser(description="" ,usage=myusage)
-    parser.add_argument('-i', '--infile',       required=True, action="store",   dest = "infile", 
-                                                    help = '')                                                 
-    parser.add_argument("-t", "--upload_type",         required=True,  action="store",   dest = "type", 
-                                                    help="raw or trimmed")                                   
-    
-    
-                                                     
-    parser.add_argument("-site",                required=True,  action="store",   dest = "site", 
-                                                    help="""""")  
-    parser.add_argument("-r", "--runcode",      required=True,  action="store",   dest = "runcode", 
-                                                    help="""""")  
- 
-    parser.add_argument("-u", "--user",         required=True,  action="store",   dest = "user", 
-                                                    help="user name")  
-    parser.add_argument("-file_type",           required=True,  action="store",   dest = "file_type", 
-                                                    help="sff, fasta or fastq") 
-    parser.add_argument('-file_base',               required=True, action="store",   dest = "file_base", 
-                                                    help = 'where the files are loacated')                                                   
-                                                    
+    parser.add_argument('-i', '--infile',       required=True, action="store",   dest = "infile",
+                                                    help = '')
+    parser.add_argument("-t", "--upload_type",         required=True,  action="store",   dest = "type",
+                                                    help="raw or trimmed")
+
+
+
+    parser.add_argument("-site",                required=True,  action="store",   dest = "site",
+                                                    help="""""")
+    parser.add_argument("-r", "--runcode",      required=True,  action="store",   dest = "runcode",
+                                                    help="""""")
+
+    parser.add_argument("-u", "--user",         required=True,  action="store",   dest = "user",
+                                                    help="user name")
+    parser.add_argument("-file_type",           required=True,  action="store",   dest = "file_type",
+                                                    help="sff, fasta or fastq")
+    parser.add_argument('-file_base',               required=True, action="store",   dest = "file_base",
+                                                    help = 'where the files are loacated')
+
 
     if len(sys.argv[1:])==0:
-        print myusage
-        sys.exit() 
+        print (myusage)
+        sys.exit()
     args = parser.parse_args()
-    
+
     data_object['infile'] = args.infile
     data_object['datetime'] = str(datetime.date.today())
     data_object['type'] = args.type
@@ -186,14 +186,14 @@ if __name__ == '__main__':
     data_object['user'] =  args.user
     data_object['file_base'] =  args.file_base
     data_object['file_type'] =  args.file_type
-    
-    
-    
-    
-    
-      
-    
-    
+
+
+
+
+
+
+
+
     if data_object['site'] == 'vamps':
         #db_host = 'vampsdb'
         db_host = 'bpcdb2'
@@ -206,16 +206,11 @@ if __name__ == '__main__':
         #db_name = 'vamps'
         db_name = 'vampsdev_user_uploads'
         db_home = '/xraid2-2/vampsweb/vampsdev/'
-    
-    print db_host, db_name, db_home
+
+    print (db_host, db_name, db_home)
     obj=Conn(db_host, db_name, db_home)
     #c = obj.get_cursor()
     data_object['obj'] = obj
-    
-    
+
+
     load_trimmed_seqs(data_object)
-        
-    
-        
-    
-    
