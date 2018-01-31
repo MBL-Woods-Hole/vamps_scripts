@@ -32,8 +32,6 @@ import subprocess
 import pymysql as MySQLdb
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
-print 'sys.path'
-print sys.path
 """
 New Table:
 CREATE TABLE `summed_counts` (
@@ -106,27 +104,24 @@ def start(args):
     #RDP_IDS_BY_TAX = {}
     RANK_COLLECTOR={}
     #TAX_ID_BY_RANKID_N_TAX = {}
-    #SUMMED_TAX_COLLECTOR = {} 
+    #SUMMED_TAX_COLLECTOR = {}
     logging.info('CMD> '+' '.join(sys.argv))
-    print 'CMD> ',sys.argv
-    
+    print ('CMD> ',sys.argv)
+
     global mysql_conn, cur    
-   
-    
-    
+
     get_ranks()
-    
-    
+
     logging.info("running get_pid_data")
     print "running get_pid_data"
     for pid in args.pids:
         # collects seqs project-by-project
         SEQ_COLLECTOR = {}
-        pdir = str(pid)+'_rdp' 
+        pdir = str(pid)+'_rdp'
         if not os.path.exists(pdir):
             os.makedirs(pdir)
         else:
-            shutil.rmtree(pdir)           
+            shutil.rmtree(pdir)
             os.makedirs(pdir)
         n = 1
         for did in args.pids[pid]["datasets"]:
@@ -180,58 +175,58 @@ def start(args):
     #pp.pprint(CONFIG_ITEMS)
     logging.info("Finished "+os.path.basename(__file__))
     print "Finished "+os.path.basename(__file__)
-    
-   
-    
-        
-    
+
+
+
+
+
 def get_ranks():
-    
+
     global RANK_COLLECTOR
     global mysql_conn, cur
-    
+
     q = "SELECT rank_id,rank from rank"
     logging.info(q)
     cur.execute(q)
     rows = cur.fetchall()
     for row in rows:
         RANK_COLLECTOR[row[1]] = row[0]
-        
-    
+
+
 
 
 #
 #
 #
 def push_taxonomy(pid, args):
-    
+
     #global SUMMED_TAX_COLLECTOR
     global mysql_conn, cur
-        
-    
-    pdir = str(pid)+'_rdp' 
+
+
+    pdir = str(pid)+'_rdp'
     for did in args.pids[pid]["datasets"]:
         dname = args.pids[pid]["datasets"][did]
-       
-        
+
+
         tax_file = os.path.join(pdir,  dname+'.rdp')
         unique_file = os.path.join(pdir, dname+'.fa.unique')
         if os.path.exists(tax_file):
             run_rdp_tax_file(args, did, tax_file, unique_file)
-        
- 
-    #logging.info( 'SUMMED_TAX_COLLECTOR')
-    #logging.info( SUMMED_TAX_COLLECTOR )        
-#
-# 
-#                               
 
-     
+
+    #logging.info( 'SUMMED_TAX_COLLECTOR')
+    #logging.info( SUMMED_TAX_COLLECTOR )
 #
 #
-#                
-def run_rdp_tax_file(args, did, tax_file, seq_file): 
-    
+#
+
+
+#
+#
+#
+def run_rdp_tax_file(args, did, tax_file, seq_file):
+
     print 'reading seqfile',seq_file
     f = fastalib.SequenceSource(seq_file)
     tmp_seqs = {}
@@ -242,8 +237,8 @@ def run_rdp_tax_file(args, did, tax_file, seq_file):
         #print 'id1',id
         tmp_seqs[id]= f.seq
     f.close()
-        
-    tax_items = [] 
+
+    tax_items = []
     with open(tax_file,'r') as fh:
         for line in fh:
             tax_items = []
@@ -273,20 +268,20 @@ def run_rdp_tax_file(args, did, tax_file, seq_file):
                   else:
                       pass
             rank = ranks[len(tax_items)-1]
-            
+
             seq= tmp_seqs[seq_id]
             #print seq
             #print tax_items
             distance = None
-            
+
             print seq_count,tax_items
-            if tax_items != []:                
+            if tax_items != []:
                 finish_tax(did, rank,distance,seq,seq_count,tax_items, boot_to_report)
                 pass
-            
-            
+
+
 def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
-    #tax_collector = {} 
+    #tax_collector = {}
     #global CONFIG_ITEMS
     global SEQ_COLLECTOR
     #global DATASET_ID_BY_NAME
@@ -295,7 +290,7 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
     #global TAX_ID_BY_RANKID_N_TAX
     #global SUMMED_TAX_COLLECTOR
     global mysql_conn, cur
-    tax_string = ';'.join(tax_items)       
+    tax_string = ';'.join(tax_items)
     #if did not in SUMMED_TAX_COLLECTOR:
     #    SUMMED_TAX_COLLECTOR[did]={}
     #print seq, seq_count, tax_string
@@ -303,43 +298,43 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
     SEQ_COLLECTOR[did][seq]['taxonomy'] = tax_string
     SEQ_COLLECTOR[did][seq]['rank'] = rank
     SEQ_COLLECTOR[did][seq]['boot'] = boot
-                          
+
     q1 = "SELECT rank_id from rank where rank = '"+rank+"'"
-    
+
     cur.execute(q1)
     mysql_conn.commit()
-   
+
     row = cur.fetchone()
-    
-    SEQ_COLLECTOR[did][seq]['rank_id'] = row[0]          
+
+    SEQ_COLLECTOR[did][seq]['rank_id'] = row[0]
     logging.info(rank+' - '+tax_string)
-    
-   
+
+
     sumtax = ''
     for i in range(0,8):
-        
+
         rank_id = RANK_COLLECTOR[ranks[i]]
         if len(tax_items) > i:
-            
+
             taxitem = tax_items[i]
-            
+
         else:
             taxitem = ranks[i]+'_NA'
         sumtax += taxitem+';'
-        
+
         #print ranks[i],rank_id,taxitem,sumtax,seq_count
         # if rank_id in SUMMED_TAX_COLLECTOR[did]:
         #     if sumtax[:-1] in SUMMED_TAX_COLLECTOR[did][rank_id]:
         #         SUMMED_TAX_COLLECTOR[did][rank_id][sumtax[:-1]] += int(seq_count)
         #     else:
         #         SUMMED_TAX_COLLECTOR[did][rank_id][sumtax[:-1]] = int(seq_count)
-                
+
         # else:
         #     SUMMED_TAX_COLLECTOR[did][rank_id] = {}
         #     SUMMED_TAX_COLLECTOR[did][rank_id][sumtax[:-1]] = int(seq_count)
 
     #for i in range(0,8):
-    #insert_nas()    
+    #insert_nas()
     if tax_items[0][:9].lower() == 'eukaryota':
          tax_items[0] = 'eukarya'
     if tax_items[0].lower() in accepted_domains:
@@ -348,13 +343,13 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
             #print i,len(tax_items),tax_items[i]
             rank_name = ranks[i]
             rank_id = RANK_COLLECTOR[ranks[i]]
-            
+
             if len(tax_items) > i:
                 if ranks[i] == 'species':
                     t = tax_items[i].lower()
                 else:
                     t = tax_items[i].capitalize()
-                
+
                 if tax_items[i].lower() != (rank_name+'_NA').lower():
                     name_found = False
                     # if rank_name in tax_collector:
@@ -363,38 +358,38 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
                     #     tax_collector[rank_name] = [t]
             else:
                 t = rank_name+'_NA'
-            
-            
-                
+
+
+
             q2 = "INSERT ignore into `"+rank_name+"` (`"+rank_name+"`) VALUES('"+t+"')"
             logging.info(q2)
             cur.execute(q2)
-            mysql_conn.commit() 
+            mysql_conn.commit()
             tax_id = cur.lastrowid
             if tax_id == 0:
                 q3 = "select "+rank_name+"_id from `"+rank_name+"` where `"+rank_name+"` = '"+t+"'"
                 logging.info( q3 )
                 cur.execute(q3)
-                mysql_conn.commit() 
+                mysql_conn.commit()
                 row = cur.fetchone()
                 tax_id=row[0]
             ids_by_rank.append(str(tax_id))
             #else:
-            #logging.info( 'rank_id,t,tax_id',rank_id,t,tax_id  )  
+            #logging.info( 'rank_id,t,tax_id',rank_id,t,tax_id  )
             # if rank_id in TAX_ID_BY_RANKID_N_TAX:
             #     TAX_ID_BY_RANKID_N_TAX[rank_id][t] = tax_id
             # else:
             #     TAX_ID_BY_RANKID_N_TAX[rank_id]={}
             #     TAX_ID_BY_RANKID_N_TAX[rank_id][t] = tax_id
             #ids_by_rank.append('1')
-        logging.info(  ids_by_rank )  
+        logging.info(  ids_by_rank )
         q4 =  "INSERT ignore into rdp_taxonomy ("+','.join(tax_ids)+",created_at)"
         q4 += " VALUES("+','.join(ids_by_rank)+",CURRENT_TIMESTAMP())"
         #
         logging.info(q4)
         print q4
         cur.execute(q4)
-        mysql_conn.commit() 
+        mysql_conn.commit()
         rdp_tax_id = cur.lastrowid
         if rdp_tax_id == 0:
             q5 = "SELECT rdp_taxonomy_id from rdp_taxonomy where ("
@@ -405,7 +400,7 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
             #print q5
             logging.info(q5)
             cur.execute(q5)
-            mysql_conn.commit() 
+            mysql_conn.commit()
             row = cur.fetchone()
             rdp_tax_id=row[0]
             #print 'silva_tax_id',silva_tax_id
@@ -415,26 +410,26 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
     else:
         print 'MISSING ',tax_items[0].lower()
         sys.exit()
-                
-                
-                
-    #print SEQ_COLLECTOR
-                
-                
-            
-            
-            
 
-             
+
+
+    #print SEQ_COLLECTOR
+
+
+
+
+
+
+
 def push_sequences(pid, args):
     # sequences
     #print
-    
+
     global SEQ_COLLECTOR
     global mysql_conn, cur
     for did in SEQ_COLLECTOR:
         for seq in SEQ_COLLECTOR[did]:
-            print 
+            print
             print SEQ_COLLECTOR[did][seq]
             if 'taxonomy' in SEQ_COLLECTOR[did][seq]:
                 rdp_tax_id = str(SEQ_COLLECTOR[did][seq]['rdp_tax_id'])
@@ -443,13 +438,13 @@ def push_sequences(pid, args):
                 #logging.info( did,seq, silva_tax_id)
                 rank_id = str(SEQ_COLLECTOR[did][seq]['rank_id'])
                 logging.info( rank_id)
-                
+
                 #q = "INSERT ignore into rdp_taxonomy_info_per_seq"
                 #q += " (sequence_id, rdp_taxonomy_id, rank_id, boot_score)"
                 #q += " VALUES ('%s','%s','%s','%s')" % (str(seqid), str(rdp_tax_id), str(rank_id), boot)
-                
+
                 q = "UPDATE ignore rdp_taxonomy_info_per_seq"
-                q += " set rdp_taxonomy_id='%s', rank_id='%s', boot_score='%s'" 
+                q += " set rdp_taxonomy_id='%s', rank_id='%s', boot_score='%s'"
                 q += " WHERE sequence_id='%s'"
                 q =  q % ( str(rdp_tax_id), str(rank_id), boot, str(seqid) )
                 logging.info(q)
@@ -462,17 +457,17 @@ def push_sequences(pid, args):
                     q3 += " where sequence_id = '"+str(seqid)+"'"
                     print 'DUP silva_tax_seq',q3
                     cur.execute(q3)
-                    mysql_conn.commit() 
+                    mysql_conn.commit()
                     row = cur.fetchone()
                     rdp_tax_seq_id = row[0]
-            
+
 
 
 
                 #q4 = "INSERT ignore into sequence_uniq_info (sequence_id, rdp_taxonomy_info_per_seq_id)"
                 #q4 += " VALUES('%s','%s')" % (str(seqid), str(rdp_tax_seq_id))
-                q4 = "UPDATE ignore sequence_uniq_info set rdp_taxonomy_info_per_seq_id='%s'" 
-                q4 += " WHERE sequence_id='%s'" 
+                q4 = "UPDATE ignore sequence_uniq_info set rdp_taxonomy_info_per_seq_id='%s'"
+                q4 += " WHERE sequence_id='%s'"
                 q4 = q4 % (str(rdp_tax_seq_id), str(seqid) )
                 print q4
                 logging.info(q4)
@@ -484,13 +479,13 @@ def push_sequences(pid, args):
 def get_pid_data(args):
     global mysql_conn, cur
     #args.pids['46'] = {"datasets":{"49":"LCY_0001_2003_05_11","50":"LCY_0003_2003_05_04","51":"LCY_0005_2003_05_16","52":"LCY_0007_2003_05_04"}}#pids[46] = {name;datasets;}LCY
- 
+
     pid_dict = {}
     if args.pid_list:
         sql_pids = "','".join(args.pid_list.split(','))
         q = "Select project_id, dataset, dataset_id from dataset where project_id in('%s')"
         q = q % (sql_pids)
-        
+
     else:
         q = "Select project_id, dataset, dataset_id from dataset"
     print q
@@ -507,22 +502,22 @@ def get_pid_data(args):
             pid_dict[pid]                   = {}
             pid_dict[pid]["datasets"]       = {}
             pid_dict[pid]["datasets"][did]  = dname
-    
-    
+
+
     return pid_dict
 
 
 
 if __name__ == '__main__':
     import argparse
-    
-    
+
+
     myusage = """usage: vamps_rdp_convert.py  [options]
-         
-       uploads to new vamps  
+
+       uploads to new vamps
          where
             -path_to_classifier/--path_to_classifier   REQUIRED
-                Location of rdp_classifier diectory 
+                Location of rdp_classifier diectory
                 vamps:    /groups/vampsweb/vamps/seqinfobin/rdp_classifier_2.6
                 vampsdev: /groups/vampsweb/vampsdev/seqinfobin/rdp_classifier_2.6
                 or try    /groups/vampsweb/seqinfobin/rdp_classifier_2.6
@@ -541,41 +536,41 @@ if __name__ == '__main__':
 
             -gene/--gene   [Default:16srrna]
                 See RDP README: 16srrna, fungallsu, fungalits_warcup, fungalits_unite
-            
+
             -pids/--pids [Default='']
                 Comma separated list of ProjectIDs to assign RDP taxonomy
-            
+
 
 """
 
-    parser = argparse.ArgumentParser(description="" ,usage=myusage)                 
-    
-    
-    parser.add_argument('-db', '--NODE_DATABASE',         
-                required=False,   action="store",  dest = "NODE_DATABASE", default='vamps_development',           
-                help = 'node database') 
-    parser.add_argument("-path_to_classifier", "--path_to_classifier",    
-                required=False,  action="store",   dest = "path_to_classifier", 
-                help = '') 
-    parser.add_argument("-host", "--host",    
+    parser = argparse.ArgumentParser(description="" ,usage=myusage)
+
+
+    parser.add_argument('-db', '--NODE_DATABASE',
+                required=False,   action="store",  dest = "NODE_DATABASE", default='vamps_development',
+                help = 'node database')
+    parser.add_argument("-path_to_classifier", "--path_to_classifier",
+                required=False,  action="store",   dest = "path_to_classifier",
+                help = '')
+    parser.add_argument("-host", "--host",
                 required=True,  action='store',  dest = "host",
-                help="")            
-    parser.add_argument("-boot", "--boot",    
+                help="")
+    parser.add_argument("-boot", "--boot",
                 required=False,  action='store',  dest = "boot_score",  default=80,
-                help="")             
+                help="")
     # use 16srrna for all Archaea & Bacteria
     # Use fungalits_unite for all and ITS (Fungal)
     # THERE IS NO GOOD database for Eukaryal sequences
-    parser.add_argument("-gene", "--gene",    
+    parser.add_argument("-gene", "--gene",
                  required=False,  action="store",   dest = "gene", default="16srrna",            # use 16srrna for all Archaea & Bacteria
-                 help = 'See RDP README: 16srrna, fungallsu, fungalits_warcup, fungalits_unite') # Use fungalits_unite for all Eukarya and ITS 
-    parser.add_argument("-pids", "--pids",    
+                 help = 'See RDP README: 16srrna, fungallsu, fungalits_warcup, fungalits_unite') # Use fungalits_unite for all Eukarya and ITS
+    parser.add_argument("-pids", "--pids",
                  required=True,  action="store",   dest = "pid_list", default='',
                  help = 'comma separated list of pids')
     if len(sys.argv[1:]) == 0:
         print myusage
-        sys.exit() 
-    args = parser.parse_args() 
+        sys.exit()
+    args = parser.parse_args()
 
     # get_pids
     if args.host == 'vamps' or args.host == 'vampsdb':
@@ -596,10 +591,8 @@ if __name__ == '__main__':
     # socket=/tmp/mysql.sock
     cur = mysql_conn.cursor()
     args.pids={}
-    
+
     args.pids = get_pid_data(args)
 
-    
+
     start(args)
-
-
