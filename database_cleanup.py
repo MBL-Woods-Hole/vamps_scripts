@@ -102,6 +102,7 @@ def clean(args):
                             'assigned_from_geo_required_metadata_info_temp',
                             'required_metadata_info_new',
                             'dataset_copy',
+                            'run_info_ill',
                             'required_metadata_info_new_copy',
                             'required_metadata_info20170313',
                             'required_metadata_info_copy20170313',

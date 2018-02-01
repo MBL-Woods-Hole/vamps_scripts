@@ -79,6 +79,7 @@ import sys
 import os
 import timeit
 import time
+import numpy as np
 from collections import defaultdict
 
 class Mysql_util:
@@ -246,16 +247,30 @@ class Utils:
       print (message)
 
     def read_csv_into_list(self, file_name):
-      xx = open(file_name, 'rb')
-      yy = csv.reader(xx, delimiter = ',')
-      print (yy)
-      csv_file_content_all = list(yy)
-      try:
-        csv_file_fields      = csv_file_content_all[0]
-        csv_file_content     = csv_file_content_all[1:]
-      except:
-        csv_file_fields      = []
-        csv_file_content     = []
+      fh = open(file_name, 'r')
+      yy = csv.reader(fh, delimiter = ',')
+      
+      csv_file_content     = []
+      for i,row in enumerate(yy):
+        if i == 0:
+            csv_file_fields      = row
+        else:
+            csv_file_content.append(row)
+      #print ('yy2')
+      #csv_file_fields ['dataset', 'dataset_description', 'env_sample_source_id', 'project']
+      #csv_file_content [['920W2', '920W2', '20', 'DCO_GRA_Bv6v4'], ['932W2', '932W2', '20', 'DCO_GRA_Bv6v4'], ['942W14', '942W14', '20', 'DCO_GRA_Bv6v4'], ['944W11', '944W11', '20', 'DCO_GRA_Bv6v4'], ['951W11', '951W11', '20', 'DCO_GRA_Bv6v4'], ['964W1', '964W1', '20', 'DCO_GRA_Bv6v4']]
+
+      #csv_file_content_all = yy[0]
+      #print(csv_file_content_all)
+      #print ('yy3')
+     #  try:
+#         csv_file_fields      = csv_file_content_all[0]
+#         csv_file_content     = csv_file_content_all[1:]
+#       except:
+#         pass
+      #print('csv_file_fields',csv_file_fields)
+      #print('csv_file_content',csv_file_content)
+      #print(csv_file_content)  
       return (csv_file_fields, csv_file_content)
       # return list(csv.reader(open(file_name, 'rb'), delimiter = ','))[1:]
 
@@ -795,9 +810,9 @@ class Seq_csv:
   def __init__(self, seq_csv_file_name, mysql_util):
     self.utils = Utils()
     self.seq_csv_file_fields, self.seqs_file_content = self.utils.read_csv_into_list(seq_csv_file_name)
-
+    
     self.content_by_field = self.content_matrix_transposition()
-
+    print(type(self.content_by_field))
     self.sequences        = self.content_by_field[1]
     self.taxa             = self.content_by_field[4]
     self.refhvr_id        = self.content_by_field[5]
@@ -815,7 +830,8 @@ class Seq_csv:
     """
 
   def content_matrix_transposition(self):
-    return zip(*self.seqs_file_content)
+    #return zip(*self.seqs_file_content)
+    return np.transpose(self.seqs_file_content)
 
   # def make_seq_list(self):
   #   self.seq_list = [val[1] for val in self.seqs_file_content]
@@ -1717,8 +1733,8 @@ if __name__ == '__main__':
   """
 
   # TODO: add names from args here
-  # seq_csv_file_name      = "sequences_%s_short.csv" % (args.project)
-  # metadata_csv_file_name = "metadata_%s_short.csv" % (args.project)
+  seq_csv_file_name      = "sequences_%s_short.csv" % (args.project)
+  metadata_csv_file_name = "metadata_%s_short.csv" % (args.project)
 
   user_contact_csv_file_name = "user_contact_%s.csv" % (args.project)
   project_csv_file_name      = "project_%s.csv" % (args.project)
@@ -1739,9 +1755,10 @@ if __name__ == '__main__':
   sequence       = Sequence(seq_csv_parser.sequences, mysql_util)
 
   pr = Project(mysql_util)
-
+  
   dataset = Dataset(mysql_util)
-
+  utils.benchmarking(dataset.parse_dataset_csv, "parse_dataset_csv", dataset_csv_file_name)
+  #sys.exit()
   metadata = Metadata(mysql_util, dataset, pr.project_dict)
 
 #   command_line_req_met_list = {  'platform':args.platform,
@@ -1803,23 +1820,15 @@ if __name__ == '__main__':
         req_md_okay = False
   if not req_md_okay:
     print (metadata.report)
-    ans = raw_input("Do you want to continue? (type 'Y' to continue): ")
+    ans = input("Do you want to continue? (type 'Y' to continue): ")
     if ans.upper() != 'Y':
         sys.exit()
 
-  # test_query1 = "SHOW tables"
-  # print (mysql_util.execute_fetch_select(test_query1))
-
-
-
-
+ 
   if (args.do_not_insert == False):
-    utils.benchmarking(sequence.insert_seq, "Inserting sequences...")
+   utils.benchmarking(sequence.insert_seq, "Inserting sequences...")
   utils.benchmarking(sequence.get_seq_ids, "get_seq_ids")
 
- # sequences already in db == sequence.sequences_w_ids
-  #print (sequence.sequences_w_ids[:10])
-  #sys.exit()
 
   utils.benchmarking(pr.parse_project_csv, "parse_project_csv", project_csv_file_name)
 

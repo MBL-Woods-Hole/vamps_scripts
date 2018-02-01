@@ -47,7 +47,7 @@ def go_list(args):
     #print(project_lookup)
     required_metadata_fields = get_required_metadata_fields(args)
     #print('file_dids')
-    #print(metadata_lookup['3938'])
+    #print(metadata_lookup)  ## <-- lookup by did
 
     #metadata_dids = metadata_lookup.keys()
     #
@@ -59,11 +59,23 @@ def go_list(args):
     no_req_data_found = 0
     no_file_found = {}
     mismatch_data = {}
+    cust_rowcount_data = {}
     other_problem = {}
-    no_req_metadata = {}
+    no_req_metadata = {}  
+     
+    if args.single_pid:
+        temp_id_lookup = {}
+        temp_id_lookup[int(args.single_pid)] = project_id_lookup[int(args.single_pid)]
+        project_id_lookup = temp_id_lookup
+        print('Searching Single PID:',args.single_pid)
+        print(project_id_lookup)
+        ds_count = len(project_id_lookup[int(args.single_pid)]) 
+        print("ds_count from DB:",ds_count)
+        
     for pid in project_id_lookup:
         # go project by project
         sql_dids =  "','".join(project_id_lookup[pid])
+        ds_count = len(project_id_lookup[pid]) 
         q = "SELECT dataset_id, "+ ', '.join(required_metadata_fields) +" from required_metadata_info WHERE dataset_id in ('%s')" % (sql_dids)
         if args.verbose:
             print(q)
@@ -88,18 +100,18 @@ def go_list(args):
                 clean_project = False
             else:
                 for i,item in enumerate(required_metadata_fields):
-                    #print item, row[i+1]
+                    #print(item, row[i+1])
                     if item in metadata_lookup[did]:
                         db_val = str(row[i+1])
                         if str(metadata_lookup[did][item]) != db_val :
                             if args.verbose:
-                                print(project_lookup[pid]+' -- ' +did+'  no match-1 for', item+':',metadata_lookup[did][item],' - ',db_val)
+                                print('pid:'+str(pid) +' -- '+project_lookup[pid]+' -- did:' +did+'  no match-1 for `'+item+'`:',metadata_lookup[did][item],' - ',db_val)
                             if pid not in mismatch_data:
                                 mismatch_data[pid] = project_lookup[pid]
                             clean_project = False
                     else:
                          if args.verbose:
-                            print( str(pid) +'--'+project_lookup[pid]+' -- ' +did+' -- '+item+' item not found in req metadata file-1\n')
+                            print( 'pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- `'+item+'` item not found in req metadata file-1\n')
                          if pid not in other_problem:
                             other_problem[pid] = project_lookup[pid]
                          clean_project = False
@@ -117,30 +129,33 @@ def go_list(args):
                 if field !=  custom_metadata_file+'_id' and field != 'dataset_id' and field != 'project_id':
                     fields.append(field) # starts with idx 2
             #print 'fields',fields
-
-            #print q2
+            if args.verbose:
+                print(q2)
             cur.execute(q2)
+            num_cust_rows = cur.rowcount
+            if num_cust_rows != ds_count:
+                cust_rowcount_data[pid] = project_lookup[pid]
             rows = cur.fetchall()
             for row in rows:
-                did = str(row[2]) # first is custom_metadata_<pid>_id, second is pid
+                did = str(row[1]) # first is custom_metadata_<pid>_id, second is did
                 #print
                 #print 'row',row
                 for i,item in enumerate(fields):
 
-                    #print 'pid:',pid,'did:',did, 'item:',item,metadata_lookup[did], project_lookup[pid]
+                    #print('pid:',pid,'did:',did, 'item:',item, metadata_lookup[did], project_lookup[pid])
                     if item in metadata_lookup[did]:
-                        #print item,row[i+2]
-                        db_val = str(row[i+3])
+                        #print(item,i,'row',row)
+                        db_val = str(row[i+2])
 
                         if str(metadata_lookup[did][item]) != db_val:
                             if args.verbose:
-                                print(project_lookup[pid]+' -- ' +did+'  no match-2 for', item+':',metadata_lookup[did][item],'!=',db_val)
+                                print('pid:'+str(pid) +' -- '+project_lookup[pid]+' -- did:' +did+'  no match-2 for `'+item+'`:',metadata_lookup[did][item],'!=',db_val)
                             if pid not in mismatch_data:
                                 mismatch_data[pid] = project_lookup[pid]
                             clean_project = False
                     else:
                         if args.verbose:
-                            print( str(pid) +'--'+project_lookup[pid]+' -- ' +did+' -- '+item+' item not found in cust metadata file-2\n')
+                            print( 'pid:'+str(pid) +' -- '+project_lookup[pid]+' -- did:' +did+' -- `'+item+'` item not found in cust metadata file-2\n')
                         if pid not in other_problem:
                             other_problem[pid] = project_lookup[pid]
                         clean_project = False
@@ -150,29 +165,53 @@ def go_list(args):
         #sys.exit()
         #if not clean_project:
         #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
+    
+    
     print()
     print('failed projects that need to have the metadata files rebuilt:')
+    
     print()
-    print('OTHER (rare):')
-    for pid in other_problem:
-        print('pid:',pid,' -- ',other_problem[pid])
-    print  ('PID List:',','.join([str(n) for n in other_problem.keys()]))
+    print('OTHER (rare -- Possible DID mis-match):')
+    if not len(other_problem):
+        print('**Clean**')
+    else:
+        for pid in other_problem:
+            print('pid:',pid,' -- ',other_problem[pid])
+        print  ('PID List:',','.join([str(n) for n in other_problem.keys()]))
     print()
     print('DATA MIS-MATCHES BETWEEN FILE AND DBASE:')
-    for pid in mismatch_data:
-        print( 'pid:',pid,' -- ',mismatch_data[pid])
-    print ('PID List:',','.join([str(n) for n in mismatch_data.keys()]))
+    if not len(mismatch_data):
+        print('**Clean**')
+    else:
+        for pid in mismatch_data:
+            print( 'pid:',pid,' -- ',mismatch_data[pid])
+        print ('PID List:',','.join([str(n) for n in mismatch_data.keys()]))
     print()
     print('NO FILE(s) FOUND:')
-    for pid in no_file_found:
-        print('pid:',pid,' -- ',no_file_found[pid])
-    print('PID List:',','.join([str(n) for n in no_file_found.keys()]))
+    if not len(no_file_found):
+        print('**Clean**')
+    else:
+        for pid in no_file_found:
+            print('pid:',pid,' -- ',no_file_found[pid])
+        print('PID List:',','.join([str(n) for n in no_file_found.keys()]))
     print()
     print('NO REQUIRED METADATA (re-install project or add by hand?):')
-    for pid in no_req_metadata:
-        print('pid:',pid,' -- ',no_req_metadata[pid])
-    print('PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
+    if not len(no_req_metadata):
+        print('**Clean**')
+    else:
+        for pid in no_req_metadata:
+            print('pid:',pid,' -- ',no_req_metadata[pid])
+        print('PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
     print()
+    print('Projects where the dataset count is different between `dataset` and `custom_metadata_xxx`')
+    if not len(cust_rowcount_data):
+        print('**Clean**')
+    else:
+        for pid in other_problem:
+            print('pid:',pid,' -- ',cust_rowcount_data[pid])
+        print  ('PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
+    print()
+    
     print("Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found))
 
 
@@ -198,7 +237,7 @@ def get_required_metadata_fields(args):
     return md_fields
 
 def get_project_lookup(args):
-    q =  "SELECT dataset_id,dataset.project_id,project from project"
+    q =  "SELECT dataset_id, dataset.project_id, project from project"
     q += " JOIN dataset using(project_id) order by project"
 
     num = 0
@@ -226,22 +265,29 @@ def get_project_lookup(args):
 if __name__ == '__main__':
 
     myusage = """
-
+    
+    metadata_files_synchrony.py
+    
         -host/--host        vampsdb, vampsdev    dbhost:  [Default: localhost]
-
-
+        
+        -v/--verbose    lots of talk          
+        
+        -pid/--pid       will check a single pid for file consistancy
+    
     """
 
     parser.add_argument("-json_file_path", "--json_file_path",
                 required=False,  action='store', dest = "json_file_path",  default='json',
                 help="Not usually needed if -host is accurate")
-                # for vampsdev"  /groups/vampsweb/vampsdev_node_data/json
     parser.add_argument("-host", "--host",
                 required=False,  action='store', dest = "dbhost",  default='localhost',
                 help="choices=['vampsdb','vampsdev','localhost']")
     parser.add_argument("-v", "--verbose",
                 required=False,  action='store_true',  dest = "verbose",  default=False,
                 help="")
+    parser.add_argument("-pid", "--pid",
+                required=False,  action='store',  dest = "single_pid",  default='',
+                help="Will check a single pid for consistancy")
     if len(sys.argv[1:]) == 0:
         print(myusage)
         sys.exit()
