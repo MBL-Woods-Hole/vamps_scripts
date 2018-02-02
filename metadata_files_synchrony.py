@@ -62,14 +62,14 @@ def go_list(args):
     cust_rowcount_data = {}
     other_problem = {}
     no_req_metadata = {}  
-     
+    num_cust_rows = 0 
     if args.single_pid:
         temp_id_lookup = {}
-        temp_id_lookup[int(args.single_pid)] = project_id_lookup[int(args.single_pid)]
+        temp_id_lookup[args.single_pid] = project_id_lookup[args.single_pid]
         project_id_lookup = temp_id_lookup
         print('Searching Single PID:',args.single_pid)
         print(project_id_lookup)
-        ds_count = len(project_id_lookup[int(args.single_pid)]) 
+        ds_count = len(project_id_lookup[args.single_pid]) 
         print("ds_count from DB:",ds_count)
         
     for pid in project_id_lookup:
@@ -131,10 +131,12 @@ def go_list(args):
             #print 'fields',fields
             if args.verbose:
                 print(q2)
+            # query2 q2 = "SELECT * from "+custom_metadata_file
             cur.execute(q2)
             num_cust_rows = cur.rowcount
             if num_cust_rows != ds_count:
                 cust_rowcount_data[pid] = project_lookup[pid]
+            
             rows = cur.fetchall()
             for row in rows:
                 did = str(row[1]) # first is custom_metadata_<pid>_id, second is did
@@ -166,54 +168,55 @@ def go_list(args):
         #if not clean_project:
         #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
     
+    print()
+    print('*'*60)
+    print('Failed projects:')
+    
     
     print()
-    print('failed projects that need to have the metadata files rebuilt:')
-    
-    print()
-    print('OTHER (rare -- Possible DID mis-match):')
-    if not len(other_problem):
-        print('**Clean**')
-    else:
-        for pid in other_problem:
-            print('pid:',pid,' -- ',other_problem[pid])
-        print  ('PID List:',','.join([str(n) for n in other_problem.keys()]))
-    print()
-    print('DATA MIS-MATCHES BETWEEN FILE AND DBASE:')
+    print('\tDATA MIS-MATCHES BETWEEN FILE AND DBASE (re-build should work):')
     if not len(mismatch_data):
-        print('**Clean**')
+        print('\t **Clean**')
     else:
         for pid in mismatch_data:
-            print( 'pid:',pid,' -- ',mismatch_data[pid])
-        print ('PID List:',','.join([str(n) for n in mismatch_data.keys()]))
+            print( '\t pid:',pid,' -- ',mismatch_data[pid])
+        print ('\t PID List:',','.join([str(n) for n in mismatch_data.keys()]))
     print()
-    print('NO FILE(s) FOUND:')
+    print('\tNO FILE(s) FOUND  (re-build should work):')
     if not len(no_file_found):
-        print('**Clean**')
+        print('\t **Clean**')
     else:
         for pid in no_file_found:
-            print('pid:',pid,' -- ',no_file_found[pid])
-        print('PID List:',','.join([str(n) for n in no_file_found.keys()]))
+            print('\t pid:',pid,' -- ',no_file_found[pid])
+        print('\t PID List:',','.join([str(n) for n in no_file_found.keys()]))
     print()
-    print('NO REQUIRED METADATA (re-install project or add by hand?):')
+    print('\tNO REQUIRED METADATA (re-install project or add by hand -- re-build won\'t help):')
     if not len(no_req_metadata):
-        print('**Clean**')
+        print('\t **Clean**')
     else:
         for pid in no_req_metadata:
-            print('pid:',pid,' -- ',no_req_metadata[pid])
-        print('PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
+            print('\t pid:',pid,' -- ',no_req_metadata[pid])
+        print('\t PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
     print()
-    print('Projects where the dataset count is different between `dataset` and `custom_metadata_xxx`')
+    print('\tProjects where the dataset count is different between `dataset` and `custom_metadata_xxx` (re-build won\'t help):')
     if not len(cust_rowcount_data):
-        print('**Clean**')
+        print('\t **Clean**')
     else:
-        for pid in other_problem:
-            print('pid:',pid,' -- ',cust_rowcount_data[pid])
-        print  ('PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
+        for pid in cust_rowcount_data:
+            print('\t pid:',pid,' -- ',cust_rowcount_data[pid])
+        print  ('\t PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
     print()
     
-    print("Number of files that need rebuilding",len(other_problem)+len(mismatch_data)+len(no_file_found))
-
+    print('\tOTHER (rare -- Possible DID mis-match or case difference -- re-build may or may not help):')
+    if not len(other_problem):
+        print('\t **Clean**')
+    else:
+        for pid in other_problem:
+            print('\t pid:',pid,' -- ',other_problem[pid])
+        print  ('\t PID List:',','.join([str(n) for n in other_problem.keys()]))
+    print()
+    print("Number of files that should be rebuilt:",len(other_problem)+len(mismatch_data)+len(no_file_found))
+    print('*'*60)
 
 def read_original_metadata():
     file_path = os.path.join(args.json_file_path,NODE_DATABASE+'--metadata.json')
@@ -248,8 +251,8 @@ def get_project_lookup(args):
     project_lookup = {}
 
     for row in cur.fetchall():
-        did = row[0]
-        pid = row[1]
+        did = str(row[0])
+        pid = str(row[1])
         pj  = row[2]
         project_lookup[pid]  =pj
         projects_by_did[did] = pj
