@@ -22,9 +22,7 @@ import time
 import random
 import csv
 from time import sleep
-import ConfigParser
 
-import rdp.rdp as rdp
 import datetime
 import logging
 today = str(datetime.date.today())
@@ -43,13 +41,14 @@ pp = pprint.PrettyPrinter(indent=4)
 queries = [
     {"table":"term","query": "SELECT term_id FROM term WHERE term_name = 'unknown'"},
     {"table":"dna_region","query": "SELECT dna_region_id FROM dna_region WHERE dna_region = 'unknown'"},
-    {"table":"adaptor_sequence","query": "SELECT run_key_id FROM run_key WHERE run_key = 'unknown'"},   # adapter_sequence
+    {"table":"adapter_sequence","query": "SELECT run_key_id FROM run_key WHERE run_key = 'unknown'"},   # adapter_sequence
     {"table":"sequencing_platform","query": "SELECT sequencing_platform_id FROM sequencing_platform WHERE sequencing_platform = 'unknown'"},
     {"table":"target_gene","query": "SELECT target_gene_id FROM target_gene WHERE target_gene = 'unknown'"},
     {"table":"domain","query": "SELECT domain_id FROM domain WHERE domain = 'unknown'"},
     {"table":"illumina_index","query": "SELECT illumina_index_id FROM illumina_index WHERE illumina_index = 'unknown'"},
     {"table":"primer_suite","query": "SELECT primer_suite_id FROM primer_suite WHERE primer_suite = 'unknown'"},
-    {"table":"run","query": "SELECT run_id FROM run WHERE run = 'unknown'"}
+    {"table":"run","query": "SELECT run_id FROM run WHERE run = 'unknown'"},
+    {"table":"env_package","query": "SELECT env_package_id FROM env_package WHERE env_package = 'unknown'"}
 ]
 class Unknowns:
 
@@ -67,7 +66,7 @@ class Unknowns:
             row = self.cur.fetchone()
             self.unknowns[q['table']] = row[0]
         
-        print 'unknown IDs',self.unknowns
+        print ('unknown IDs',self.unknowns)
        
     
                 
@@ -122,7 +121,7 @@ if __name__ == '__main__':
         hostname = 'localhost'
         NODE_DATABASE = 'vamps_development'
     
-    print 'HOST',hostname    
+    print ('HOST',hostname )   
 
     
     # socket=/tmp/mysql.sock
