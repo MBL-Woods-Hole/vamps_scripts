@@ -440,7 +440,7 @@ def go_required_metadata(did_sql, metadata_lookup):
     req_query = "SELECT dataset_id, " + ', '.join(
         required_metadata_fields) + " from required_metadata_info WHERE dataset_id in ('%s')"
     query = req_query % did_sql
-    print(query)
+    # print(query)
     rows = myconn.execute_fetch_select(query)
     for row in rows:
         # cur.execute(query)
