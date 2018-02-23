@@ -211,6 +211,7 @@ queries = [{"rank": "domain", "queryA": domain_queryA, "queryB": domain_queryB},
 
 def get_all_dids_per_pid_dict():
     query = "SELECT project_id, group_concat(dataset_id) AS dids FROM dataset GROUP BY project_id ORDER BY NULL"
+    # print("EEE query = %s" % query)
     res = myconn.execute_fetch_select(query)
     return dict((str(x[0]), make_list_from_c_str(x[1])) for x in res)
 
@@ -307,6 +308,7 @@ def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
 
     for short_list in pid_list_group:
         for pid in short_list:
+            print("PID: %s" % pid)
             dids = all_dids_per_pid_dict[pid]
             (metadata_lookup, metadata_errors) = go_custom_metadata(dids, pid, metadata_lookup, metadata_errors)
 
