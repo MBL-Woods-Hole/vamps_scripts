@@ -321,7 +321,7 @@ def go_add(node_database, pids_str, all_pids):
     pid_list = make_list_from_c_str(pids_str)
     if all_pids:
         pid_list = list(all_dids_per_pid_dict.keys())
-    group_size = 750
+    group_size = 50 #750
 
     pid_list_group = make_list_chunks(pid_list, group_size)
     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
