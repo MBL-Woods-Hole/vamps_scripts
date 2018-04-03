@@ -62,11 +62,40 @@ class Unknowns:
         
         for q in queries:
             self.cur.execute(q['query'])
+            if self.cur.rowcount != 1:
+                print(q)
+                sys.exit("ERROR - query reveals zero or more than 1 'unknowns'")
             self.mysql_conn.commit()
             row = self.cur.fetchone()
             self.unknowns[q['table']] = row[0]
         
         print ('unknown IDs',self.unknowns)
+        #field_order = ['geo_loc_name_id','env_feature_id','env_material_id','env_biome_id','env_package_id','target_gene_id','dna_region_id','sequencing_platform_id','domain_id','adapter_sequence_id','illumina_index_id','primer_suite_id','run_id']
+        field_order = ['geo_loc_name','env_feature','env_material','env_biome','env_package','target_gene','dna_region','sequencing_platform','domain','adapter_sequence','illumina_index','primer_suite','run']
+       
+        # select concat("('",dataset_id,"','670414','670414','670414','670414','19','3','1','5','1','1','83','35','5543'),") from dataset where project_id='2265'
+        select_stmt = "SELECT CONCAT(\"('\",dataset_id,\"',"
+        insert_stmt = "INSERT INTO `required_metadata_info` (dataset_id,"
+        #dataset_id,geo_loc_name_id,env_feature_id,env_material_id,env_biome_id,env_package_id, target_gene_id,dna_region_id,sequencing_platform_id,domain_id,   adapter_sequence_id,illumina_index_id,primer_suite_id,run_id) VALUES"
+        
+        
+        for f in field_order:
+            #print(f)
+            if f in ['geo_loc_name','env_feature','env_material','env_biome']:
+                select_stmt += "'"+str(self.unknowns['term'])+"',"
+            else:
+                select_stmt += "'"+str(self.unknowns[f])+"',"
+            insert_stmt += f+'_id,'
+            pass
+        select_stmt = select_stmt[:-1] + "),\") from dataset where project_id = ''"
+        insert_stmt = insert_stmt[:-1] + ') VALUES'
+        print() 
+        print('1-For entering default (unknowns) into `required_metadata_info` run this query to grab the default ID lines:')    
+        print('  ',select_stmt)
+        print()
+        print('2-Then place those lines after this statement and run it too:')
+        print('  ',insert_stmt)
+        print()
        
     
                 
@@ -115,7 +144,7 @@ if __name__ == '__main__':
         hostname = 'vampsdb'
         NODE_DATABASE = 'vamps2'
     elif args.host == 'vampsdev':
-        hostname = 'vampsdev'
+        hostname = 'bpcweb7'
         NODE_DATABASE = 'vamps2'
     else:
         hostname = 'localhost'

@@ -215,6 +215,7 @@ queries = [{"rank": "domain", "queryA": domain_queryA, "queryB": domain_queryB},
 
 def get_all_dids_per_pid_dict():
     query = "SELECT project_id, group_concat(dataset_id) AS dids FROM dataset GROUP BY project_id ORDER BY NULL"
+    # print("EEE query = %s" % query)
     res = myconn.execute_fetch_select(query)
     return dict((str(x[0]), make_list_from_c_str(x[1])) for x in res)
 
@@ -320,6 +321,7 @@ def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
 
     for short_list in pid_list_group:
         for pid in short_list:
+            print("PID: %s" % pid)
             dids = all_dids_per_pid_dict[pid]
             (metadata_lookup, metadata_errors) = go_custom_metadata(dids, pid, metadata_lookup, metadata_errors)
 
@@ -332,7 +334,7 @@ def go_add(node_database, pids_str, all_pids):
     pid_list = make_list_from_c_str(pids_str)
     if all_pids:
         pid_list = list(all_dids_per_pid_dict.keys())
-    group_size = 750
+    group_size = 50 #750
 
     pid_list_group = make_list_chunks(pid_list, group_size)
     all_used_dids = get_all_used_dicts(all_dids_per_pid_dict, pid_list)
@@ -455,7 +457,7 @@ def go_required_metadata(did_sql, metadata_lookup):
     req_query = "SELECT dataset_id, " + ', '.join(
         required_metadata_fields) + " from required_metadata_info WHERE dataset_id in ('%s')"
     query = req_query % did_sql
-    print(query)
+    # print(query)
     rows = myconn.execute_fetch_select(query)
     for row in rows:
         # cur.execute(query)
