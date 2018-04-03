@@ -276,6 +276,8 @@ if __name__ == '__main__':
         -v/--verbose    lots of talk          
         
         -pid/--pid       will check a single pid for file consistancy
+        
+        -json_file_path/--json_file_path
     
     """
 

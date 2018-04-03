@@ -156,13 +156,17 @@ query_coreA = " FROM sequence_pdr_info"
 query_core_join_silva119 = " JOIN silva_taxonomy_info_per_seq USING(sequence_id)"
 query_core_join_silva119 += " JOIN silva_taxonomy USING(silva_taxonomy_id)"
 
-query_core_join_rdp = " JOIN rdp_taxonomy_info_per_seq USING(rdp_taxonomy_info_per_seq_id)"
+query_core_join_rdp = " JOIN rdp_taxonomy_info_per_seq USING(sequence_id)"
 query_core_join_rdp += " JOIN rdp_taxonomy USING(rdp_taxonomy_id)"
+
+query_coreA_generic = " FROM generic_taxonomy_info"
+#query_core_join_generic = " JOIN generic_taxonomy_info USING(dataset_id)"
+query_core_join_generic = " JOIN generic_taxonomy USING(generic_taxonomy_id)"
+
 
 where_part = " WHERE dataset_id in (%s)"
 
-domain_queryA = "SELECT sum(seq_count), dataset_id, domain_id"
-
+domain_queryA = "SELECT sum(seq_count), dataset_id, domain_id"  #sum(seq_count)
 domain_queryB = where_part
 domain_queryB += " GROUP BY dataset_id, domain_id"
 
@@ -235,7 +239,8 @@ def make_prefix(args, node_database):
         prefix = os.path.join(args.json_file_path, node_database + '--datasets_silva119')
     elif args.units == 'rdp2.6':
         prefix = os.path.join(args.json_file_path, node_database + '--datasets_rdp2.6')
-
+    elif args.units == 'generic':
+        prefix = os.path.join(args.json_file_path, node_database + '--datasets_generic')
     if not os.path.exists(prefix):
         os.makedirs(prefix)
     print(prefix)
@@ -264,15 +269,23 @@ def get_counts_per_tax(did_sql, units):
             query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
         elif units == 'rdp2.6':
             query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
+        elif units == 'generic':
+            query = q["queryA"] + query_coreA_generic + query_core_join_generic + q["queryB"] % did_sql + end_group_query
+        print(query)
         try:
             logging.debug("running mysql query for: "+q['rank'])
 
             rows = myconn.execute_fetch_select(query)
             rank = q['rank']
+            if not rows:
+                print('No result with query:',query)
+                print("Try other units: 'silva119', 'rdp2.6', 'generic'")
+                sys.exit()
             counts_per_tax_dict[rank] = rows
         except:
             logging.debug("Failing to query with: "+query)
             sys.exit("This Database Doesn't Look Right -- Exiting")
+    
     return counts_per_tax_dict
 
 
@@ -406,6 +419,7 @@ def write_all_metadata_file(metadata_lookup, rando):
 
 def write_json_files(prefix, dids, metadata_lookup, counts_lookup):
     for did in dids:
+        
         file_path = os.path.join(prefix, str(did) + '.json')
         print('writing new file', file_path)
         f = open(file_path, 'w')
@@ -416,13 +430,16 @@ def write_json_files(prefix, dids, metadata_lookup, counts_lookup):
         else:
             my_counts_str = json.dumps({})
         if did in metadata_lookup:
+            metadata_lookup[did]['taxonomy_units'] = args.units
             try:
                 my_metadata_str = json.dumps(metadata_lookup[did])
             except:
                 my_metadata_str = json.dumps(metadata_lookup[did], ensure_ascii = False)
         else:
             print('WARNING -- no metadata for dataset:', did)
-            my_metadata_str = json.dumps({})
+            metadata_lookup[did] = {}
+            metadata_lookup[did]['taxonomy_units'] = args.units
+            my_metadata_str = json.dumps(metadata_lookup[did])
         # f.write('{"'+str(did)+'":'+mystr+"}\n")
         f.write('{"taxcounts":' + my_counts_str + ', "metadata":' + my_metadata_str + '}' + "\n")
         f.close()
@@ -568,7 +585,7 @@ if __name__ == '__main__':
         Optional:
         -json_file_path  json files path [Default: ../json]
         -host            vampsdb, vampsdev    dbhost:  [Default: localhost]
-        -units           silva119, or rdp2.6   [Default:silva119]
+        -units           silva119, or rdp2.6, generic   [Default:silva119]
 
     count_lookup_per_did[did][rank][taxid] = count
 
@@ -606,7 +623,7 @@ if __name__ == '__main__':
                         required = False, action = 'store', dest = "dbhost", default = 'localhost',
                         help = "choices=['vampsdb', 'vampsdev', 'localhost']")
     parser.add_argument("-units", "--tax_units",
-                        required = False, action = 'store', choices = ['silva119', 'rdp2.6'], dest = "units",
+                        required = False, action = 'store', choices = ['silva119', 'rdp2.6', 'generic'], dest = "units",
                         default = 'silva119',
                         help = "Default: 'silva119'; only other choice available is 'rdp2.6'")
     parser.add_argument("-dco", "--dco",
@@ -638,6 +655,8 @@ if __name__ == '__main__':
         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_silva119")
     elif args.units == 'rdp2.6':
         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_rdp2.6")
+    elif args.units == 'generic':
+        args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_generic")
     else:
         sys.exit('UNITS ERROR: ' + args.units)
     print("\nARGS: dbhost  =", dbhost)
