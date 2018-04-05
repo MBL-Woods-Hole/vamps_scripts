@@ -132,13 +132,14 @@ def clean(args):
                             'depth_required_metadata_info_temp',
                             'required_metadata_info_copy_before_big_changes',
                             'metadata_add_temp']
-    project_tmp_tables = ['custom_metadata_fields_copy','description_required_metadata_info_temp',
+    project_tmp_tables = ['user_project_status',
+                            'custom_metadata_fields_copy','description_required_metadata_info_temp',
                             'common_name_required_metadata_info_temp',
                             'metadata_add_temp',
-                            'custom_metadata_fields_copy_aug3_17',
-                            'user_project_status']
+                            'custom_metadata_fields_copy_aug3_17'
+                            ]
     for table in dataset_tmp_tables:
-        q = "SELECT * FROM information_schema.tables WHERE table_schema = 'vamps2' AND table_name = '"+table+"' LIMIT 1;"
+        q = "SELECT * FROM information_schema.tables WHERE table_schema = '"+args.NODE_DATABASE+"' AND table_name = '"+table+"' LIMIT 1;"
         cur.execute(q)
         if cur.rowcount > 0:
             q = "DELETE from "+ table
@@ -154,7 +155,7 @@ def clean(args):
     cur.execute(q)
 
     for table in project_tmp_tables:
-        q = "SELECT * FROM information_schema.tables WHERE table_schema = 'vamps2' AND table_name = '"+table+"' LIMIT 1;"
+        q = "SELECT * FROM information_schema.tables WHERE table_schema = '"+args.NODE_DATABASE+"' AND table_name = '"+table+"' LIMIT 1;"
         cur.execute(q)
         if cur.rowcount > 0:
             q = "DELETE from "+ table
