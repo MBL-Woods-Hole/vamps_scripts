@@ -58,16 +58,32 @@ def clean(args):
         pid = row[1]
         did_file1 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119',did+'.json')
         did_file2 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_rdp2.6',did+'.json')
-        print (did_file1)
+        did_file3 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_generic',did+'.json')
+        
+        file_not_deleted = False
+        removed_file = did_file1
         try:
             os.remove(did_file1)
+            file_not_deleted = False
         except OSError:
-            print ("File Not Found: "+did_file1)
-        print (did_file2)
+            #print ("File Not Found: "+did_file1)
+            file_not_deleted = True
         try:
             os.remove(did_file2)
+            file_not_deleted = False
         except OSError:
-            print ("File Not Found: "+did_file2)
+            #print ("File Not Found: "+did_file2)
+            file_not_deleted = True
+        
+        try:
+            os.remove(did_file3)
+            file_not_deleted = False
+        except OSError:
+            #print ("File Not Found: "+did_file3)
+            file_not_deleted = True
+        
+        if file_not_deleted:
+            print("File Not Found: "+did_file3)
 
     q = "DELETE from required_metadata_info"
     q += " WHERE dataset_id in ('"+ "','".join(dids) + "')"
@@ -338,7 +354,6 @@ if __name__ == '__main__':
         args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
         args.NODE_DATABASE = 'vamps2'
     else:
-        args.json_file_path = '../../json'
         args.NODE_DATABASE = args.db
         args.dbhost = 'localhost'
     print ("ARGS: dbhost  =",args.dbhost)
