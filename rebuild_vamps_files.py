@@ -625,8 +625,7 @@ if __name__ == '__main__':
                         required = False, action = 'store', dest = "dbhost", default = 'localhost',
                         help = "choices=['vampsdb', 'vampsdev', 'localhost']")
     parser.add_argument("-units", "--tax_units",
-                        required = False, action = 'store', choices = ['silva119', 'rdp2.6', 'generic'], dest = "units",
-                        default = 'silva119',
+                        required = False, action = 'store', choices = ['silva119', 'rdp2.6', 'generic'], dest = "units",  default = 'silva119',
                         help = "Default: 'silva119'; only other choice available is 'rdp2.6'")
     parser.add_argument("-dco", "--dco",
                         required = False, action = 'store_true', dest = "dco", default = False,
