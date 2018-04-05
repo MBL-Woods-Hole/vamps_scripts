@@ -61,6 +61,7 @@ def go_list(args):
     mismatch_data = {}
     cust_rowcount_data = {}
     other_problem = {}
+    did_file_problem = {}
     no_req_metadata = {}  
     num_cust_rows = 0 
     if args.single_pid:
@@ -115,7 +116,20 @@ def go_list(args):
                          if pid not in other_problem:
                             other_problem[pid] = project_lookup[pid]
                          clean_project = False
+            try:
+                did_file = os.path.join(args.json_file_path,NODE_DATABASE+'--datasets_silva119',str(did)+'.json')
+                fp = open(did_file)
+                file_data = json.load(fp)
+                if not file_data or not file_data['taxcounts']:
+                    did_file_problem[pid] = project_lookup[pid]
+                fp.close()
+            except:
+                did_file_problem[pid] = project_lookup[pid]
+                if args.verbose:
+                    print( 'pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- Could not open did file-1\n')
+        
         custom_metadata_file = 'custom_metadata_'+str(pid)
+        
         q1 = "SHOW fields from "+custom_metadata_file
         q2 = "SELECT * from "+custom_metadata_file
 
@@ -206,7 +220,14 @@ def go_list(args):
             print('\t pid:',pid,' -- ',cust_rowcount_data[pid])
         print  ('\t PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
     print()
-    
+    print('\tProjects where the dataset file(s) are missing or corrupt:')
+    if not len(did_file_problem):
+        print('\t **Clean**')
+    else:
+        for pid in did_file_problem:
+            print('\t pid:',pid,' -- ',did_file_problem[pid])
+        print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
+    print()
     print('\tOTHER (rare -- Possible DID mis-match or case difference -- re-build may or may not help):')
     if not len(other_problem):
         print('\t **Clean**')
@@ -241,7 +262,7 @@ def get_required_metadata_fields(args):
 
 def get_project_lookup(args):
     q =  "SELECT dataset_id, dataset.project_id, project from project"
-    q += " JOIN dataset using(project_id) order by project"
+    q += " JOIN dataset using(project_id) where project not like '%_Sgun' order by project"
 
     num = 0
     cur.execute(q)
@@ -254,7 +275,7 @@ def get_project_lookup(args):
         did = str(row[0])
         pid = str(row[1])
         pj  = row[2]
-        project_lookup[pid]  =pj
+        project_lookup[pid]  = pj
         projects_by_did[did] = pj
         if pid in project_id_lookup:
             project_id_lookup[pid].append(str(did))

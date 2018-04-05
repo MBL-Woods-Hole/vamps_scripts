@@ -76,7 +76,7 @@ import csv
 import pymysql as MySQLdb
 import logging
 import sys
-import os
+import os,math
 import timeit
 import time
 from collections import defaultdict
@@ -157,7 +157,7 @@ class Mysql_util:
                 field = field.strip()
                 sql += field+"=VALUES("+field+"),"
             sql = sql.rstrip(',') # remove last comma
-            #print ('sql2',sql)
+        #print ('sql2',sql)
         #if table_name == 'dataset' or table_name == 'project':
         #    print ('sql',sql)
         if self.cursor:
@@ -757,7 +757,7 @@ class Sequence:
     if len(self.sequences) > self.utils.min_seqs:
         sequences_w_ids = []
         split = len(self.sequences)/self.utils.chunk_split  # how many pieces
-        for i,seqs in enumerate(self.utils.chunks(self.sequences, split)):
+        for i,seqs in enumerate(self.utils.chunks(self.sequences, int(math.ceil(split)))):
             print (i+1,'/',self.utils.chunk_split,' -- len seqs chunk:',len(seqs))
             comp_seq = "COMPRESS(%s)" % '), COMPRESS('.join(["'%s'" % key for key in seqs])
             sequences_w_ids.extend( mysql_util.get_all_name_id('sequence', '', 'CONVERT(UNCOMPRESS(sequence_comp) USING utf8)', 'WHERE sequence_comp in (%s)' % comp_seq) )
@@ -775,7 +775,8 @@ class Sequence:
     
     if len(self.sequences) > self.utils.min_seqs:
         split = len(self.sequences)/self.utils.chunk_split  # how many pieces
-        for i,seqs in enumerate(self.utils.chunks(self.sequences, split)):
+        print('split',int(math.ceil(split)))
+        for i,seqs in enumerate(self.utils.chunks(self.sequences, int(math.ceil(split)))):
             print (i+1,'/',self.utils.chunk_split,' -- len seq chunk:',len(seqs))
             comp_seq = "COMPRESS(%s)" % ')), (COMPRESS('.join(["'%s'" % key for key in seqs])
             rows_affected = mysql_util.execute_insert("sequence", "sequence_comp", comp_seq)
@@ -822,13 +823,36 @@ class Seq_csv:
   # def make_seq_list(self):
   #   self.seq_list = [val[1] for val in self.seqs_file_content]
 
-
+  def get_default_run_info_ill_id(self):
+    # select run_info_ill_id from run_info_ill
+#     where run_key_id = (select run_key_id from run_key where run_key = "unknown")
+#     and run_id = (select run_id from run where run = "unknown")
+#     and dataset_id = (select dataset_id from dataset where dataset = "default_dataset")
+#     and dna_region_id = (select dna_region_id from dna_region where dna_region = "unknown")
+#     and primer_suite_id = (select primer_suite_id from primer_suite where primer_suite = "unknown")
+#     and illumina_index_id = (select illumina_index_id from illumina_index where illumina_index = "unknown")
+    
+    table_name = 'run_info_ill'
+    field_name = 'run_info_ill_id'
+    where_part = 'where run_key_id = (select run_key_id from run_key where run_key = "unknown")'
+    where_part += ' and run_id = (select run_id from run where run = "unknown")'
+    where_part += ' and dataset_id = (select dataset_id from dataset where dataset = "default_dataset")'
+    where_part += ' and dna_region_id = (select dna_region_id from dna_region where dna_region = "unknown")'
+    where_part += ' and primer_suite_id = (select primer_suite_id from primer_suite where primer_suite = "unknown")'
+    where_part += ' and illumina_index_id = (select illumina_index_id from illumina_index where illumina_index = "unknown")'
+    result = mysql_util.execute_simple_select(field_name, table_name, where_part)
+    return result[0][0]
+  
   def make_sequence_pdr_info_content(self, dataset_dict):
     #print('self.seq_ids_by_name_dict')
     #print(self.seq_ids_by_name_dict)
     #for a in self.seq_ids_by_name_dict:
     #    print('a')
     #    print(a)
+    # AAV: this script will always use 'default' run_info_ill_id
+    default_run_info_ill_id = self.get_default_run_info_ill_id()
+    
+    
     for e in self.seqs_file_content:
       temp_tuple = []
       #if e[1] in self.seq_ids_by_name_dict:
@@ -836,18 +860,20 @@ class Seq_csv:
       temp_tuple.append(int(self.seq_ids_by_name_dict[e[1]]))
       temp_tuple.append(int(e[7]))
       temp_tuple.append(int(2))
+      temp_tuple.append(int(default_run_info_ill_id))
       # self.utils.print_array_w_title(temp_tuple, "temp_tuple AFTER = ")
       self.sequence_pdr_info_content.append(temp_tuple)
 
   def insert_sequence_pdr_info(self):
-    fields = "dataset_id, sequence_id, seq_count, classifier_id"
+    fields = "dataset_id, sequence_id, seq_count, classifier_id, run_info_ill_id"
     
     # self.utils.print_array_w_title(insert_seq_pdr_vals, "insert_seq_pdr_vals")
+    
     
     if len(self.sequence_pdr_info_content) > self.utils.min_seqs:
         
         split = len(self.sequence_pdr_info_content)/self.utils.chunk_split  # how many pieces
-        for i,vals in enumerate(self.utils.chunks(self.sequence_pdr_info_content, split)):
+        for i,vals in enumerate(self.utils.chunks(self.sequence_pdr_info_content, int(math.ceil(split)))):
             insert_seq_pdr_vals = self.utils.make_insert_values(vals)
             print (i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(insert_seq_pdr_vals) )
             rows_affected = mysql_util.execute_insert('sequence_pdr_info', fields, insert_seq_pdr_vals)
@@ -913,7 +939,7 @@ class Seq_csv:
     #print(self.silva_taxonomy_info_per_seq_list)
     if len(self.silva_taxonomy_info_per_seq_list) > self.utils.min_seqs and '[]' not in self.silva_taxonomy_info_per_seq_list:
         split = len(self.silva_taxonomy_info_per_seq_list)/self.utils.chunk_split  # how many pieces
-        for i,vals in enumerate(self.utils.chunks(self.silva_taxonomy_info_per_seq_list, split)):
+        for i,vals in enumerate(self.utils.chunks(self.silva_taxonomy_info_per_seq_list, int(math.ceil(split)))):
             all_insert_dat_vals = self.utils.make_insert_values(vals)
             print (i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(all_insert_dat_vals))
             rows_affected = mysql_util.execute_insert("silva_taxonomy_info_per_seq", field_list, all_insert_dat_vals)
@@ -945,7 +971,7 @@ class Seq_csv:
     field_list = "sequence_id, silva_taxonomy_info_per_seq_id"
     if len(self.seq_id_w_silva_taxonomy_info_per_seq_id) > self.utils.min_seqs:
         split = len(self.seq_id_w_silva_taxonomy_info_per_seq_id)/self.utils.chunk_split  # how many pieces
-        for i,vals in enumerate(self.utils.chunks(self.seq_id_w_silva_taxonomy_info_per_seq_id, split)):
+        for i,vals in enumerate(self.utils.chunks(self.seq_id_w_silva_taxonomy_info_per_seq_id, int(math.ceil(split)))):
             sequence_uniq_info_values = '), ('.join(str(i1) + "," + str(i2) for i1, i2 in vals)
             print (i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(sequence_uniq_info_values))
             rows_affected = mysql_util.execute_insert("sequence_uniq_info", field_list, sequence_uniq_info_values)
