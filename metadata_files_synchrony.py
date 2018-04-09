@@ -228,11 +228,13 @@ def go_list(args):
     else:
         for pid in did_file_problem:
             print('\t pid:',pid,' -- ',did_file_problem[pid])
-        print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()])) 
-        print(args)
-        # if args.show_dids:
-        for pid, dids in did_file_problem_by_pid.items():
-            print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
+        print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
+
+        print("ARRR: %s" % args)
+
+        if args.show_dids:
+            for pid, dids in did_file_problem_by_pid.items():
+                print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
         
     print()
     print('\t6) OTHER (rare -- Possible DID mis-match or case difference -- re-build may or may not help):')
@@ -320,7 +322,7 @@ if __name__ == '__main__':
                 help="")
     parser.add_argument("-pid", "--pid",
                 required=False,  action='store',  dest = "single_pid",  default='',
-                help="Will check a single pid for consistancy")
+                help="Will check a single pid for consistency")
     parser.add_argument("-d", "--dids",
                 required=False,  action='store',  dest = "show_dids",  default='',
                 help="Show dids for 'Projects where the dataset file(s) are missing or corrupt'")
