@@ -228,10 +228,11 @@ def go_list(args):
     else:
         for pid in did_file_problem:
             print('\t pid:',pid,' -- ',did_file_problem[pid])
-        print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
-        if args.show_dids:
-            for pid, dids in did_file_problem_by_pid.items():
-                print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
+        print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()])) 
+        print(args)
+        # if args.show_dids:
+        for pid, dids in did_file_problem_by_pid.items():
+            print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
         
     print()
     print('\t6) OTHER (rare -- Possible DID mis-match or case difference -- re-build may or may not help):')
