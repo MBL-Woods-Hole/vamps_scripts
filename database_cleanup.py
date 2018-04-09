@@ -361,7 +361,11 @@ if __name__ == '__main__':
     if os.path.exists(args.json_file_path):
         print ('Validated: json file path')
     else:
+<<<<<<< HEAD
         print ("Could not find json directory (-json_file_path) : '",args.json_file_path,"'-Exiting")
+=======
+        print ("Could not find json directory (-json_file_path): '",args.json_file_path,"'-Exiting")
+>>>>>>> d4bc320ac2636498c2d996c224c80cbc53ca6e23
         sys.exit(-1)
     print ("ARGS: json_dir=",args.json_file_path)
     if args.dbhost == 'vampsdev':
