@@ -18,6 +18,7 @@ import json
 import shutil
 import datetime
 import socket
+from collections import defaultdict
 
 today     = str(datetime.date.today())
 
@@ -62,6 +63,7 @@ def go_list(args):
     cust_rowcount_data = {}
     other_problem = {}
     did_file_problem = {}
+    did_file_problem_by_pid = defaultdict(list)
     no_req_metadata = {}  
     num_cust_rows = 0 
     if args.single_pid:
@@ -121,7 +123,8 @@ def go_list(args):
                 fp = open(did_file)
                 file_data = json.load(fp)
                 if not file_data or not file_data['taxcounts']:
-                    did_file_problem[pid] = project_lookup[pid]
+                    did_file_problem[pid] = project_lookup[pid] 
+                    did_file_problem_by_pid[str(pid)].append(str(did))
                 fp.close()
             except:
                 did_file_problem[pid] = project_lookup[pid]
@@ -186,9 +189,8 @@ def go_list(args):
     print('*'*60)
     print('Failed projects:')
     
-    
     print()
-    print('\tDATA MIS-MATCHES BETWEEN FILE AND DBASE (re-build should work):')
+    print('\t1) DATA MIS-MATCHES BETWEEN FILE AND DBASE (re-build should work):')
     if not len(mismatch_data):
         print('\t **Clean**')
     else:
@@ -196,7 +198,7 @@ def go_list(args):
             print( '\t pid:',pid,' -- ',mismatch_data[pid])
         print ('\t PID List:',','.join([str(n) for n in mismatch_data.keys()]))
     print()
-    print('\tNO FILE(s) FOUND  (re-build should work):')
+    print('\t2) NO FILE(s) FOUND  (re-build should work):')
     if not len(no_file_found):
         print('\t **Clean**')
     else:
@@ -204,7 +206,7 @@ def go_list(args):
             print('\t pid:',pid,' -- ',no_file_found[pid])
         print('\t PID List:',','.join([str(n) for n in no_file_found.keys()]))
     print()
-    print('\tNO REQUIRED METADATA (re-install project or add by hand -- re-build won\'t help):')
+    print('\t3) NO REQUIRED METADATA (re-install project or add by hand -- re-build won\'t help):')
     if not len(no_req_metadata):
         print('\t **Clean**')
     else:
@@ -212,7 +214,7 @@ def go_list(args):
             print('\t pid:',pid,' -- ',no_req_metadata[pid])
         print('\t PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
     print()
-    print('\tProjects where the dataset count is different between `dataset` and `custom_metadata_xxx` (re-build won\'t help):')
+    print('\t4) Projects where the dataset count is different between `dataset` and `custom_metadata_xxx` (re-build won\'t help):')
     if not len(cust_rowcount_data):
         print('\t **Clean**')
     else:
@@ -220,15 +222,18 @@ def go_list(args):
             print('\t pid:',pid,' -- ',cust_rowcount_data[pid])
         print  ('\t PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
     print()
-    print('\tProjects where the dataset file(s) are missing or corrupt:')
+    print('\t5)Projects where the dataset file(s) are missing or corrupt:')
     if not len(did_file_problem):
         print('\t **Clean**')
     else:
         for pid in did_file_problem:
             print('\t pid:',pid,' -- ',did_file_problem[pid])
         print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
+        for pid, dids in did_file_problem_by_pid.items():
+            print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
+        
     print()
-    print('\tOTHER (rare -- Possible DID mis-match or case difference -- re-build may or may not help):')
+    print('\t6) OTHER (rare -- Possible DID mis-match or case difference -- re-build may or may not help):')
     if not len(other_problem):
         print('\t **Clean**')
     else:
