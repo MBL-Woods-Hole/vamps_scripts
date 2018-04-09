@@ -43,7 +43,7 @@ def go_list(args):
     file_dids = []
 
     metadata_lookup = convert_keys_to_string(read_original_metadata())
-    (projects_by_did, project_id_lookup, project_lookup) = get_project_lookup(args)
+    (projects_by_did, project_id_lookup, project_lookup) = get_project_lookup(args) # from database
     #print(project_lookup)
     required_metadata_fields = get_required_metadata_fields(args)
     #print('file_dids')
@@ -57,12 +57,12 @@ def go_list(args):
     #q += " JOIN dataset using(project_id) order by project"
     failed_projects = []
     no_req_data_found = 0
-    no_file_found = {}
-    mismatch_data = {}
-    cust_rowcount_data = {}
+    no_file_found = {}          # 2only for metadata BULK FILE: if did NOT found
+    mismatch_data = {}          # 1metadata mismatch between DATABASE and metadata BULK FILE
+    cust_rowcount_data = {}     # 4dataset count unequal between DATABASE custom metadata table and DATABASE datasets table
     other_problem = {}
-    did_file_problem = {}
-    no_req_metadata = {}  
+    did_file_problem = {}       # 5did FILES: if taxcounts ={} or empty file present
+    no_req_metadata = {}        # 3if no required metadata found in DATABASE
     num_cust_rows = 0 
     if args.single_pid:
         temp_id_lookup = {}
@@ -188,7 +188,7 @@ def go_list(args):
     
     
     print()
-    print('\tDATA MIS-MATCHES BETWEEN FILE AND DBASE (re-build should work):')
+    print('\tMETADATA MIS-MATCHES BETWEEN BULK FILE AND DBASE (Assumes same for did file)(re-build should work):')
     if not len(mismatch_data):
         print('\t **Clean**')
     else:
@@ -196,7 +196,7 @@ def go_list(args):
             print( '\t pid:',pid,' -- ',mismatch_data[pid])
         print ('\t PID List:',','.join([str(n) for n in mismatch_data.keys()]))
     print()
-    print('\tNO FILE(s) FOUND  (re-build should work):')
+    print('\tNO DID FOUND IN METADATA BULK FILE (Assumes no did file found either) (re-build should work):')
     if not len(no_file_found):
         print('\t **Clean**')
     else:
@@ -204,7 +204,7 @@ def go_list(args):
             print('\t pid:',pid,' -- ',no_file_found[pid])
         print('\t PID List:',','.join([str(n) for n in no_file_found.keys()]))
     print()
-    print('\tNO REQUIRED METADATA (re-install project or add by hand -- re-build won\'t help):')
+    print('\tNO REQUIRED METADATA FOUND IN DATABASE (re-install project or add by hand -- re-build won\'t help):')
     if not len(no_req_metadata):
         print('\t **Clean**')
     else:
@@ -212,7 +212,7 @@ def go_list(args):
             print('\t pid:',pid,' -- ',no_req_metadata[pid])
         print('\t PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
     print()
-    print('\tProjects where the dataset count is different between `dataset` and `custom_metadata_xxx` (re-build won\'t help):')
+    print('\tDATABASE: Dataset count is different between `dataset` and `custom_metadata_xxx` tables (re-build won\'t help):')
     if not len(cust_rowcount_data):
         print('\t **Clean**')
     else:
@@ -220,7 +220,7 @@ def go_list(args):
             print('\t pid:',pid,' -- ',cust_rowcount_data[pid])
         print  ('\t PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
     print()
-    print('\tProjects where the dataset file(s) are missing or corrupt:')
+    print('\tDID FILES: zero-length file or taxcounts={}:')
     if not len(did_file_problem):
         print('\t **Clean**')
     else:
@@ -228,7 +228,7 @@ def go_list(args):
             print('\t pid:',pid,' -- ',did_file_problem[pid])
         print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
     print()
-    print('\tOTHER (rare -- Possible DID mis-match or case difference -- re-build may or may not help):')
+    print('\tOTHER (rare -- Possible DID mis-match or case difference for metadata -- re-build may or may not help):')
     if not len(other_problem):
         print('\t **Clean**')
     else:
