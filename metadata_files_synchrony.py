@@ -229,7 +229,8 @@ def go_list(args):
         for pid in did_file_problem:
             print('\t pid:',pid,' -- ',did_file_problem[pid])
         print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
-        for pid, dids in did_file_problem_by_pid.items():
+        if args.show_dids:
+            for pid, dids in did_file_problem_by_pid.items():
             print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
         
     print()
@@ -319,6 +320,9 @@ if __name__ == '__main__':
     parser.add_argument("-pid", "--pid",
                 required=False,  action='store',  dest = "single_pid",  default='',
                 help="Will check a single pid for consistancy")
+    parser.add_argument("-d", "--dids",
+                required=False,  action='store',  dest = "show_dids",  default='',
+                help="Show dids for 'Projects where the dataset file(s) are missing or corrupt'")
     if len(sys.argv[1:]) == 0:
         print(myusage)
         sys.exit()
