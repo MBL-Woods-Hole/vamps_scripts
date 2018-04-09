@@ -18,6 +18,7 @@ import json
 import shutil
 import datetime
 import socket
+from collections import defaultdict
 
 today     = str(datetime.date.today())
 
@@ -122,7 +123,8 @@ def go_list(args):
                 fp = open(did_file)
                 file_data = json.load(fp)
                 if not file_data or not file_data['taxcounts']:
-                    did_file_problem[pid] = project_lookup[pid]
+                    did_file_problem[pid] = project_lookup[pid] 
+                    did_file_problem_by_pid[str(pid)].append(str(did))
                 fp.close()
             except:
                 did_file_problem[pid] = project_lookup[pid]
@@ -187,7 +189,6 @@ def go_list(args):
     print('*'*60)
     print('Failed projects:')
     
-    
     print()
     print('\t1) METADATA MIS-MATCHES BETWEEN BULK FILE AND DBASE (Assumes same for did file) (re-build should work):')
     if not len(mismatch_data):
@@ -228,6 +229,7 @@ def go_list(args):
         for pid in did_file_problem:
             print('\t pid:',pid,' -- ',did_file_problem[pid])
         print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
+
         if args.show_dids:
             for pid, dids in did_file_problem_by_pid.items():
                 print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
@@ -318,7 +320,10 @@ if __name__ == '__main__':
                 help="")
     parser.add_argument("-pid", "--pid",
                 required=False,  action='store',  dest = "single_pid",  default='',
-                help="Will check a single pid for consistancy")
+                help="Will check a single pid for consistency")
+    parser.add_argument("-d", "--dids",
+                required=False,  action='store_true',  dest = "show_dids",  default='',
+                help="Show dids for 'Projects where the dataset file(s) are missing or corrupt'")
     if len(sys.argv[1:]) == 0:
         print(myusage)
         sys.exit()
@@ -386,4 +391,3 @@ if __name__ == '__main__':
     print('DATABASE:',NODE_DATABASE)
 
     go_list(args)
-    
