@@ -231,7 +231,7 @@ def go_list(args):
         print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
         if args.show_dids:
             for pid, dids in did_file_problem_by_pid.items():
-            print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
+                print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
         
     print()
     print('\t6) OTHER (rare -- Possible DID mis-match or case difference -- re-build may or may not help):')
