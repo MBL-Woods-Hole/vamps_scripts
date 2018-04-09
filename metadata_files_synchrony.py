@@ -324,7 +324,7 @@ if __name__ == '__main__':
                 required=False,  action='store',  dest = "single_pid",  default='',
                 help="Will check a single pid for consistency")
     parser.add_argument("-d", "--dids",
-                required=False,  action='store',  dest = "show_dids",  default='',
+                required=False,  action='store_true',  dest = "show_dids",  default='',
                 help="Show dids for 'Projects where the dataset file(s) are missing or corrupt'")
     if len(sys.argv[1:]) == 0:
         print(myusage)
