@@ -119,7 +119,7 @@ def go_list(args):
                             other_problem[pid] = project_lookup[pid]
                          clean_project = False
             try:
-                did_file = os.path.join(args.json_file_path,NODE_DATABASE+'--datasets_silva119',str(did)+'.json')
+                did_file = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119', str(did)+'.json')
                 fp = open(did_file)
                 file_data = json.load(fp)
                 if not file_data or not file_data['taxcounts']:
