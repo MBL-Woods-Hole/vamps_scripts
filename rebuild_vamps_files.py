@@ -290,7 +290,7 @@ def get_counts_per_tax(did_sql, units, short_list):
                 print("Try other units: 'silva119', 'rdp2.6', 'generic'")
                 pids_by_did = get_all_pids_by_did_dict()
                 pid = pids_by_did[short_list[0]]
-                print('Error while processing project:', pid)
+                print('Error while processing project: ', pid)
                 sys.exit()
             counts_per_tax_dict[rank] = rows
         except:
