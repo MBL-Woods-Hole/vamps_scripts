@@ -220,6 +220,13 @@ def get_all_dids_per_pid_dict():
     return dict((str(x[0]), make_list_from_c_str(x[1])) for x in res)
 
 
+def get_all_pids_by_did_dict():
+    query = "SELECT dataset_id, project_id FROM dataset"
+    # print("EEE query = %s" % query)
+    res = myconn.execute_fetch_select(query)
+    return dict((str(x[0]), str(x[1])) for x in res)
+
+
 def get_dco_pids():
     query = "select project_id from project where project like 'DCO%'"
     rows = myconn.execute_fetch_select(query)
@@ -263,7 +270,7 @@ def make_list_chunks(my_list, chunk_size):
     return [my_list[x:x + chunk_size] for x in range(0, len(my_list), chunk_size)]
 
 
-def get_counts_per_tax(did_sql, units):
+def get_counts_per_tax(did_sql, units, short_list):
     counts_per_tax_dict = {}
     for q in queries:
         if units == 'silva119':
@@ -281,6 +288,9 @@ def get_counts_per_tax(did_sql, units):
             if not rows:
                 print('No result with query:',query)
                 print("Try other units: 'silva119', 'rdp2.6', 'generic'")
+                pids_by_did = get_all_pids_by_did_dict()
+                pid = pids_by_did[short_list[0]]
+                print('Error while processing project:', pid)
                 sys.exit()
             counts_per_tax_dict[rank] = rows
         except:
@@ -309,7 +319,7 @@ def make_counts_lookup_by_did(did_list_group, units):
 
     for short_list in did_list_group:
         did_sql = ', '.join(short_list)
-        counts_per_tax_dict = get_counts_per_tax(did_sql, units)
+        counts_per_tax_dict = get_counts_per_tax(did_sql, units, short_list)
         counts_lookup = make_counts_lookup_dict(counts_per_tax_dict, counts_lookup)
 
     return counts_lookup
