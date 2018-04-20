@@ -58,7 +58,7 @@ def start(args):
     
     
     logging.info('CMD> '+' '.join(sys.argv))
-    print 'CMD> ',sys.argv
+    print ('CMD> ',sys.argv)
     
     (status1, msg1) = check_project(args)
     (status2, msg2, oid) = check_owner(args)
@@ -78,7 +78,7 @@ def start(args):
     rows = args.cur.fetchall()
     for row in rows:
         RANK_COLLECTOR[row[1]] = row[0]
-    print RANK_COLLECTOR
+    print (RANK_COLLECTOR)
    
     
     print('parsing file')
@@ -95,16 +95,16 @@ def start(args):
     #print "starting sequences"
     #push_sequences( args )
     
-    print "projects"
+    print ("projects")
     (args.pid, msg) = push_project( args )
     if args.pid == 0:
         sys.exit(msg)
-    print 'PID:',args.pid  
+    print ('PID:',args.pid  )
           
-    print "datasets"
+    print ("datasets")
     push_dataset( args )
         
-    print "starting push_pdr_seqs"
+    print ("starting push_pdr_seqs")
     push_pdr_seqs( args )
          
 def push_taxonomy(args):
@@ -123,7 +123,7 @@ def push_taxonomy(args):
             tax_items   = tax_string.split(';')
             rank_index = len(tax_items)-1
             rank_name = ranks[rank_index]
-            print 'rank',rank_index, rank_name
+            print ('rank',rank_index, rank_name)
             count   = OTU_COLLECTOR[ds][otu]['count'] 
             sumtax = ''
     
@@ -163,7 +163,7 @@ def push_taxonomy(args):
                     q2 = "INSERT ignore into `"+rank_name+"` (`"+rank_name+"`) VALUES('"+t+"')"
                     print(q2)
                     args.cur.execute(q2)
-                    print 'rows affected',args.cur.rowcount
+                    print ('rows affected',args.cur.rowcount)
                     mysql_conn.commit() 
                     tax_id = args.cur.lastrowid
                     if tax_id == 0:
@@ -218,7 +218,7 @@ def push_project(args):
     ds_count  = len(OTU_COLLECTOR)
     otu_count = len(OTU_COUNT)
     q = q % (args.project,title,desc,rev,args.oid,pub,args.otu_size,args.otu_method,ds_count,otu_count)
-    print q
+    print (q)
     
     pid = 0
     try:
@@ -251,7 +251,7 @@ def push_dataset(args):
         #try:
         args.cur.execute(q4)
         did = args.cur.lastrowid
-        print 'new did',did
+        print ('new did',did)
         DATASET_ID_BY_NAME[ds] = did
         mysql_conn.commit()
         #except:
@@ -265,7 +265,7 @@ def push_pdr_seqs(args):
     global OTU_COLLECTOR
     global DATASET_ID_BY_NAME
     global mysql_conn
-    print DATASET_ID_BY_NAME
+    print (DATASET_ID_BY_NAME)
     for ds in OTU_COLLECTOR:
         for otu in OTU_COLLECTOR[ds]:
             did = DATASET_ID_BY_NAME[ds]
@@ -282,7 +282,7 @@ def push_pdr_seqs(args):
                 args.cur.execute(q % (str(did), otu, str(count), tax_id ))
             except:
                 print(q)
-                print "ERROR Exiting: "+ds +"; Query: "+q % (str(did), otu, str(count), tax_id )
+                print ("ERROR Exiting: "+ds +"; Query: "+q % (str(did), otu, str(count), tax_id ))
                 #print DATASET_ID_BY_NAME
                 sys.exit()
             mysql_conn.commit() 
@@ -298,11 +298,11 @@ def parse_file(args):
     
     if args.compressed:
         #with gzip.open(args.tax_by_seq_file, mode='r') as infile:
-        print 'trying to open matrix gzip file'
+        print ('trying to open matrix gzip file')
         f=gzip.open(args.matrix_file,'rb')
     else:
         #with open(args.tax_by_seq_file, mode='r') as infile:
-        print 'trying to open matrix text file'
+        print ('trying to open matrix text file')
         f=open(args.matrix_file,'rb')
 
     infile = f.readlines()
@@ -336,9 +336,9 @@ def parse_file(args):
                 taxonomy = False
                 ds_order = line_items[1:]
             if taxonomy:
-                print 'Using Taxonomy Column at Index =',taxonomy_index
+                print ('Using Taxonomy Column at Index =',taxonomy_index)
             else:
-                print 'No Taxonomy'
+                print ('No Taxonomy')
             continue            
         #print 'dataset order:',ds_order
         #print line_items
@@ -408,7 +408,7 @@ def check_owner(args):
     return ('OK','',row[1])
     
 def connect_mysql(args):
-    print "ARGS: dbhost  =",args.host
+    print ("ARGS: dbhost  =",args.host)
     if args.host == 'vamps' or args.host == 'vampsdb' or args.host == 'bpcweb8':
         args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
         args.NODE_DATABASE = 'vamps2'
@@ -423,11 +423,11 @@ def connect_mysql(args):
         args.dbhost = 'localhost'
     
     if os.path.exists(args.json_file_path):
-        print 'Validated: json file path'
+        print ('Validated: json file path')
     else:
-        print "Could not find json directory: '",args.json_file_path,"'-Exiting"
+        print ("Could not find json directory: '",args.json_file_path,"'-Exiting")
         sys.exit(-1)
-    print "ARGS: json_dir=",args.json_file_path 
+    print ("ARGS: json_dir=",args.json_file_path )
 
       
     
@@ -438,7 +438,7 @@ def connect_mysql(args):
 
 def delete(args):
 
-    print 'in delete'
+    print ('in delete')
     
     # get dids
     q = "SELECT otu_dataset_id from otu_dataset where otu_project_id='"+args.pid+"'"
@@ -448,23 +448,23 @@ def delete(args):
     for row in rows:
         id_list.append(str(row[0]))
     sql_list = "','".join(id_list)
-    print sql_list
+    print (sql_list)
     
     q= "delete from otu_pdr_info where otu_dataset_id in('"+sql_list+"')"
     print(q)
     
     args.cur.execute(q)
-    print 'rows affected',args.cur.rowcount
+    print ('rows affected',args.cur.rowcount)
     mysql_conn.commit() 
     q= "delete from otu_dataset where otu_dataset_id in('"+sql_list+"')"
     print(q)
     args.cur.execute(q)
-    print 'rows affected',args.cur.rowcount
+    print ('rows affected',args.cur.rowcount)
     mysql_conn.commit() 
     q= "delete from otu_project where otu_project_id ='"+args.pid+"'"
     print(q)
     args.cur.execute(q)
-    print 'rows affected',args.cur.rowcount
+    print ('rows affected',args.cur.rowcount)
     mysql_conn.commit() 
 
 if __name__ == '__main__':
@@ -578,6 +578,6 @@ if __name__ == '__main__':
     
     start(args)
 
-    print 'Done; PID =',args.pid
+    print ('Done; PID =',args.pid)
     
  

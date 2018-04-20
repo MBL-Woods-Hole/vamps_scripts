@@ -176,7 +176,8 @@ class Mysql_util:
       my_sql  = """SELECT %s, %s FROM %s %s""" % (field_name, id_name, table_name, where_part)
       # self.utils.print_both(("my_sql from get_all_name_id = %s") % my_sql)
       res     = self.execute_fetch_select(my_sql)
-      
+      #print('RES')
+      #print(res[0])
       if res:
         return res[0]   
 
@@ -246,9 +247,9 @@ class Utils:
       print (message)
 
     def read_csv_into_list(self, file_name):
-      fh = open(file_name, 'r')
+      fh = open(file_name, 'r', encoding='utf-8', newline='')
       yy = csv.reader(fh, delimiter = ',')
-      print(yy)
+      
       csv_file_content_all = list(yy)
       try:
         csv_file_fields      = csv_file_content_all[0]
@@ -256,6 +257,9 @@ class Utils:
       except:
         csv_file_fields      = []
         csv_file_content     = []
+        
+      #print('csv_file_content')
+      #print( csv_file_content[0:4] )
       return (csv_file_fields, csv_file_content)
       # return list(csv.reader(open(file_name, 'rb'), delimiter = ','))[1:]
 
@@ -691,7 +695,7 @@ class Dataset:
 
     self.dataset_file_content = self.utils.read_csv_into_list(dataset_csv_file_name)[1]
     self.dataset_file_content = [[p[0],p[1],p[3]] for p in self.dataset_file_content]
-    print(self.dataset_file_content)
+    #print(self.dataset_file_content)
     # need to remove field 2 from each row
     # self.utils.print_array_w_title(self.dataset_file_content, "===\nself.dataset_file_content AAA")
 
@@ -729,7 +733,7 @@ class Dataset:
   def make_all_dataset_id_by_project_dict(self):
     for dat, proj in sorted(self.dataset_project_dict.items()):
         self.all_dataset_id_by_project_dict[proj].append(self.dataset_id_by_name_dict[dat])
-    print ("all_dataset_id_by_project_dict")
+    #print ("all_dataset_id_by_project_dict")
     #print self.all_dataset_id_by_project_dict
     # {'ICM_SMS_Bv6': [1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077]})
 
@@ -761,12 +765,13 @@ class Sequence:
             print (i+1,'/',self.utils.chunk_split,' -- len seqs chunk:',len(seqs))
             comp_seq = "COMPRESS(%s)" % '), COMPRESS('.join(["'%s'" % key for key in seqs])
             sequences_w_ids.extend( mysql_util.get_all_name_id('sequence', '', 'CONVERT(UNCOMPRESS(sequence_comp) USING utf8)', 'WHERE sequence_comp in (%s)' % comp_seq) )
-        print('2-sequences_w_ids[:10]')
-        print(sequences_w_ids[:10])
+        
         self.sequences_w_ids = sequences_w_ids
     else:
         self.comp_seq = "COMPRESS(%s)" % '), COMPRESS('.join(["'%s'" % key for key in self.sequences])
-        self.sequences_w_ids = mysql_util.get_all_name_id('sequence', '', 'UNCOMPRESS(sequence_comp)', 'WHERE sequence_comp in (%s)' % self.comp_seq)
+        self.sequences_w_ids = mysql_util.get_all_name_id('sequence', '', "CONVERT(UNCOMPRESS(sequence_comp) USING 'utf8')", 'WHERE sequence_comp in (%s)' % self.comp_seq)
+    #print('2-sequences_w_ids[:10]')
+    #print(self.sequences_w_ids[:10])
     # self.utils.print_array_w_title(sequences_w_ids, "sequences_w_ids from get_seq_ids")
 
   def insert_seq(self):
@@ -797,6 +802,7 @@ class Seq_csv:
 
   def __init__(self, seq_csv_file_name, mysql_util):
     self.utils = Utils()
+    
     self.seq_csv_file_fields, self.seqs_file_content = self.utils.read_csv_into_list(seq_csv_file_name)
     
     self.content_by_field = self.content_matrix_transposition()
@@ -817,7 +823,7 @@ class Seq_csv:
     [['278176', 'TGGACTTGACATGCACTTGTAAGCCATAGAGATATGGCCCCTCTTCGGAGC', 'ICM_SMS_Bv6', 'SMS_0001_2007_09_19', 'Bacteria;Proteobacteria;Deltaproteobacteria;Desulfobacterales;Nitrospinaceae;Nitrospina', 'v6_DU318 v6_DU349 v6_DU400 v6_DU416', 'genus', '2', '0.000136008160489629', '0.03900', 'FL6XCJ201ALT42', 'ICM_SMS_Bv6--SMS_0001_2007_09_19']...]
     """
 
-  def content_matrix_transposition(self):
+  def content_matrix_transposition(self):    
     return list(zip(*self.seqs_file_content))
 
   # def make_seq_list(self):
@@ -844,8 +850,9 @@ class Seq_csv:
     return result[0][0]
   
   def make_sequence_pdr_info_content(self, dataset_dict):
-    #print('self.seq_ids_by_name_dict')
-    #print(self.seq_ids_by_name_dict)
+    print('self.seq_ids_by_name_dict')
+    #print( len(self.seq_ids_by_name_dict))
+    #print( dict(list(self.seq_ids_by_name_dict.items())[0:2] ))
     #for a in self.seq_ids_by_name_dict:
     #    print('a')
     #    print(a)
@@ -855,6 +862,8 @@ class Seq_csv:
     
     for e in self.seqs_file_content:
       temp_tuple = []
+      #print(e[1])
+      #print(self.seq_ids_by_name_dict[e[1]])
       #if e[1] in self.seq_ids_by_name_dict:
       temp_tuple.append(int(dataset_dict[e[3]]))
       temp_tuple.append(int(self.seq_ids_by_name_dict[e[1]]))
@@ -889,7 +898,8 @@ class Seq_csv:
     # self.sequence.get_seq_ids()
     # sequences_w_ids
     # self.utils.print_array_w_title(sequences_w_ids, "self.seq_ids_by_name_dict = ")
-
+    #print('sequences_w_ids[0:3]')
+    #print(sequences_w_ids[0:3])
     self.seq_ids_by_name_dict = dict(sequences_w_ids)
     
     # self.utils.print_array_w_title(self.seq_ids_by_name_dict, "self.seq_ids_by_name_dict = ")
@@ -915,8 +925,8 @@ class Seq_csv:
     silva_taxonomy_info_per_seq_list1 = []
     for entry in self.seqs_file_content:
       temp_list = []
-
       entry_w_fields_dict = self.utils.make_entry_w_fields_dict(self.seq_csv_file_fields, entry)
+      #if entry_w_fields_dict["sequence"] in self.seq_ids_by_name_dict:
       sequence_id       = self.seq_ids_by_name_dict[entry_w_fields_dict["sequence"]]
       silva_taxonomy_id = taxonomy.silva_taxonomy_id_per_taxonomy_dict[entry_w_fields_dict["taxonomy"]]
       gast_distance     = entry_w_fields_dict["distance"]
@@ -1302,9 +1312,14 @@ class Metadata:
       field_list_temp.append(required_metadata_dict.keys())
       all_required_metadata.append(required_metadata_dict.values())
     add_on_names = [self.target_gene_id, self.dna_region_id, self.domain_id, self.sequencing_platform_id, self.geo_loc_name_id, self.env_biome_id,self.env_feature_id,self.env_material_id,self.env_package_id,self.adapter_sequence_id,self.illumina_index_id,self.primer_suite_id,self.run_id]
-    
+    #print('add_on_names')
+    #print(add_on_names)
+    #print('all_required_metadata')
+    #print(all_required_metadata)
     if len(all_required_metadata) > 0:
-        all_required_metadata = [x + add_on_names for x in all_required_metadata]
+        
+        all_required_metadata = [list(x) + add_on_names for x in all_required_metadata]
+        
         self.required_metadata_insert_values = self.utils.make_insert_values(all_required_metadata)      
         self.required_metadata_field_list    = ", ".join(field_list_temp[0])
         self.required_metadata_field_list += ", "
@@ -1385,7 +1400,7 @@ class Metadata:
     self.custom_metadata_fields_uniqued_for_tbl = mysql_util.execute_simple_select(field_names, table_name, where_part)
 
   def correct_field_name(self, field_name):
-    return field_name.replace("(", "_").replace(")", "_").lower()  # LOWERCASE decided for all fields 2017-11-29
+    return field_name.replace("(", "_").replace(")", "_").replace(",", "-").lower()  # LOWERCASE decided for all fields 2017-11-29
     
   def create_custom_metadata_pr_id_table(self):    
     # print self.project_ids

@@ -49,7 +49,9 @@ def go_list(args):
     required_metadata_fields = get_required_metadata_fields(args)
     #print('file_dids')
     #print(metadata_lookup)  ## <-- lookup by did
-
+    
+    project_id_order = list(project_id_lookup.keys())
+    project_id_order.sort()
     #metadata_dids = metadata_lookup.keys()
     #
     #print file_dids
@@ -69,13 +71,14 @@ def go_list(args):
     if args.single_pid:
         temp_id_lookup = {}
         temp_id_lookup[args.single_pid] = project_id_lookup[args.single_pid]
+        project_id_order = [args.single_pid]
         project_id_lookup = temp_id_lookup
         print('Searching Single PID:',args.single_pid)
         print(project_id_lookup)
         ds_count = len(project_id_lookup[args.single_pid]) 
         print("ds_count from DB:",ds_count)
         
-    for pid in project_id_lookup:
+    for pid in project_id_order:
         # go project by project
         sql_dids =  "','".join(project_id_lookup[pid])
         ds_count = len(project_id_lookup[pid]) 
@@ -131,6 +134,8 @@ def go_list(args):
                 if args.verbose:
                     print( 'pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- Could not open did file-1\n')
         
+        
+        
         custom_metadata_file = 'custom_metadata_'+str(pid)
         
         q1 = "SHOW fields from "+custom_metadata_file
@@ -184,7 +189,26 @@ def go_list(args):
         #sys.exit()
         #if not clean_project:
         #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
-    
+    missing_seqs = {}
+    q2_base = "SELECT sequence_pdr_info_id from sequence_pdr_info where dataset_id in ('%s')"
+    if args.verbose:
+        print(q2_base)
+    if args.search_seqs:
+        print('Searching for sequences in sequence_pdr_info')        
+        for pid in project_id_order:
+            # go project by project
+            sql_dids =  "','".join(project_id_lookup[pid])
+            ds_count = len(project_id_lookup[pid]) 
+            q2 = q2_base % (sql_dids)                
+            clean_project = True
+            num = 0
+            cur.execute(q2)
+            numrows = cur.rowcount
+            if numrows == 0:
+                missing_seqs[pid] = project_lookup[pid]
+                if args.verbose:
+                    print('No sequences found::pid:'+str(pid) +' -- '+project_lookup[pid])
+        
     print()
     print('*'*60)
     print('Failed projects:')
@@ -242,7 +266,17 @@ def go_list(args):
         for pid in other_problem:
             print('\t pid:',pid,' -- ',other_problem[pid])
         print  ('\t PID List:',','.join([str(n) for n in other_problem.keys()]))
+    
     print()
+    if args.search_seqs:
+        print('\t7) SEQUENCES (all-or-nothing: NO seqs found in `sequence_pdr_info` table):')
+        if not len(missing_seqs):
+            print('\t **Clean**')
+        else:
+            for pid in missing_seqs:
+                print('\t pid:',pid,' -- ',missing_seqs[pid])
+            print  ('\t PID List:',','.join([str(n) for n in missing_seqs.keys()]))
+        print()
     print("Number of files that should be rebuilt:",len(other_problem)+len(mismatch_data)+len(no_file_found))
     print('*'*60)
 
@@ -306,6 +340,8 @@ if __name__ == '__main__':
         -pid/--pid       will check a single pid for file consistancy
         
         -json_file_path/--json_file_path
+        
+        -s/--search_seqs  
     
     """
 
@@ -324,6 +360,9 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--dids",
                 required=False,  action='store_true',  dest = "show_dids",  default='',
                 help="Show dids for 'Projects where the dataset file(s) are missing or corrupt'")
+    parser.add_argument("-s", "--search_seqs",
+                required=False,  action='store_true',  dest = "search_seqs",  default=False,
+                help="search sequence_pdr_info for project sequence -- off by default'")
     if len(sys.argv[1:]) == 0:
         print(myusage)
         sys.exit()
