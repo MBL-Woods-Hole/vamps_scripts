@@ -277,7 +277,7 @@ def go_list(args):
                 print('\t pid:',pid,' -- ',missing_seqs[pid])
             print  ('\t PID List:',','.join([str(n) for n in missing_seqs.keys()]))
         print()
-    all_to_rebuild = other_problem + mismatch_data + no_file_found
+    all_to_rebuild = list(other_problem.keys()) + list(mismatch_data.keys()) + list(no_file_found.keys()) 
     print("To rebuild: %s" % (", ".join(all_to_rebuild)))    
     print("Number of files that should be rebuilt:",len(other_problem)+len(mismatch_data)+len(no_file_found))
     print('*'*60)
