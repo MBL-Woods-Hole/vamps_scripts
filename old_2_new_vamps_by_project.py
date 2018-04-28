@@ -1116,7 +1116,7 @@ class Metadata:
     self.get_run_ids()
     
     #print('self.target_gene_list',self.target_gene_list)
-    #print('self.dna_region_list',self.dna_region_list)
+    print('self.dna_region_list',self.dna_region_list)
     #print('self.domain_list',self.domain_list)
     print('self.sequencing_platform_list',self.sequencing_platform_list)
     #print('self.geo_loc_name_list',self.geo_loc_name_list)
