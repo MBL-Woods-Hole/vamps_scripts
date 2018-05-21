@@ -163,6 +163,8 @@ query_coreA_generic = " FROM generic_taxonomy_info"
 #query_core_join_generic = " JOIN generic_taxonomy_info USING(dataset_id)"
 query_core_join_generic = " JOIN generic_taxonomy USING(generic_taxonomy_id)"
 
+query_coreA_matrix     = " FROM  matrix_taxonomy_info"
+query_core_join_matrix = " JOIN generic_taxonomy USING(generic_taxonomy_id)"
 
 where_part = " WHERE dataset_id in (%s)"
 
@@ -220,6 +222,13 @@ def get_all_dids_per_pid_dict():
     return dict((str(x[0]), make_list_from_c_str(x[1])) for x in res)
 
 
+def get_all_pids_by_did_dict():
+    query = "SELECT dataset_id, project_id FROM dataset"
+    # print("EEE query = %s" % query)
+    res = myconn.execute_fetch_select(query)
+    return dict((str(x[0]), str(x[1])) for x in res)
+
+
 def get_dco_pids():
     query = "select project_id from project where project like 'DCO%'"
     rows = myconn.execute_fetch_select(query)
@@ -242,6 +251,8 @@ def make_prefix(args, node_database):
         prefix = os.path.join(args.json_file_path, node_database + '--datasets_rdp2.6')
     elif args.units == 'generic':
         prefix = os.path.join(args.json_file_path, node_database + '--datasets_generic')
+    elif args.units == 'matrix':  # add matrix files to generic
+        prefix = os.path.join(args.json_file_path, node_database + '--datasets_generic')
     if not os.path.exists(prefix):
         os.makedirs(prefix)
     print(prefix)
@@ -263,7 +274,7 @@ def make_list_chunks(my_list, chunk_size):
     return [my_list[x:x + chunk_size] for x in range(0, len(my_list), chunk_size)]
 
 
-def get_counts_per_tax(did_sql, units):
+def get_counts_per_tax(did_sql, units, short_list):
     counts_per_tax_dict = {}
     for q in queries:
         if units == 'silva119':
@@ -272,6 +283,8 @@ def get_counts_per_tax(did_sql, units):
             query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
         elif units == 'generic':
             query = q["queryA"] + query_coreA_generic + query_core_join_generic + q["queryB"] % did_sql + end_group_query
+        elif units == 'matrix':
+            query = q["queryA"] + query_coreA_matrix +  query_core_join_matrix +  q["queryB"] % did_sql + end_group_query
         print(query)
         try:
             logging.debug("running mysql query for: "+q['rank'])
@@ -281,6 +294,9 @@ def get_counts_per_tax(did_sql, units):
             if not rows:
                 print('No result with query:',query)
                 print("Try other units: 'silva119', 'rdp2.6', 'generic'")
+                pids_by_did = get_all_pids_by_did_dict()
+                pid = pids_by_did[short_list[0]]
+                print('Error while processing project: ', pid)
                 sys.exit()
             counts_per_tax_dict[rank] = rows
         except:
@@ -309,7 +325,7 @@ def make_counts_lookup_by_did(did_list_group, units):
 
     for short_list in did_list_group:
         did_sql = ', '.join(short_list)
-        counts_per_tax_dict = get_counts_per_tax(did_sql, units)
+        counts_per_tax_dict = get_counts_per_tax(did_sql, units, short_list)
         counts_lookup = make_counts_lookup_dict(counts_per_tax_dict, counts_lookup)
 
     return counts_lookup
@@ -625,23 +641,24 @@ if __name__ == '__main__':
                         required = False, action = 'store', dest = "dbhost", default = 'localhost',
                         help = "choices=['vampsdb', 'vampsdev', 'localhost']")
     parser.add_argument("-units", "--tax_units",
-                        required = False, action = 'store', choices = ['silva119', 'rdp2.6', 'generic'], dest = "units",  default = 'silva119',
-                        help = "Default: 'silva119'; only other choice available is 'rdp2.6'")
+                        required = False, action = 'store', choices = ['silva119', 'rdp2.6', 'generic','matrix'], dest = "units",  default = 'silva119',
+                        help = "Default: 'silva119'; only other choices available are 'rdp2.6','generic','matrix'")
     parser.add_argument("-dco", "--dco",
                         required = False, action = 'store_true', dest = "dco", default = False,
                         help = "")
+
 
     # if len(sys.argv[1:]) == 0:
     #     print(myusage)
     #     sys.exit()
     args = parser.parse_args()
 
-    if args.dbhost == 'vamps' or args.dbhost == 'vampsdb':
+    if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8':
         args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
         dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
 
-    elif args.dbhost == 'vampsdev':
+    elif args.dbhost == 'vampsdev' or args.dbhost == 'bpcweb7':
         args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
         args.NODE_DATABASE = 'vamps2'
         dbhost = 'bpcweb7'
@@ -652,14 +669,14 @@ if __name__ == '__main__':
     else:
         dbhost = 'localhost'
         args.NODE_DATABASE = 'vamps_development'
-    if args.units == 'silva119':
-        args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_silva119")
-    elif args.units == 'rdp2.6':
-        args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_rdp2.6")
-    elif args.units == 'generic':
-        args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_generic")
-    else:
-        sys.exit('UNITS ERROR: ' + args.units)
+   #  if args.units == 'silva119':
+#         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_silva119")
+#     elif args.units == 'rdp2.6':
+#         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_rdp2.6")
+#     elif args.units == 'generic':
+#         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_generic")
+#     else:
+#         sys.exit('UNITS ERROR: ' + args.units)
     print("\nARGS: dbhost  =", dbhost)
     print("\nARGS: NODE_DATABASE  =", args.NODE_DATABASE)
     print("ARGS: json_file_path =", args.json_file_path)

@@ -153,21 +153,12 @@ if __name__ == '__main__':
     
     myusage = """usage: assign_default_metadata.py  [options]
          
-         
+         Assisgns 'Unknown' to required metadata
          where
             -db NODE_DATABASE  (default: vamps2)
             -host required  vamps, vampsdev
             -pid   project_id to give default req metadata to         
             
-           
-            
-         These should all be in INFO-CONFIG.ini file which is REQUIRED to be in dir:
-            -p/--project            
-            
-            
-     Samples:
-    ./upload_metadata_to_database.py -dir new_vamps_data/MBE_10068_Bv4 -i new_vamps_data/MBE_10068_Bv4/preprocessed_fasta.csv
-    ./upload_metadata_to_database.py -dir new_vamps_data/test_project/ -i new_vamps_data/test_project/test.txt
     """
     parser = argparse.ArgumentParser(description="" ,usage=myusage)                 
     

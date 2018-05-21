@@ -22,8 +22,6 @@ import time
 import random
 import csv
 from time import sleep
-import ConfigParser
-from IlluminaUtils.lib import fastalib
 import rdp.rdp as rdp
 import datetime
 import logging
@@ -32,6 +30,8 @@ import subprocess
 import pymysql as MySQLdb
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
+sys.path.append( '/groups/vampsweb/seqinfobin')
+import fastalibAV as fastalib
 """
 New Table:
 CREATE TABLE `summed_counts` (
@@ -516,7 +516,7 @@ if __name__ == '__main__':
 
        uploads to new vamps
          where
-            -path_to_classifier/--path_to_classifier   REQUIRED
+            -path_to_classifier/--path_to_classifier   
                 Location of rdp_classifier diectory
                 vamps:    /groups/vampsweb/vamps/seqinfobin/rdp_classifier_2.6
                 vampsdev: /groups/vampsweb/vampsdev/seqinfobin/rdp_classifier_2.6

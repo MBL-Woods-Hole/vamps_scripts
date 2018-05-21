@@ -18,6 +18,7 @@ import json
 import shutil
 import datetime
 import socket
+from collections import defaultdict
 
 today     = str(datetime.date.today())
 
@@ -48,7 +49,9 @@ def go_list(args):
     required_metadata_fields = get_required_metadata_fields(args)
     #print('file_dids')
     #print(metadata_lookup)  ## <-- lookup by did
-
+    
+    project_id_order = list(project_id_lookup.keys())
+    project_id_order.sort()
     #metadata_dids = metadata_lookup.keys()
     #
     #print file_dids
@@ -62,18 +65,20 @@ def go_list(args):
     cust_rowcount_data = {}     # 4dataset count unequal between DATABASE custom metadata table and DATABASE datasets table
     other_problem = {}
     did_file_problem = {}       # 5did FILES: if taxcounts ={} or empty file present
+    did_file_problem_by_pid = defaultdict(list)
     no_req_metadata = {}        # 3if no required metadata found in DATABASE
     num_cust_rows = 0 
     if args.single_pid:
         temp_id_lookup = {}
         temp_id_lookup[args.single_pid] = project_id_lookup[args.single_pid]
+        project_id_order = [args.single_pid]
         project_id_lookup = temp_id_lookup
         print('Searching Single PID:',args.single_pid)
         print(project_id_lookup)
         ds_count = len(project_id_lookup[args.single_pid]) 
         print("ds_count from DB:",ds_count)
         
-    for pid in project_id_lookup:
+    for pid in project_id_order:
         # go project by project
         sql_dids =  "','".join(project_id_lookup[pid])
         ds_count = len(project_id_lookup[pid]) 
@@ -117,16 +122,19 @@ def go_list(args):
                             other_problem[pid] = project_lookup[pid]
                          clean_project = False
             try:
-                did_file = os.path.join(args.json_file_path,NODE_DATABASE+'--datasets_silva119',str(did)+'.json')
+                did_file = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119', str(did)+'.json')
                 fp = open(did_file)
                 file_data = json.load(fp)
                 if not file_data or not file_data['taxcounts']:
-                    did_file_problem[pid] = project_lookup[pid]
+                    did_file_problem[pid] = project_lookup[pid] 
+                    did_file_problem_by_pid[str(pid)].append(str(did))
                 fp.close()
             except:
                 did_file_problem[pid] = project_lookup[pid]
                 if args.verbose:
                     print( 'pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- Could not open did file-1\n')
+        
+        
         
         custom_metadata_file = 'custom_metadata_'+str(pid)
         
@@ -181,14 +189,32 @@ def go_list(args):
         #sys.exit()
         #if not clean_project:
         #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
-    
+    missing_seqs = {}
+    q2_base = "SELECT sequence_pdr_info_id from sequence_pdr_info where dataset_id in ('%s')"
+    if args.verbose:
+        print(q2_base)
+    if args.search_seqs:
+        print('Searching for sequences in sequence_pdr_info')        
+        for pid in project_id_order:
+            # go project by project
+            sql_dids =  "','".join(project_id_lookup[pid])
+            ds_count = len(project_id_lookup[pid]) 
+            q2 = q2_base % (sql_dids)                
+            clean_project = True
+            num = 0
+            cur.execute(q2)
+            numrows = cur.rowcount
+            if numrows == 0:
+                missing_seqs[pid] = project_lookup[pid]
+                if args.verbose:
+                    print('No sequences found::pid:'+str(pid) +' -- '+project_lookup[pid])
+        
     print()
     print('*'*60)
     print('Failed projects:')
     
-    
     print()
-    print('\tMETADATA MIS-MATCHES BETWEEN BULK FILE AND DBASE (Assumes same for did file)(re-build should work):')
+    print('\t1) METADATA MIS-MATCHES BETWEEN BULK FILE AND DBASE (Assumes same for did file) (re-build should work):')
     if not len(mismatch_data):
         print('\t **Clean**')
     else:
@@ -196,7 +222,7 @@ def go_list(args):
             print( '\t pid:',pid,' -- ',mismatch_data[pid])
         print ('\t PID List:',','.join([str(n) for n in mismatch_data.keys()]))
     print()
-    print('\tNO DID FOUND IN METADATA BULK FILE (Assumes no did file found either) (re-build should work):')
+    print('\t2) NO DID FOUND IN METADATA BULK FILE (Assumes no did file found either) (re-build should work):')
     if not len(no_file_found):
         print('\t **Clean**')
     else:
@@ -204,7 +230,7 @@ def go_list(args):
             print('\t pid:',pid,' -- ',no_file_found[pid])
         print('\t PID List:',','.join([str(n) for n in no_file_found.keys()]))
     print()
-    print('\tNO REQUIRED METADATA FOUND IN DATABASE (re-install project or add by hand -- re-build won\'t help):')
+    print('\t3) NO REQUIRED METADATA FOUND IN DATABASE (re-install project or add by hand -- re-build won\'t help):')
     if not len(no_req_metadata):
         print('\t **Clean**')
     else:
@@ -212,7 +238,7 @@ def go_list(args):
             print('\t pid:',pid,' -- ',no_req_metadata[pid])
         print('\t PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
     print()
-    print('\tDATABASE: Dataset count is different between `dataset` and `custom_metadata_xxx` tables (re-build won\'t help):')
+    print('\t4) DATABASE: Dataset count is different between `dataset` and `custom_metadata_xxx` tables (re-build won\'t help):')
     if not len(cust_rowcount_data):
         print('\t **Clean**')
     else:
@@ -220,22 +246,40 @@ def go_list(args):
             print('\t pid:',pid,' -- ',cust_rowcount_data[pid])
         print  ('\t PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
     print()
-    print('\tDID FILES: zero-length file or taxcounts={}:')
+    print('\t5) DID FILES: zero-length file or taxcounts={}:')
     if not len(did_file_problem):
         print('\t **Clean**')
     else:
         for pid in did_file_problem:
             print('\t pid:',pid,' -- ',did_file_problem[pid])
         print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
+
+        if args.show_dids:
+            for pid, dids in did_file_problem_by_pid.items():
+                print('\t pid: %s, dids: %s' % (pid, ', '.join(dids)))
+        
     print()
-    print('\tOTHER (rare -- Possible DID mis-match or case difference for metadata -- re-build may or may not help):')
+    print('\t6) OTHER (rare -- Possible DID mis-match or case difference for metadata -- re-build may or may not help):')
     if not len(other_problem):
         print('\t **Clean**')
     else:
         for pid in other_problem:
             print('\t pid:',pid,' -- ',other_problem[pid])
         print  ('\t PID List:',','.join([str(n) for n in other_problem.keys()]))
+    
     print()
+    if args.search_seqs:
+        print('\t7) SEQUENCES (all-or-nothing: NO seqs found in `sequence_pdr_info` table):')
+        if not len(missing_seqs):
+            print('\t **Clean**')
+        else:
+            for pid in missing_seqs:
+                print('\t pid:',pid,' -- ',missing_seqs[pid])
+            print  ('\t PID List:',','.join([str(n) for n in missing_seqs.keys()]))
+        print()
+    all_to_rebuild = list(other_problem.keys()) + list(mismatch_data.keys()) + list(no_file_found.keys()) + list(did_file_problem.keys()) 
+     
+    print("To rebuild: \ncd /groups/vampsweb/new_vamps_maintenance_scripts/; ./rebuild_vamps_files.py -host "+args.dbhost+" -pids '%s'; mail_done" % (", ".join(list(set(all_to_rebuild)))))    
     print("Number of files that should be rebuilt:",len(other_problem)+len(mismatch_data)+len(no_file_found))
     print('*'*60)
 
@@ -299,6 +343,8 @@ if __name__ == '__main__':
         -pid/--pid       will check a single pid for file consistancy
         
         -json_file_path/--json_file_path
+        
+        -s/--search_seqs  
     
     """
 
@@ -313,28 +359,34 @@ if __name__ == '__main__':
                 help="")
     parser.add_argument("-pid", "--pid",
                 required=False,  action='store',  dest = "single_pid",  default='',
-                help="Will check a single pid for consistancy")
+                help="Will check a single pid for consistency")
+    parser.add_argument("-d", "--dids",
+                required=False,  action='store_true',  dest = "show_dids",  default='',
+                help="Show dids for 'Projects where the dataset file(s) are missing or corrupt'")
+    parser.add_argument("-s", "--search_seqs",
+                required=False,  action='store_true',  dest = "search_seqs",  default=False,
+                help="search sequence_pdr_info for project sequence -- off by default'")
     if len(sys.argv[1:]) == 0:
         print(myusage)
         sys.exit()
     args = parser.parse_args()
 
-
-    if args.dbhost == 'vamps' or args.dbhost == 'vampsdb':
+    print(args)
+    if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8' :
         args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
-        dbhost = 'vampsdb'
+        args.dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
 
-    elif args.dbhost == 'vampsdev':
+    elif args.dbhost == 'vampsdev' or args.dbhost == 'bpcweb7':
         args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
         args.NODE_DATABASE = 'vamps2'
-        dbhost = 'bpcweb7'
+        args.dbhost = 'bpcweb7'
     elif args.dbhost == 'localhost' and (socket.gethostname() == 'Annas-MacBook.local' or socket.gethostname() == 'Annas-MacBook-new.local'):
         args.NODE_DATABASE = 'vamps2'
-        dbhost = 'localhost'
+        args.dbhost = 'localhost'
     else:
         args.NODE_DATABASE = 'vamps_development'
-        dbhost = 'localhost'
+        args.dbhost = 'localhost'
     args.units = 'silva119'
     if args.units == 'silva119':
         args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_silva119")
@@ -349,10 +401,10 @@ if __name__ == '__main__':
         print(myusage)
         print("Could not find json directory: '",args.json_file_path,"'-Exiting")
         sys.exit(-1)
-    print("\nARGS: dbhost  =",dbhost)
+    print("\nARGS: dbhost  =",args.dbhost)
     print("ARGS: json_dir=",args.json_file_path)
 
-    db = mysql.connect(host=dbhost, # your host, usually localhost
+    db = mysql.connect(host=args.dbhost, # your host, usually localhost
                              read_default_file="~/.my.cnf_node"  )
     cur = db.cursor()
     if args.NODE_DATABASE:

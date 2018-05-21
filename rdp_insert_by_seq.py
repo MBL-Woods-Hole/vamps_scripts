@@ -23,7 +23,6 @@ import time
 import random
 import csv
 from time import sleep
-from IlluminaUtils.lib import fastalib
 import rdp.rdp as rdp
 import datetime
 today = str(datetime.date.today())
@@ -31,6 +30,8 @@ import subprocess
 import pymysql as MySQLdb
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
+sys.path.append( '/groups/vampsweb/seqinfobin')
+import fastalibAV as fastalib
 
 """
 
@@ -134,7 +135,7 @@ def start(args):
         #print(fp_index,number_of_files)
         fp = file_pointers[fp_index]
         seqid = str(row[1])
-        seq = row[0]
+        seq = str(row[0])
         fp.write('>'+seqid+'\n'+seq+'\n')
     
     mysql_conn.commit()
@@ -418,7 +419,7 @@ if __name__ == '__main__':
          
        converts null sequences to taxonomy
          where
-            -path_to_classifier/--path_to_classifier   REQUIRED
+            -path_to_classifier/--path_to_classifier  
                 Location of rdp_classifier diectory 
                 vamps:    /groups/vampsweb/vamps/seqinfobin/rdp_classifier_2.6
                 vampsdev: /groups/vampsweb/vampsdev/seqinfobin/rdp_classifier_2.6
@@ -464,7 +465,7 @@ if __name__ == '__main__':
                  required=False,  action="store",   dest = "gene", default="16srrna",
                  help = 'See RDP README: 16srrna, fungallsu, fungalits_warcup, fungalits_unite') 
     parser.add_argument("-limit", "--limit",    
-                 required=False,  action="store",   dest = "limit", default="",
+                 required=False,  action="store",   dest = "limit", default="10000",
                  help = '') 
     parser.add_argument("-fc", "--file_count",    
                  required=False,  action="store",   dest = "max_file_count", default=300,
@@ -496,18 +497,18 @@ if __name__ == '__main__':
     # socket=/tmp/mysql.sock
     cur = mysql_conn.cursor()
     
-    total_seq_count = get_seq_count(args)
-    if args.limit:        
-        if total_seq_count > int(args.limit):
-            args.count = int(args.limit)
-            print ('Total Count:',total_seq_count,';  Using Limit Count:',args.limit)
-        else:
-            args.count = total_seq_count
-            print ('Using Total Count:',total_seq_count,';  Requested Limit Count:',args.limit)
-    else:
-        print ('Using Total Count:',total_seq_count)
-        args.count = total_seq_count
-    ans = raw_input("Do you want to continue? (type 'Y' to continue): ")
+    #total_seq_count = get_seq_count(args)
+    #if args.limit:        
+    #if total_seq_count > int(args.limit):
+    args.count = int(args.limit)
+    print ('Using Limit Count:',args.limit)
+    #     else:
+#             args.count = total_seq_count
+#             print ('Using Total Count:',total_seq_count,';  Requested Limit Count:',args.limit)
+    #else:
+    #    print ('Using Total Count:',total_seq_count)
+    #    args.count = total_seq_count
+    ans = input("Do you want to continue? (type 'Y' to continue): ")
     if ans.upper() == 'Y':
         start(args)
 
