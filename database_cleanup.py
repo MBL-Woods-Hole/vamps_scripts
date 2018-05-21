@@ -82,8 +82,8 @@ def clean(args):
             #print ("File Not Found: "+did_file3)
             file_not_deleted = True
         
-        if file_not_deleted:
-            print("File Not Found: "+did_file3)
+        #if file_not_deleted:
+            #print("File Not Found: "+did_file3)
 
     q = "DELETE from required_metadata_info"
     q += " WHERE dataset_id in ('"+ "','".join(dids) + "')"
@@ -112,32 +112,9 @@ def clean(args):
     #DELETE from elevation_required_metadata_info_temp WHERE dataset_id in ('1120','1121','1122','1123')
     #DELETE from required_metadata_info_copy_before_big_changes WHERE dataset_id in ('1120','1121','1122','1123')
     #DELETE from metadata_add_temp WHERE project_id = '282'
-    dataset_tmp_tables = ['required_metadata_info_old',
-    'taxon_id_required_metadata_info_temp',
-                            'description_required_metadata_info_temp',
-                            'assigned_from_geo_required_metadata_info_temp',
-                            'required_metadata_info_new',
-                            'dataset_copy',
-                            'run_info_ill',
-                            'required_metadata_info_new_copy',
-                            'required_metadata_info20170313',
-                            'required_metadata_info_copy20170313',
-                            'required_metadata_info_copyJun1_17',
-                            'required_metadata_info_copy_jun6_17',
-                            'required_metadata_info_copy_aug3_17',
-                            'required_metadata_info_copy_Nov_7',
-                            'required_metadata_info_copy032417',
-                            'common_name_required_metadata_info_temp',
-                            'elevation_required_metadata_info_temp',
-                            'depth_required_metadata_info_temp',
-                            'required_metadata_info_copy_before_big_changes',
-                            'metadata_add_temp']
-    project_tmp_tables = ['user_project_status',
-                            'custom_metadata_fields_copy','description_required_metadata_info_temp',
-                            'common_name_required_metadata_info_temp',
-                            'metadata_add_temp',
-                            'custom_metadata_fields_copy_aug3_17'
-                            ]
+    dataset_tmp_tables = ['dataset_copy',
+                            'run_info_ill']
+    project_tmp_tables = ['user_project_status']
     for table in dataset_tmp_tables:
         q = "SELECT * FROM information_schema.tables WHERE table_schema = '"+args.NODE_DATABASE+"' AND table_name = '"+table+"' LIMIT 1;"
         cur.execute(q)

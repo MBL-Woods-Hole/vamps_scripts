@@ -279,7 +279,7 @@ def go_list(args):
         print()
     all_to_rebuild = list(other_problem.keys()) + list(mismatch_data.keys()) + list(no_file_found.keys()) + list(did_file_problem.keys()) 
      
-    print("To rebuild: \ncd /groups/vampsweb/new_vamps_maintenance_scripts/; ./rebuild_vamps_files.py -host vampsdb -pids '%s'; mail_done" % (", ".join(list(set(all_to_rebuild)))))    
+    print("To rebuild: \ncd /groups/vampsweb/new_vamps_maintenance_scripts/; ./rebuild_vamps_files.py -host "+args.dbhost+" -pids '%s'; mail_done" % (", ".join(list(set(all_to_rebuild)))))    
     print("Number of files that should be rebuilt:",len(other_problem)+len(mismatch_data)+len(no_file_found))
     print('*'*60)
 
@@ -371,22 +371,22 @@ if __name__ == '__main__':
         sys.exit()
     args = parser.parse_args()
 
-
-    if args.dbhost == 'vamps' or args.dbhost == 'vampsdb':
+    print(args)
+    if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8' :
         args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
-        dbhost = 'vampsdb'
+        args.dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
 
-    elif args.dbhost == 'vampsdev':
+    elif args.dbhost == 'vampsdev' or args.dbhost == 'bpcweb7':
         args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
         args.NODE_DATABASE = 'vamps2'
-        dbhost = 'bpcweb7'
+        args.dbhost = 'bpcweb7'
     elif args.dbhost == 'localhost' and (socket.gethostname() == 'Annas-MacBook.local' or socket.gethostname() == 'Annas-MacBook-new.local'):
         args.NODE_DATABASE = 'vamps2'
-        dbhost = 'localhost'
+        args.dbhost = 'localhost'
     else:
         args.NODE_DATABASE = 'vamps_development'
-        dbhost = 'localhost'
+        args.dbhost = 'localhost'
     args.units = 'silva119'
     if args.units == 'silva119':
         args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_silva119")
@@ -401,10 +401,10 @@ if __name__ == '__main__':
         print(myusage)
         print("Could not find json directory: '",args.json_file_path,"'-Exiting")
         sys.exit(-1)
-    print("\nARGS: dbhost  =",dbhost)
+    print("\nARGS: dbhost  =",args.dbhost)
     print("ARGS: json_dir=",args.json_file_path)
 
-    db = mysql.connect(host=dbhost, # your host, usually localhost
+    db = mysql.connect(host=args.dbhost, # your host, usually localhost
                              read_default_file="~/.my.cnf_node"  )
     cur = db.cursor()
     if args.NODE_DATABASE:

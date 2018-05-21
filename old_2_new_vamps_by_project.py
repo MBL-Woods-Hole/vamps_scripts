@@ -151,13 +151,14 @@ class Mysql_util:
       try:
         sql = "INSERT %s INTO %s (%s) VALUES (%s)" % (ignore, table_name, field_name, val_list)
         #if table_name == 'sequence_uniq_info' or table_name == 'silva_taxonomy_info_per_seq':
-        if (args.do_not_update == False):
+        #  DO NOT UPDATE USER ONLY ADD
+        if (args.do_not_update == False and table_name != 'user'):
             sql += " ON DUPLICATE KEY UPDATE\n"   # IGNORE keyword ignored when this is used
             for field in field_name.split(","):
                 field = field.strip()
                 sql += field+"=VALUES("+field+"),"
-            sql = sql.rstrip(',') # remove last comma
-        #print ('sql2',sql)
+            sql = sql.rstrip(',') # remove last comma        
+        print ('sql2',sql)
         #if table_name == 'dataset' or table_name == 'project':
         #    print ('sql',sql)
         if self.cursor:
@@ -183,6 +184,7 @@ class Mysql_util:
 
     def execute_simple_select(self, field_name, table_name, where_part):
       id_query  = "SELECT %s FROM %s %s" % (field_name, table_name, where_part)
+      #print(id_query)
       return self.execute_fetch_select(id_query)[0]
 
     def get_id(self, field_name, table_name, where_part, rows_affected = [0,0]):
