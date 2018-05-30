@@ -68,6 +68,7 @@ def go_list(args):
     did_file_problem_by_pid = defaultdict(list)
     no_req_metadata = {}        # 3if no required metadata found in DATABASE
     num_cust_rows = 0 
+    
     if args.single_pid:
         temp_id_lookup = {}
         temp_id_lookup[args.single_pid] = project_id_lookup[args.single_pid]
@@ -98,6 +99,9 @@ def go_list(args):
 
         for row in cur.fetchall():
             did = str(row[0])
+            did_file1 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119', str(did)+'.json')
+            did_file2 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_rdp2.6"',  str(did)+'.json')
+            did_file3 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_generic',  str(did)+'.json')
             #print 'did',did
             #if did == '3938':
             if did not in metadata_lookup:
@@ -121,9 +125,10 @@ def go_list(args):
                          if pid not in other_problem:
                             other_problem[pid] = project_lookup[pid]
                          clean_project = False
+            
             try:
-                did_file = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119', str(did)+'.json')
-                fp = open(did_file)
+                #did_file = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119', str(did)+'.json')
+                fp = open(did_file1)
                 file_data = json.load(fp)
                 if not file_data or not file_data['taxcounts']:
                     did_file_problem[pid] = project_lookup[pid] 
@@ -360,7 +365,7 @@ if __name__ == '__main__':
     parser.add_argument("-pid", "--pid",
                 required=False,  action='store',  dest = "single_pid",  default='',
                 help="Will check a single pid for consistency")
-    parser.add_argument("-d", "--dids",
+    parser.add_argument("-dids", "--dids",
                 required=False,  action='store_true',  dest = "show_dids",  default='',
                 help="Show dids for 'Projects where the dataset file(s) are missing or corrupt'")
     parser.add_argument("-s", "--search_seqs",
@@ -387,13 +392,17 @@ if __name__ == '__main__':
     else:
         args.NODE_DATABASE = 'vamps_development'
         args.dbhost = 'localhost'
-    args.units = 'silva119'
-    if args.units == 'silva119':
-        args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_silva119")
-    elif args.units == 'rdp2.6':
-         args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_rdp2.6")
-    else:
-        sys.exit('UNITS ERROR: '+args.units)
+    # args.units = 'silva119'
+#     args.units = 'rdp2.6'
+#     args.units = 'generic'
+#     if args.units == 'silva119':
+#         args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_silva119")
+#     elif args.units == 'rdp2.6':
+#          args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_rdp2.6")
+#     elif args.units == 'generic':
+#          args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_generic")
+#     else:
+#         sys.exit('UNITS ERROR: '+args.units)
 
     if os.path.exists(args.json_file_path):
         print('Validated: json file path')
