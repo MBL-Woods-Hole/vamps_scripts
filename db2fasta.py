@@ -62,16 +62,16 @@ def start(args):
         freq = row[3]
         seq = str(row[4],'utf8')
         pjds = project+'--'+dataset
-        id = '>'+seqid+' project='+project+'|dataset='+dataset+'|frequency='+str(freq)
+        #id = '>'+seqid+' project='+project+'|dataset='+dataset+'|frequency='+str(freq)
         # id formatting from https://www.ncbi.nlm.nih.gov/books/NBK279688/
-        #id = '>gnl|'+pjds+'|'+seqid + ' '+ 'frequency:'+str(freq)
+        id = '>gnl|'+pjds+'|'+seqid + ' '+ 'frequency:'+str(freq)
         
         if args.expand:
             expand_count = 1
             for n in range(freq):
                 new_seqid = seqid+'_'+str(expand_count)
-                id = '>'+new_seqid+' project='+project+'|dataset='+dataset
-                #id = '>gnl|'+pjds+'|'+new_seqid
+                #id = '>'+new_seqid+' project='+project+'|dataset='+dataset
+                id = '>gnl|'+pjds+'|'+new_seqid
                 fp.write(id+'\n')
                 fp.write(seq+'\n')
                 expand_count += 1
