@@ -64,7 +64,7 @@ def start(args):
         pjds = project+'--'+dataset
         #id = '>'+seqid+'|project='+project+'|dataset='+dataset+'|frequency='+str(freq)
         # id formatting from https://www.ncbi.nlm.nih.gov/books/NBK279688/
-        id '>gnl|'+pjds+'|'+seqid + ' '+ 'frequency:'+str(freq)
+        id = '>gnl|'+pjds+'|'+seqid + ' '+ 'frequency:'+str(freq)
         
         if args.expand:
             expand_count = 1
