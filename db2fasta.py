@@ -36,7 +36,7 @@ import pymysql as MySQLdb
 
     
 def start(args):
-    
+    #  https://www.ncbi.nlm.nih.gov/books/NBK279688/
     sqlQuery = "SELECT sequence_id, project, dataset, seq_count, UNCOMPRESS(sequence_comp) as sequence FROM sequence" 
     sqlQuery += " JOIN sequence_pdr_info using(sequence_id)"
     sqlQuery += " JOIN dataset using(dataset_id)"
@@ -61,13 +61,17 @@ def start(args):
         dataset=row[2]
         freq = row[3]
         seq = str(row[4],'utf8')
-        id = '>'+seqid+'|project='+project+'|dataset='+dataset+'|frequency='+str(freq)
+        pjds = project+'--'+dataset
+        #id = '>'+seqid+'|project='+project+'|dataset='+dataset+'|frequency='+str(freq)
+        # id formatting from https://www.ncbi.nlm.nih.gov/books/NBK279688/
+        id '>gnl|'+pjds+'|'+seqid + ' '+ 'frequency:'+str(freq)
         
         if args.expand:
             expand_count = 1
             for n in range(freq):
                 new_seqid = seqid+'_'+str(expand_count)
-                id = '>'+new_seqid+'|project='+project+'|dataset='+dataset
+                #id = '>'+new_seqid+'|project='+project+'|dataset='+dataset
+                id = '>gnl|'+pjds+'|'+new_seqid
                 fp.write(id+'\n')
                 fp.write(seq+'\n')
                 expand_count += 1
