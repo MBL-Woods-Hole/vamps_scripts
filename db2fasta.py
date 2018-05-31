@@ -37,7 +37,7 @@ import pymysql as MySQLdb
     
 def start(args):
     #  https://www.ncbi.nlm.nih.gov/books/NBK279688/
-    sqlQuery = "SELECT sequence_id, project, dataset, seq_count, UNCOMPRESS(sequence_comp) as sequence FROM sequence" 
+    sqlQuery = "SELECT sequence_id, project, dataset, SUM(seq_count), UNCOMPRESS(sequence_comp) as sequence FROM sequence" 
     sqlQuery += " JOIN sequence_pdr_info using(sequence_id)"
     sqlQuery += " JOIN dataset using(dataset_id)"
     sqlQuery += " JOIN project using(project_id) "
@@ -47,6 +47,7 @@ def start(args):
         sqlQuery += "WHERE project='"+args.project+"'"
     else:
         sys.exit('either enter a project(-p) or where clause(-sql)')
+    sqlQuery += " GROUP BY project, dataset, sequence"
     print(' ')
     print(sqlQuery)
     cur.execute(sqlQuery) 
