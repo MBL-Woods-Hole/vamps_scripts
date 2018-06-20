@@ -158,7 +158,7 @@ class Mysql_util:
                 field = field.strip()
                 sql += field+"=VALUES("+field+"),"
             sql = sql.rstrip(',') # remove last comma        
-        print ('sql2',sql)
+        #print ('sql2',sql)
         #if table_name == 'dataset' or table_name == 'project':
         #    print ('sql',sql)
         if self.cursor:
@@ -1157,6 +1157,7 @@ class Metadata:
     self.report += 'illumina_idx::\t'+illumina_index+' (id:'+self.illumina_index_id+')'+'\n'
     self.report += 'primer_suite::\t'+primer_suite+' (id:'+self.primer_suite_id+')'+'\n'
     self.report += 'run::\t\t'+run+' (id:'+self.run_id+')'+'\n'
+    self.report += 'public::\t\t'+args.public+'\n'
 
   
   def find_required_id(self, term, req_name):
