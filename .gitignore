@@ -6,10 +6,8 @@ HLSU/
 HSSU/
 SLM/
 SPINGO/
-data-spingo/
 data/
-data_JCM/
-data_sgun/
+data_*/
 obsolete/
 unused/
 rdp/

@@ -100,7 +100,7 @@ def start_metadata_load(args):
         
         q += "),"
     q = q[:-1]  # remove trailing comma
-    #print(q)
+    print(dataset_ids)
     cur.execute(q)
     mysql_conn.commit()
 
