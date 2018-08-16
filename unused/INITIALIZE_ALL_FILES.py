@@ -99,7 +99,7 @@ def check_files(args):
     db_dids = []
     for row in cur.fetchall():
         db_dids.append(str(row[0]))
-    #print db_dids
+    #print(db_dids)
     did_count = len(db_dids)
 
     ###### INDIVIDUAL JSON FILES ##################
@@ -131,9 +131,9 @@ def check_files(args):
 
 def print_results(okay_count, did_count, missing, f_name):
     if okay_count == did_count:
-        print 'OK -- No missing files for %s' % f_name
+        print('OK -- No missing files for %s') % f_name
     else:
-        print 'Missing from %s' % f_name
+        print('Missing from %s') % f_name
         print("('" + "', '".join(missing) + "')")
     print('DID presence is REQUIRED')
 
@@ -143,7 +143,7 @@ def ok_cnt(dids, data):
     missing = []
     for did in dids:
         if did in data:
-            #print 'found', did
+            #print("found"), did
             okay_count += 1
         else:
             missing.append(did)
@@ -153,7 +153,7 @@ def ok_cnt(dids, data):
 def get_counts_per_tax():
     counts_per_tax_dict = {}
     for q in queries:
-        #print q["query"]
+        #print(q["query"])
         # dirs = []
         if args.units == 'rdp2.6':
             query = q["query"] % query_core_rdp26 + end_group_query
@@ -161,7 +161,7 @@ def get_counts_per_tax():
             query = q["query"] % query_core_silva119 + end_group_query
         try:
             # print()
-            # print ("running mysql query for:", q['rank'])
+            # print("running mysql query for:", q['rank'])
             logging.debug("running mysql query for: "+q['rank'])
 
             # print(query)
@@ -169,13 +169,13 @@ def get_counts_per_tax():
             cur.execute(query)
             # cur._rows <type 'tuple'>: ((Decimal('107'), 20276L, 1L), (Decimal('43'), 20276L, 2L), ...
             # elapsed4 = (time.time() - start4)
-            # print "4 cur.execute(query) time: %s" % elapsed4
+            # print("4 cur.execute(query) time: %s") % elapsed4
 
             # start41 = time.time()
             rank = q['rank']
             counts_per_tax_dict[rank] = cur._rows
             # elapsed41 = (time.time() - start4)
-            # print "41 counts_per_tax_dict[rank] = cur._rows time: %s" % elapsed41
+            # print("41 counts_per_tax_dict[rank] = cur._rows time: %s") % elapsed41
         except:
             # print("Trying to query with:", query)
             logging.debug("Failing to query with: "+query)
@@ -210,38 +210,38 @@ def go(args):
         start2 = time.time()
         shutil.rmtree(args.files_prefix)
         elapsed2 = (time.time() - start2)
-        print "2 shutil.rmtree(args.files_prefix) time: %s" % elapsed2
+        print("2 shutil.rmtree(args.files_prefix) time: %s") % elapsed2
     
     start0 = time.time()
     os.makedirs(args.files_prefix)
     elapsed0 = (time.time() - start0)
-    print "0 os.makedirs(args.files_prefix) time: %s" % elapsed0
+    print("0 os.makedirs(args.files_prefix) time: %s") % elapsed0
     #os.mkdir(args.files_prefix)
     logging.debug('Created Dir: '+args.files_prefix)
 
     start31 = time.time()
     counts_per_tax_dict = get_counts_per_tax()
     elapsed31 = (time.time() - start31)
-    print "31 get_counts_per_tax() time: %s" % elapsed31
+    print("31 get_counts_per_tax() time: %s") % elapsed31
 
     start5 = time.time()
     counts_lookup = make_counts_lookup(counts_per_tax_dict)
     elapsed5 = (time.time() - start5)
-    print "5 make_counts_lookup() time: %s" % elapsed5
+    print("5 make_counts_lookup() time: %s") % elapsed5
 
     print('gathering metadata from tables')
     logging.debug('gathering metadata from tables')
     start8 = time.time()
     metadata_lookup = go_metadata()
     elapsed8 = (time.time() - start8)
-    print "8 metadata_lookup = go_metadata() time: %s" % elapsed8
+    print("8 metadata_lookup = go_metadata() time: %s") % elapsed8
 
     print('writing to individual files')
     logging.debug('writing to individual files')
     start9 = time.time()
     write_data_to_files(args, metadata_lookup, counts_lookup)
     elapsed9 = (time.time() - start9)
-    print "9 metadata_lookup = go_metadata() time: %s" % elapsed9
+    print("9 metadata_lookup = go_metadata() time: %s") % elapsed9
 
     if args.units == 'silva119':
         # print('writing metadata file')
@@ -249,19 +249,19 @@ def go(args):
         start10 = time.time()
         write_all_metadata_file(args, metadata_lookup)
         elapsed10 = (time.time() - start10)
-        print "10 write_all_metadata_file(args, metadata_lookup) time: %s" % elapsed10
+        print("10 write_all_metadata_file(args, metadata_lookup) time: %s") % elapsed10
 
         print('writing taxcount file')
         logging.debug('writing taxcount file')
         start11 = time.time()
         write_all_taxcounts_file(args, counts_lookup)
         elapsed11 = (time.time() - start11)
-        print "11 write_all_taxcounts_file(args, counts_lookup) time: %s" % elapsed11
+        print("11 write_all_taxcounts_file(args, counts_lookup) time: %s") % elapsed11
 
 
 def write_data_to_files(args, metadata_lookup, counts_lookup):
 
-    #print counts_lookup
+    #print(counts_lookup)
     for did in counts_lookup:
         cur_file = os.path.join(args.files_prefix, str(did)+'.json')
         f = open(cur_file, 'w')
@@ -279,7 +279,7 @@ def write_data_to_files(args, metadata_lookup, counts_lookup):
 
 def write_all_metadata_file(args, metadata_lookup):
 
-    #print md_file
+    #print(md_file)
     json_str = json.dumps(metadata_lookup, encoding='latin1')
     #print(json_str)
     f = open(args.metadata_file_new, 'w')   # overwrite
@@ -289,7 +289,7 @@ def write_all_metadata_file(args, metadata_lookup):
 
 def write_all_taxcounts_file(args, counts_lookup):
 
-    #print tc_file
+    #print(tc_file)
     json_str = json.dumps(counts_lookup)
     #print(json_str)
     f = open(args.taxcounts_file_new, 'w')  # overwrite
@@ -468,7 +468,7 @@ if __name__ == '__main__':
     cur = db.cursor()
     cur_dict = db.cursor(MySQLdb.cursors.DictCursor)
 
-    #print db_str
+    #print(db_str)
     if args.NODE_DATABASE:
         NODE_DATABASE = args.NODE_DATABASE
     else:
@@ -481,7 +481,7 @@ if __name__ == '__main__':
             if row[0] != 'mysql' and row[0] != 'information_schema':
                 dbs.append(row[0])
                 db_str += str(i)+'-'+row[0]+';  '
-                print str(i)+' - '+row[0]+';  '
+                print(str(i)+' - '+row[0]+';  ')
                 i += 1
         db_no = input("\nchoose database number: ")
         if int(db_no) < len(dbs):
@@ -501,7 +501,7 @@ if __name__ == '__main__':
     #args.separate_taxcounts_files   = True
 
     if not os.path.exists(args.json_file_path):
-        print "Could not find json directory: '", args.json_file_path, "'-Exiting"
+        print("Could not find json directory: '", args.json_file_path, "'-Exiting")
         sys.exit(-1)
 
     #args.json_dir = os.path.join("../", "json")
@@ -523,7 +523,7 @@ if __name__ == '__main__':
             args.files_prefix   = os.path.join(args.json_file_path, args.NODE_DATABASE+"--datasets_silva119NEW")
             args.taxcounts_file_new = os.path.join(args.json_file_path, args.NODE_DATABASE+"--taxcounts_silva119NEW.json")
         args.metadata_file_new  = os.path.join(args.json_file_path, args.NODE_DATABASE+"--metadataNEW.json")
-    #print args.files_prefix , args.taxcounts_file, args.metadata_file
+    #print(args.files_prefix , args.taxcounts_file, args.metadata_file)
     if args.check_files:
         check_files(args)
     else:
@@ -531,7 +531,7 @@ if __name__ == '__main__':
         start6 = time.time()
         go(args)
         elapsed6 = (time.time() - start6)
-        print "go(args) time: %s" % elapsed6
+        print("go(args) time: %s") % elapsed6
         for w in warnings:
             print(w)
             logging.debug(w)

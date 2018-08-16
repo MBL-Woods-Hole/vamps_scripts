@@ -37,10 +37,24 @@ import pymysql as MySQLdb
     
 def start(args):
     #  https://www.ncbi.nlm.nih.gov/books/NBK279688/
-    sqlQuery = "SELECT sequence_id, project, dataset, SUM(seq_count), UNCOMPRESS(sequence_comp) as sequence FROM sequence" 
+    sqlQuery = "SELECT sequence_id, project, dataset, SUM(seq_count), UNCOMPRESS(sequence_comp) as sequence" 
+    if args.tax:
+        sqlQuery += ", concat_ws(';',domain,phylum,klass,`order`,family,genus,species) as tax"
+    sqlQuery += " FROM sequence" 
     sqlQuery += " JOIN sequence_pdr_info using(sequence_id)"
     sqlQuery += " JOIN dataset using(dataset_id)"
     sqlQuery += " JOIN project using(project_id) "
+    if args.tax:
+        sqlQuery += " JOIN silva_taxonomy_info_per_seq using(sequence_id)" 
+        sqlQuery += " JOIN silva_taxonomy using(silva_taxonomy_id)"
+        sqlQuery += " JOIN domain using(domain_id)"
+        sqlQuery += " JOIN phylum using(phylum_id)"
+        sqlQuery += " JOIN klass using(klass_id)"
+        sqlQuery += " JOIN `order` using(order_id)"
+        sqlQuery += " JOIN family using(family_id)"
+        sqlQuery += " JOIN genus using(genus_id)"
+        sqlQuery += " JOIN species using(species_id) "
+
     if args.sql_where:
         sqlQuery += args.sql_where
     elif args.project:        
@@ -65,14 +79,18 @@ def start(args):
         pjds = project+'--'+dataset
         #id = '>'+seqid+' project='+project+'|dataset='+dataset+'|frequency='+str(freq)
         # id formatting from https://www.ncbi.nlm.nih.gov/books/NBK279688/
-        id = '>gnl|'+pjds+'|'+seqid + ' '+ 'frequency:'+str(freq)
+        id = '>'+pjds+'|'+seqid
+        
+        if args.tax:
+            id += '|'+row[5].rstrip(';')
+        id += '|frequency:'+str(freq)
         
         if args.expand:
             expand_count = 1
             for n in range(freq):
                 new_seqid = seqid+'_'+str(expand_count)
                 #id = '>'+new_seqid+' project='+project+'|dataset='+dataset
-                id = '>gnl|'+pjds+'|'+new_seqid
+                id = '>'+pjds+'|'+new_seqid
                 fp.write(id+'\n')
                 fp.write(seq+'\n')
                 expand_count += 1
@@ -82,10 +100,12 @@ def start(args):
             fp.write(seq+'\n')
             fa_rowcount += 1
     fp.close()
+    print(args.out_file_name)
     if args.expand:
         print('Sequence Count:',fa_rowcount,'Expanded')
     else:
         print('Sequence Count:',fa_rowcount,'Uniqued')
+        
             
 
 def delete_metadata_only(args):
@@ -126,6 +146,7 @@ if __name__ == '__main__':
                                 "WHERE public='1'"
                                 "WHERE project like 'ICM%%'"
                                 "WHERE dataset_id='12342'"
+            -tax/--tax  Include taxonomy in defile (for blast databases) default: False
 
 
  db2fasta - exports sequence information from a database to a fasta file.  
@@ -167,7 +188,9 @@ if __name__ == '__main__':
     parser.add_argument("-proj", "--project",          
                 required=False,  action='store', dest = "project", default='',
                 help=" ")  
-    
+    parser.add_argument("-tax", "--tax",          
+                required=False,  action='store_true', dest = "tax", default=False,
+                help="Include GAST taxonomy in defline")
    
                       
     args = parser.parse_args()    
