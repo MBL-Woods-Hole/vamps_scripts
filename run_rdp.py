@@ -28,7 +28,7 @@ import subprocess
 
 def run_rdp(infile, outfile, classifier_path, rdp_script_dir, ref_db_dir='2.10.1'):
 	
-    #print infile, outfile, classifier_path, rdp_script_dir, ref_db_dir
+    
     #logging.debug('CMD:> '+process_dir+'/public/scripts/'+os.path.basename(__file__)+' -i '+infile+' -o '+outfile+' --process_dir '+process_dir+' -ref_db '+ref_db_dir+' -script_dir '+rdp_script_dir)
     #print('CMD:> '+classifier_path+' -i '+infile+' -o '+outfile+' --process_dir '+process_dir+' -ref_db '+ref_db_dir+' -script_dir '+rdp_script_dir)
     #PATH_2_JAVA="/bioware/jre/bin/java";
@@ -64,12 +64,12 @@ def run_rdp(infile, outfile, classifier_path, rdp_script_dir, ref_db_dir='2.10.1
         # use non-trained as default:
         rdp_cmd = PATH_2_JAVA + " -Xmx2400m -jar "+classifier_path+" -q "+infile+" -o "+outfile+" -f fixrank"
         #logging.debug('RDPCMD: '+rdp_cmd)
-        print rdp_cmd
+        print(rdp_cmd)
 
         subprocess.call(rdp_cmd, shell=True)
 
     except:
-        print "ERROR in RDP:  java - classifier: "+rdp_cmd
+        print("ERROR in RDP:  java - classifier: "+rdp_cmd)
         sys.exit(-23)
 
 

@@ -54,7 +54,7 @@ class FastaReader:
             return True  
             
 def run_taxonomy(args, ds, ds_count, files):
-    print 'tax'
+    print('tax')
     project_dataset = args.project+'--'+ds
     taxa_lookup = {}
     read_id_lookup={}
@@ -65,7 +65,7 @@ def run_taxonomy(args, ds, ds_count, files):
             line = line.strip()
             items = line.split("\t")
             if args.verbose:
-                print items
+                print(items)
             taxa = items[1]
             if taxa[-3:] == ';NA':
                 taxa = taxa[:-3]
@@ -80,8 +80,8 @@ def run_taxonomy(args, ds, ds_count, files):
                 read_id = items[0].split('|')[1]
                 freq_from_defline = items[0].split('|')[-1].split(':')[1]
             if args.verbose:
-                print 'id=',read_id
-                print '  freq=',freq_from_defline
+                print('id=',read_id)
+                print('  freq=',freq_from_defline)
             read_id_lookup[read_id] = taxa
         
             # the count here is the frequency of the taxon in the datasets
@@ -102,7 +102,7 @@ def run_taxonomy(args, ds, ds_count, files):
     # taxa_lookup: {'Unknown': 146, 'Bacteria': 11888, 'Bacteria;Chloroflexi': 101}
     # dataset_count is 3 (3 taxa in this dataset)
     # frequency is 3/144
-    print 'Running data_cube'
+    print('Running data_cube')
     fh1 = open(files['taxes_file'],'w')
 
     fh1.write("\t".join( ["HEADER","project", "dataset", "taxonomy", "superkingdom", 
@@ -112,7 +112,7 @@ def run_taxonomy(args, ds, ds_count, files):
     summer=0
     for tax,knt in taxa_lookup.iteritems():
         if args.verbose:
-            print tax,knt
+            print(tax,knt)
         summer += knt
         datarow = ['',args.project,ds]
     
@@ -139,7 +139,7 @@ def run_taxonomy(args, ds, ds_count, files):
         datarow.append('GAST')
     
         w = "\t".join(datarow)
-        #print w
+       
         fh1.write(w+"\n")
    
         tax_collector[tax]['rank'] = rank
@@ -153,7 +153,7 @@ def run_taxonomy(args, ds, ds_count, files):
     # SUMMED DATA CUBE TABLE
     #
     ########################################
-    print 'Running summed_(junk)_data_cube'
+    print('Running summed_(junk)_data_cube')
     fh2 = open(files['summed_taxes_file'],'w')
     
     fh2.write("\t".join(["HEADER","taxonomy", "sum_tax_counts", "frequency", "dataset_count","rank", 
@@ -174,15 +174,14 @@ def run_taxonomy(args, ds, ds_count, files):
             if taxon in tax_collector:
                 knt = tax_collector[taxon]['knt']
             else:
-                print 'ERROR tax not found in tax_collector: assigning zero'
+                print('ERROR tax not found in tax_collector: assigning zero')
                 knt = 0
             idx = len(ranks_subarray)
             l=[]
             for k in range(3,idx+3):                    
                 l.append(line[k])
             tax = ';'.join(l)
-            #print 'rl tax',ranks_list,tax
-            
+                       
             
             if tax in rank_list_lookup:
                 rank_list_lookup[tax] += knt
@@ -193,7 +192,7 @@ def run_taxonomy(args, ds, ds_count, files):
       
     for tax,knt in rank_list_lookup.iteritems():
         
-        #print 'tax2',tax
+        
         taxa = tax.split(';')
         #if taxa[0] in C.domains:
         rank = len( taxa ) -1
@@ -214,7 +213,7 @@ def run_taxonomy(args, ds, ds_count, files):
             datarow.append('GAST')
         
             w = "\t".join(datarow)
-            #print w
+            
             fh2.write(w+"\n")
             
 
@@ -226,7 +225,7 @@ def run_taxonomy(args, ds, ds_count, files):
     # DISTINCT TAXONOMY
     #
     ####################################
-    print 'Running taxonomy'
+    print('Running taxonomy')
     fh3 = open(files['distinct_taxes_file'],'w')
     fh3.write("\t".join(["HEADER","taxon_string", "rank", "num_kids"] )+"\n")
     taxon_string_lookup={}
@@ -235,7 +234,7 @@ def run_taxonomy(args, ds, ds_count, files):
             continue
         items = line.strip().split("\t")            
         taxon_string = items[0]
-        #print taxon_string
+        
         if taxon_string in taxon_string_lookup:
             taxon_string_lookup[taxon_string] += 1
         else:
@@ -254,14 +253,14 @@ def run_taxonomy(args, ds, ds_count, files):
                 num_kids = '1'
             datarow.append(num_kids)
             w = "\t".join(datarow)
-            #print 'w',w
+           
             fh3.write(w+"\n")
     fh3.close()
     
     return (tax_collector,read_id_lookup)
     
 def run_sequences(args, ds, tax_collector, read_id_lookup, files):
-    print 'Running sequences'
+    print('Running sequences')
     refid_collector={}
     project_dataset = args.project+'--'+ds
     with open(files['gast_file'],'r') as f:
@@ -271,7 +270,7 @@ def run_sequences(args, ds, tax_collector, read_id_lookup, files):
         
             items=line.split("\t")
             if args.verbose:
-                print items
+                print(items)
             if args.datasetname_not_in_unique_file:
                 id = items[0]
             else:
@@ -279,7 +278,7 @@ def run_sequences(args, ds, tax_collector, read_id_lookup, files):
             distance = items[2]
             refhvr_ids = items[-1] # always last? separated by ,,
             if args.verbose:
-                print 'refhvr_ids',refhvr_ids
+                print('refhvr_ids',refhvr_ids)
             refid_collector[id] = {}
             refid_collector[id]['distance'] = distance
             refid_collector[id]['refhvr_ids'] = refhvr_ids
@@ -296,14 +295,14 @@ def run_sequences(args, ds, tax_collector, read_id_lookup, files):
                
         
         if args.verbose:
-            print 'cnt from uniques file',cnt
+            print('cnt from uniques file',cnt)
         seq = f.seq.upper()
         if true_id in read_id_lookup:
             if args.verbose:
-                print 'FOUND TAX for sequences file'
+                print('FOUND TAX for sequences file')
             tax = read_id_lookup[true_id]
         else: 
-            print 'ERROR:: NO TAX for sequences file'
+            print('ERROR:: NO TAX for sequences file')
             sys.exit()
             tax = ''
             
@@ -336,14 +335,14 @@ def run_sequences(args, ds, tax_collector, read_id_lookup, files):
         datarow.append(true_id)
         datarow.append(project_dataset)
         w = "\t".join(datarow)
-        #print 'w',w
+        
         fh.write(w+"\n")
     fh.close()
     return refid_collector      
     
             
 def run_projects(args, ds, ds_count, files):
-    print 'Running projects'
+    print('Running projects')
     project_dataset = args.project+'--'+ds
     date_trimmed = 'unknown'
     dataset_description = ds
@@ -375,26 +374,22 @@ def run_defline(args, defline):
     return (cnt, true_id)
     
 def run_info(args, ds, files, project_count):
-    print 'Running info'
+    print('Running info')
     
     #try:
     # get 'real' data from database
     db = get_db_connection(args)
     cursor = db.cursor()
-    print 'Connecting to '+args.site+' database, to get user "'+args.user+'" information'
+    print('Connecting to '+args.site+' database, to get user "'+args.user+'" information')
     query = "SELECT last_name,first_name,email,institution from vamps_auth where user='%s'" % (args.user)
-    print query
+    print(query)
     
     cursor.execute(query)
     data = cursor.fetchone()
     contact= data[1]+' '+data[0]
     email= data[2]
     institution= data[3]
-    # except:
-#         print 'TESTING(or connect error) -- no writing to '+args.site+' db'
-#         contact= 'test,test'
-#         email= 'test@no-reply.edu'
-#         institution= 'TEST U.'
+    
     
     fh = open(files['project_info_file'],'w')
     title="title"
@@ -410,7 +405,7 @@ def run_info(args, ds, files, project_count):
     
 
 def get_db_connection(args):
-    print args
+    print(args)
     db = MySQLdb.connect( host=args.site, db=args.database,
              read_default_file="~/.my.cnf" # you can use another ini file, for example .my.cnf
            )
@@ -424,7 +419,7 @@ def create_vamps_files(args, ds, ds_count, project_count):
     """
     files = gather_files_per_ds(args, ds)
     if not ds_count:
-        print "no ds count fount -- looking in fasta file for frequency"
+        print("no ds count fount -- looking in fasta file for frequency")
         ds_count = get_ds_count_from_defline(files['unique_file'])
          
          
@@ -499,8 +494,7 @@ def get_mbl_datasets(args):
                    mdobj_by_dataset[ds][key] = val               
                mdobj_by_dataset[ds]['prefix'] = file_prefix        
             lineno += 1
-    #print mdobj_by_dataset
-    #print mdobj_by_dataset.keys()
+   
     
     return (ds_list, 0, mdobj_by_dataset)    
 
@@ -514,15 +508,15 @@ def start_vamps_file_creation(args, ds_list, project_count):
     file_collector={}
     args.outdir = create_out_dir(args, ds_list)
     for i,ds in enumerate(ds_list):
-        print
+        print()
         if ds_list[ds] >= int(args.min_ds_count) or args.datasetnames_in_mbl_metadata_file:
-            print 'CreatingFiles',args.project,ds,i,'/',len(ds_list)
+            print('CreatingFiles',args.project,ds,i,'/',len(ds_list))
             
             check_for_infiles(args, ds)
             ds_cnt = ds_list[ds]
             file_collector[ds] = create_vamps_files(args, ds, ds_cnt, project_count)
         else:
-            print 'Skipping',ds,'count is less than',args.min_ds_count
+            print('Skipping',ds,'count is less than',args.min_ds_count)
     
     return file_collector
     
@@ -542,7 +536,7 @@ def check_for_infiles(args,ds):
             sys.exit( 'no gast file found--exiting: '+gast)
         if not os.path.isfile(unique):
             sys.exit( 'no unique file found--exiting: '+unique)
-        print 'all files found for '+ds+'*'
+        print('all files found for '+ds+'*')
     else:
         names = os.path.join('./', ds+'.'+args.file_suffix_part1+'.names')
         unique= os.path.join('./', ds+'.'+args.file_suffix_part1+'.unique')
@@ -557,7 +551,7 @@ def check_for_infiles(args,ds):
             sys.exit( 'no gast file found--exiting: '+gast)
         if not os.path.isfile(unique):
             sys.exit( 'no unique file found--exiting: '+unique)
-        print 'all files found for '+ds+'*'
+        print('all files found for '+ds+'*')
     
 
     
@@ -587,9 +581,9 @@ def get_datasets(args):
         base = os.path.basename(file)
         #ds = base[:-10]
         ds = base[:-len(args.infile_suffix)-1]
-        print ds
+        print(ds)
         if args.verbose:
-            print 'ds',ds
+            print('ds',ds)
         with open(file,'r') as fp:
             for line in fp:
                 items = line.strip().split('\t')
@@ -606,7 +600,7 @@ def create_dataset_file(args):
     out_file_path = os.path.join('./', out_file_name)
     
     with open(out_file_path,'w') as fp:
-        print 'Writing',out_file_name
+        print('Writing',out_file_name)
         fp.write('"dataset","dataset_description","env_sample_source_id","project"\n')
         for ds in args.ds_list:
             fp.write('"'+ds+'","'+ds+'","'+args.env_source_id+'","'+args.project+'"\n')
@@ -616,7 +610,7 @@ def create_project_file(args):
     out_file_path = os.path.join('./', out_file_name)
     
     with open(out_file_path,'w') as fp:
-        print 'Writing',out_file_name
+        print('Writing',out_file_name)
         fp.write('"project","title","project_description","funding","env_sample_source_id","contact","email","institution"\n')
         fp.write('"'+args.project+'","'+args.title+'","'+args.description+'","","'+args.env_source_id+'","'+args.contact+'","'+args.email+'","'+args.institution+'"\n')    
 
@@ -625,7 +619,7 @@ def create_user_file(args):
     out_file_path = os.path.join('./', out_file_name)
     
     with open(out_file_path,'w') as fp:
-        print 'Writing',out_file_name
+        print('Writing',out_file_name)
         fp.write('"contact","username","email","institution","first_name","last_name","active","security_level","encrypted_password"\n')
         fp.write('"'+args.contact+'","'+args.user+'","'+args.email+'","","'+args.contact.split()[0]+'","'+args.contact.split()[1]+'","1","50","XXXXXXXXXXX"\n')    
 
@@ -633,12 +627,8 @@ def create_metadata_file(args):
     out_file_name = 'metadata_'+args.project+'.csv'
     out_file_path = os.path.join('./', out_file_name)             
     with open(out_file_path,'w') as fp:
-        print 'Writing empty',out_file_name
-#            fp.write('"dataset","parameterName","parameterValue","units","miens_units","project","units_id","structured_comment_name","method","other","notes","ts","entry_date","parameter_id","project_dataset"\n')        
-#         for ds in args.ds_list:
-#             for mditem in args.default_req_metadata:
-#                 value = args.default_req_metadata[mditem]
-#                 fp.write('"'+ds+'",'+'"'+mditem+'",'+'"'+value+'","","",'+'"'+args.project+'","",'+'"'+mditem+'","","","","","","",""\n')
+        print('Writing empty',out_file_name)
+
                 
 def create_sequences_file(args):
     out_file_name = 'sequences_'+args.project+'.csv'
@@ -647,7 +637,7 @@ def create_sequences_file(args):
     files = glob.glob(file_glob)
     
     with open(out_file_path,'w') as fp1:
-        print 'Writing',out_file_name
+        print('Writing',out_file_name)
         fp1.write('"id","sequence","project","dataset","taxonomy","refhvr_ids","rank","seq_count","frequency","distance","rep_id","project_dataset"\n') 
         for spingo_file in files:
             base = os.path.basename(spingo_file)
@@ -777,8 +767,8 @@ if __name__ == '__main__':
     file_collector = {}
     
     (args.ds_list, args.project_count) = get_datasets(args)
-    print 'ds_list'
-    print args.ds_list
+    print('ds_list')
+    print(args.ds_list)
     
     
     
@@ -786,8 +776,8 @@ if __name__ == '__main__':
     if ans.upper() != 'Y':
         sys.exit()
     if not args.ds_list:
-        print 'No datasets found! Its likely the  args.infile_suffix is set wrong'
-        print 'Here it is: "'+ args.infile_suffix+'"; Enter "-fp <new_pt>" to change'
+        print('No datasets found! Its likely the  args.infile_suffix is set wrong')
+        print('Here it is: "'+ args.infile_suffix+'"; Enter "-fp <new_pt>" to change')
         sys.exit()
     create_dataset_file(args)
     create_project_file(args)

@@ -85,8 +85,8 @@ def start(args):
    
     RANK_COLLECTOR={}
    
-    print ("SELECT count(sequence.sequence_id) as seq from sequence JOIN sequence_uniq_info using(sequence_id) WHERE rdp_taxonomy_info_per_seq_id is null")
-    print ('CMD> ',sys.argv)
+    print("SELECT count(sequence.sequence_id) as seq from sequence JOIN sequence_uniq_info using(sequence_id) WHERE rdp_taxonomy_info_per_seq_id is null")
+    print('CMD> ',sys.argv)
     
     global mysql_conn, cur    
    
@@ -125,9 +125,9 @@ def start(args):
     cur.execute(q_seq)
     rows = cur.fetchall()
     
-    print ('num files',number_of_files)
-    print ('using count',args.count)
-    print ('count per fa file',count_per_fasta)
+    print('num files',number_of_files)
+    print('using count',args.count)
+    print('count per fa file',count_per_fasta)
     
     for i,row in enumerate(rows):
         
@@ -135,7 +135,7 @@ def start(args):
         #print(fp_index,number_of_files)
         fp = file_pointers[fp_index]
         seqid = str(row[1])
-        seq = str(row[0])
+        seq = row[0].decode('utf-8')
         fp.write('>'+seqid+'\n'+seq+'\n')
     
     mysql_conn.commit()
@@ -148,16 +148,16 @@ def start(args):
         unique_file  = os.path.join(pdir,str(n)+'-fasta.fa.unique')
         rdp_out_file = os.path.join(pdir, str(n)+'-rdp.out') # to be created
         print()
-        print ("starting rdp; file#",n,'of',number_of_files)
+        print("starting rdp; file#",n,'of',number_of_files)
         rdp.run_rdp( unique_file, rdp_out_file, args.path_to_classifier, args.gene )
         print()
-        print ("starting taxonomy; file#",n,'of',number_of_files)
+        print("starting taxonomy; file#",n,'of',number_of_files)
         push_taxonomy(args, n)
         print()
-        print ("starting sequences; file#",n,'of',number_of_files)
+        print("starting sequences; file#",n,'of',number_of_files)
         push_sequences(args, n)
    
-    print ("Finished "+os.path.basename(__file__))
+    print("Finished "+os.path.basename(__file__))
     
    
 def get_ranks():
@@ -195,11 +195,10 @@ def push_taxonomy(args, file_index):
 #                
 def run_rdp_tax_file(args, file_index, tax_file, seq_file): 
     
-    print ('reading seqfile',seq_file)
+    print('reading seqfile',seq_file)
     f = fastalib.SequenceSource(seq_file)
     
-    #print tax_file
-    #print seq_file
+   
     global SEQ_COLLECTOR
     while f.next():
         seqid = f.id.split('|')[0]  # may have |frequency
@@ -213,7 +212,7 @@ def run_rdp_tax_file(args, file_index, tax_file, seq_file):
             tax_items = []
             items = line.strip().split("\t")
             print()
-            print (items)
+            print(items)
             # ['21|frequency:1', '', 'Bacteria', 'domain', '1.0', '"Firmicutes"', 'phylum', '1.0', '"Clostridia"', 'class', '1.0', 'Clostridiales', 'order', '1.0', '"Ruminococcaceae"', 'family', '1.0', 'Faecalibacterium', 'genus', '1.0']
             # if boot_value > args.boot_score add to tax_string
             tmp = items[0].split('|')
@@ -223,11 +222,11 @@ def run_rdp_tax_file(args, file_index, tax_file, seq_file):
             tax_line = items[2:]
             boot_to_report = ''
             for i in range(0,len(tax_line),3):
-                  #print i,tax_line[i]
+                 
                   tax_name = tax_line[i].strip('"').strip("'").replace('"','').replace(' ','_')
                   rank = tax_line[i+1]
                   boot = float(tax_line[i+2])*100
-                  #print boot,args.boot_score
+                  
                   if i==0 and tax_name.lower() in accepted_domains and boot > args.boot_score:
                       tax_items.append(tax_name)
                       boot_to_report = str(tax_line[i+2])
@@ -235,7 +234,7 @@ def run_rdp_tax_file(args, file_index, tax_file, seq_file):
                       tax_items.append(tax_name)
                       boot_to_report = str(tax_line[i+2])
                   else:
-                      #print 'FAIL',boot,rank,tax_name
+                      
                       if rank == 'domain' and boot <= args.boot_score:
                          tax_items = ['Unknown']                   
                          boot_to_report = boot
@@ -244,7 +243,7 @@ def run_rdp_tax_file(args, file_index, tax_file, seq_file):
             
             distance = None
             
-            print (tax_items)
+            print(tax_items)
             if tax_items != []:                
                 finish_tax(rank, file_index, distance, seq_id, tax_items, boot_to_report)
                 pass
@@ -293,7 +292,7 @@ def finish_tax(rank, file_index, distance, seqid, tax_items, boot):
     if tax_items[0].lower() in accepted_domains:
         ids_by_rank = []
         for i in range(0,8):
-            #print i,len(tax_items),tax_items[i]
+            
             rank_name = ranks[i]
             rank_id = RANK_COLLECTOR[ranks[i]]
             
@@ -333,7 +332,7 @@ def finish_tax(rank, file_index, distance, seqid, tax_items, boot):
         q4 += " VALUES("+','.join(ids_by_rank)+",CURRENT_TIMESTAMP())"
         #
        
-        print (q4)
+        print(q4)
         cur.execute(q4)
         mysql_conn.commit() 
         rdp_tax_id = cur.lastrowid
@@ -343,19 +342,19 @@ def finish_tax(rank, file_index, distance, seqid, tax_items, boot):
             for i in range(0,len(tax_ids)):
                 vals += ' '+tax_ids[i]+"="+ids_by_rank[i]+' and'
             q5 = q5 + vals[0:-3] + ')'
-            #print q5
+            
             
             cur.execute(q5)
             mysql_conn.commit() 
             row = cur.fetchone()
             rdp_tax_id=row[0]
-            #print 'silva_tax_id',silva_tax_id
-        print ('rdp_tax_id',rdp_tax_id)
+            
+        print('rdp_tax_id',rdp_tax_id)
         #RDP_IDS_BY_TAX[tax_string] = rdp_tax_id
         #SEQ_COLLECTOR[seqid]['rdp_tax_id'] = rdp_tax_id
         SEQ_COLLECTOR[file_index][seqid]['rdp_tax_id'] = rdp_tax_id
     else:
-        print ('MISSING ',tax_items[0].lower())
+        print('MISSING ',tax_items[0].lower())
         sys.exit()
                 
                 
@@ -383,14 +382,14 @@ def push_sequences(args, file_index):
             q += " (sequence_id, rdp_taxonomy_id, rank_id, boot_score)"
             q += " VALUES ('%s','%s','%s','%s')" % (str(seqid), str(rdp_tax_id), str(rank_id), boot)
            
-            print (q)
+            print(q)
             cur.execute(q)
             mysql_conn.commit()
             rdp_tax_seq_id = cur.lastrowid
             if rdp_tax_seq_id == 0:
                 q3 = "select rdp_taxonomy_info_per_seq_id from rdp_taxonomy_info_per_seq"
                 q3 += " where sequence_id = '"+str(seqid)+"'"
-                print ('DUP silva_tax_seq',q3)
+                print('DUP silva_tax_seq',q3)
                 cur.execute(q3)
                 mysql_conn.commit() 
                 row = cur.fetchone()
@@ -402,7 +401,7 @@ def push_sequences(args, file_index):
             q4 = "UPDATE ignore sequence_uniq_info set rdp_taxonomy_info_per_seq_id='%s'"
             q4 += " WHERE sequence_id='%s'" 
             q4 = q4 % (str(rdp_tax_seq_id), str(seqid) )
-            print (q4)
+            print(q4)
             cur.execute(q4)
             mysql_conn.commit()
         ## don't see that we need to save uniq_ids
@@ -474,7 +473,7 @@ if __name__ == '__main__':
                  required=False,  action="store",   dest = "max_seqs_per_file", default=10000,
                  help = '')                           
     if len(sys.argv[1:]) == 0:
-        print (myusage)
+        print(myusage)
         sys.exit() 
     args = parser.parse_args() 
     
@@ -501,13 +500,8 @@ if __name__ == '__main__':
     #if args.limit:        
     #if total_seq_count > int(args.limit):
     args.count = int(args.limit)
-    print ('Using Limit Count:',args.limit)
-    #     else:
-#             args.count = total_seq_count
-#             print ('Using Total Count:',total_seq_count,';  Requested Limit Count:',args.limit)
-    #else:
-    #    print ('Using Total Count:',total_seq_count)
-    #    args.count = total_seq_count
+    print('Using Limit Count:',args.limit)
+    
     ans = input("Do you want to continue? (type 'Y' to continue): ")
     if ans.upper() == 'Y':
         start(args)

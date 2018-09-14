@@ -106,13 +106,12 @@ def start_metadata_load_from_file(args):
             print('NO REQUIRED METADATA')
         
     else:
-        print ("Could not find csv_file:",csv_infile)
+        print("Could not find csv_file:",csv_infile)
         # no metadata -- should enter defaults
-        print ("Using 'unknown' Defaults")
+        print("Using 'unknown' Defaults")
         defaults = get_null_ids()
         # must get dids
-        #print (DATASET_ID_BY_NAME.values())
-        #print (defaults)
+        
         #{'term': 6191, 'dna_region': 1, 'adapter_sequence': 1, 'sequencing_platform': 5, 'target_gene': 3, 'domain': 1, 'illumina_index': 83, 'primer_suite': 35, 'run': 5543}
         q = "INSERT IGNORE into required_metadata_info (dataset_id"
         for id_label in required_id_metadata_fields:
@@ -144,7 +143,7 @@ def get_null_ids():
         row = cur.fetchone()
         unknowns[q['table']] = row[0]
     
-    print ('unknown IDs',unknowns)
+    print('unknown IDs',unknowns)
     return unknowns
     
 def put_required_metadata():
@@ -253,7 +252,7 @@ def put_custom_metadata():
       create new table
     """
     global mysql_conn, cur
-    print ('starting put_custom_metadata')
+    print('starting put_custom_metadata')
     cust_keys_array = CUST_METADATA_ITEMS.keys()
     custom_table = 'custom_metadata_'+str(CONFIG_ITEMS['project_id'])
     
@@ -335,7 +334,7 @@ def put_custom_metadata():
 def get_metadata(indir, csv_infile):
     
     
-    print ('csv',csv_infile)
+    print('csv',csv_infile)
     logging.info('csv '+csv_infile)
     if args.delim == 'tab':
         lol = list(csv.reader(open(csv_infile, 'r'), delimiter='\t'))
@@ -345,18 +344,17 @@ def get_metadata(indir, csv_infile):
         sys.exit('Could not find delimiter: `tab` or `comma`')
     TMP_METADATA_ITEMS = {}
     
-    #print lol
+    
     keys = lol[0]
     for i,key in enumerate(keys):
         TMP_METADATA_ITEMS[key] = []
         for line in lol[1:]:
             TMP_METADATA_ITEMS[key].append(line[i])
     saved_indexes = []    
-    #print ('datasets',CONFIG_ITEMS['datasets'])
-    #print (TMP_METADATA_ITEMS)
+    
     #if CONFIG_ITEMS['fasta_type']=='multi':           
     for ds in CONFIG_ITEMS['datasets']:
-        #print  TMP_METADATA_ITEMS['sample_name'].index(ds), ds 
+        
         found = False
         for samp_head_name in req_first_col:
             #print('samp_head_name',samp_head_name)
@@ -373,7 +371,7 @@ def get_metadata(indir, csv_infile):
                                 
     
     # now get the data from just the datasets we have in CONFIG.ini
-    #print ('TMP_METADATA_ITEMS',TMP_METADATA_ITEMS)
+   
     for key in TMP_METADATA_ITEMS:
         
         if key in required_metadata_fields:
@@ -417,8 +415,7 @@ def get_metadata(indir, csv_infile):
                     ds = CONFIG_ITEMS['datasets'][0]
                     did = DATASET_ID_BY_NAME[ds]
                     CUST_METADATA_ITEMS['dataset_id'].append(did)
-    #print('REQ_METADATA_ITEMS',REQ_METADATA_ITEMS)
-    #print('CUST_METADATA_ITEMS',CUST_METADATA_ITEMS)
+    
                
     if not 'dataset_id' in REQ_METADATA_ITEMS:
         REQ_METADATA_ITEMS['dataset_id'] = []
@@ -428,18 +425,18 @@ def get_metadata(indir, csv_infile):
 def get_config_data(args):
     global mysql_conn, cur
     config_path = os.path.join(args.project_dir, args.config_file)
-    print (config_path)
+    print(config_path)
     logging.info(config_path)
     config = ConfigParser.ConfigParser()
     config.optionxform=str
     config.read(config_path)    
     for name, value in  config.items('MAIN'):
-        #print '  %s = %s' % (name, value)  
+        
         CONFIG_ITEMS[name] = value
     CONFIG_ITEMS['datasets'] = []
     for dsname, count in  config.items('MAIN.dataset'):        
         CONFIG_ITEMS['datasets'].append(dsname)   
-    #print 'project',CONFIG_ITEMS['project']
+    
     q = "SELECT project_id FROM project"
     q += " WHERE project = '"+CONFIG_ITEMS['project_name']+"'" 
     logging.info(q)

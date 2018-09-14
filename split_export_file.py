@@ -108,14 +108,13 @@ def go_list(args):
     metadata_lookup = convert_keys_to_string(read_original_metadata())
     metadata_dids = metadata_lookup.keys()
     #
-    #print file_dids
-    #print len(file_dids)           
+            
     q =  "SELECT dataset_id, dataset.project_id, project from project"
     q += " JOIN dataset using(project_id) order by project"
     
     num = 0
     cur.execute(q)
-    #print 'List of projects in: '+in_file
+    
     projects = {}
     missing_bulk_silva119 = {}
     missing_files = {}
@@ -135,31 +134,31 @@ def go_list(args):
             #file_path = os.path.join(args.json_file_path,NODE_DATABASE+'--datasets',did+'.json')
             if not os.path.isfile(file_path):
                 missing_bulk_silva119[project] = pid
-        #print 'project:',row[0],' --project_id:',row[1]
+        
     sort_p = sorted(projects.keys())
-    print 'UNITS:',args.units
+    print('UNITS:',args.units)
     for project in sort_p:  
         if project not in missing_files and project not in missing_bulk_silva119:
-            print 'ID:',projects[project],"-",project
+            print('ID:',projects[project],"-",project)
         num += 1
-    print
-    print args.units,'MISSING from metadata bulk file:'
+    print()
+    print(args.units,'MISSING from metadata bulk file:')
     sort_md = sorted(missing_metadata.keys())
     for project in sort_md:
-        print 'ID:',missing_metadata[project],"project:",project
-    print
+        print('ID:',missing_metadata[project],"project:",project)
+    print()
     
-    print args.units,'MISSING from taxcount(silva119 only) bulk file:'
+    print(args.units,'MISSING from taxcount(silva119 only) bulk file:')
     sort_m = sorted(missing_bulk_silva119.keys())
     for project in sort_m:
-        print 'ID:',missing_bulk_silva119[project],"project:",project
-    print
-    print args.units,'MISSING '+args.units+' files:'
+        print('ID:',missing_bulk_silva119[project],"project:",project)
+    print()
+    print(args.units,'MISSING '+args.units+' files:')
     sort_m = sorted(missing_files.keys())
     for project in sort_m:
-        print 'ID:',missing_files[project],"project:",project
-    print
-    print 'Number of Projects:',num
+        print('ID:',missing_files[project],"project:",project)
+    print()
+    print('Number of Projects:',num)
     
 
 def get_dco_pids(args):
@@ -183,7 +182,7 @@ def go_add(NODE_DATABASE, pids_str):
     
     if not os.path.exists(prefix):
         os.makedirs(prefix)
-    print prefix
+    print(prefix)
     all_dids = []
     metadata_lookup = {}
     
@@ -202,19 +201,19 @@ def go_add(NODE_DATABASE, pids_str):
             except:
                 pass
         did_sql = "','".join(dids)
-        #print counts_lookup
+        
         for q in queries:
             if args.units == 'rdp2.6':
                 query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % (did_sql)
             elif args.units == 'silva119':
                 query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % (did_sql)
-            print 'PID =',pid, '('+str(i+1),'of',str(len(pid_list))+')'
-            print query
+            print('PID =',pid, '('+str(i+1),'of',str(len(pid_list))+')')
+            print(query)
 
             dirs = []
             cur.execute(query)
             for row in cur.fetchall():
-                #print row
+                
                 count = int(row[0])
                 did = str(row[1])
                 # if args.separate_taxcounts_files:
@@ -228,7 +227,7 @@ def go_add(NODE_DATABASE, pids_str):
                 tax_id_str = ''
                 for k in range(2,len(row)):
                     tax_id_str += '_' + str(row[k])
-                #print 'tax_id_str',tax_id_str
+                
                 if did in counts_lookup:
                     #sys.exit('We should not be here - Exiting')
                     if tax_id_str in counts_lookup[did]:
@@ -250,9 +249,9 @@ def go_add(NODE_DATABASE, pids_str):
     if args.metadata_warning_only:
         for did in dids:            
              if did in metadata_lookup:
-                 print 'metadata found for did',did
+                 print('metadata found for did',did)
              else:
-                 print 'WARNING -- no metadata for did:',did
+                 print('WARNING -- no metadata for did:',did)
     else:
         
         
@@ -273,9 +272,9 @@ def write_all_metadata_file(metadata_lookup,rando):
     
     if not args.no_backup:
         bu_file = os.path.join(args.json_file_path,NODE_DATABASE+"--metadata_"+today+'_'+str(rando)+".json")
-        print 'Backing up metadata file to',bu_file
+        print('Backing up metadata file to',bu_file)
         shutil.copy(md_file, bu_file)
-    #print md_file
+    
     for did in metadata_lookup:
         original_metadata_lookup[did] = metadata_lookup[did]
         
@@ -294,7 +293,7 @@ def write_all_metadata_file(metadata_lookup,rando):
            f.write(json.dumps(original_metadata_lookup, ensure_ascii=False)) 
         finally:
             pass
-    print 'writing new metadata file'
+    print('writing new metadata file')
     #f.write(json_str.encode('utf-8').strip()+"\n")
     f.close() 
     
@@ -304,36 +303,24 @@ def write_all_taxcounts_file(counts_lookup,rando):
     tc_file = os.path.join(args.json_file_path,NODE_DATABASE+"--taxcounts_silva119.json")
     if not args.no_backup:
         bu_file = os.path.join(args.json_file_path,NODE_DATABASE+"--taxcounts_silva119"+today+'_'+str(rando)+".json")
-        print 'Backing up taxcount file to',bu_file
+        print('Backing up taxcount file to',bu_file)
         shutil.copy(tc_file, bu_file)
     for did in counts_lookup:
         original_counts_lookup[did] = counts_lookup[did]
     json_str = json.dumps(original_counts_lookup)       
-    #print(json_str)
+    
     f = open(tc_file,'w')  # this will delete taxcounts file!
-    print 'writing new taxcount file'
+    print('writing new taxcount file')
     f.write(json_str+"\n")
     f.close()
       
 def write_json_files(prefix, dids, metadata_lookup, counts_lookup):
-    #json_str = json.dumps(counts_lookup)    
-    # print('Re-Writing JSON file (REMEMBER to move new file to ../json/)')
-    # f = open(outfile,'w')
-    # f.write(json_str+"\n")
-    # f.close()
-    # for did in counts_lookup:
-#         file_path = os.path.join(prefix,str(did)+'.json')
-#         f = open(file_path,'w')
-#         mystr = json.dumps(counts_lookup[did])
-#         print mystr
-#         f.write('{"'+str(did)+'":'+mystr+"}\n")
-#         f.close()
+   
      for did in dids:
          file_path = os.path.join(prefix,str(did)+'.json')
-         print 'writing new file',file_path
+         print('writing new file',file_path)
          f = open(file_path,'w') 
-         #print
-         #print did, counts_lookup[did]
+         
          if did in counts_lookup:
             my_counts_str = json.dumps(counts_lookup[did]) 
          else:
@@ -344,7 +331,7 @@ def write_json_files(prefix, dids, metadata_lookup, counts_lookup):
              except:
                 my_metadata_str = json.dumps(metadata_lookup[did], ensure_ascii=False)
          else:
-             print 'WARNING -- no metadata for dataset:',did
+             print('WARNING -- no metadata for dataset:',did)
              my_metadata_str = json.dumps({})
          #f.write('{"'+str(did)+'":'+mystr+"}\n") 
          f.write('{"taxcounts":'+my_counts_str+',"metadata":'+my_metadata_str+'}'+"\n")
@@ -366,7 +353,7 @@ def go_required_metadata(did_sql, metadata_lookup):
             metadata_lookup[did] = {}
         #metadata_lookup[did]['primer_id'] = []
         for i,f in enumerate(required_metadata_fields):
-            #print i,did,name,row[i+1]
+            
             value = row[i+1]
 # DO not put primers or primer_ids into files
 #             if f == 'primer_suite_id':
@@ -416,17 +403,15 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
             field_collection.append(field.strip())
         
     
-    #print 'did_list',did_list
-    #print 'field_collection',field_collection
+   
 
     cust_dquery = "SELECT `" + '`,`'.join(field_collection) + "` from " + custom_table
-    #print cust_dquery
-    #try:
+    
     cur.execute(cust_dquery)
 
-    #print 'metadata_lookup1',metadata_lookup
+    
     for row in cur.fetchall():
-        #print row
+        
         did = str(row[0])
         if did in did_list:
             
@@ -439,7 +424,7 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
                     value = str(row[i])
                     #else:
                     #    value = None
-                    #print 'XXX',did,i,f,value
+                    
 
                     if did in metadata_lookup:              
                         metadata_lookup[did][f] = value
@@ -447,11 +432,9 @@ def go_custom_metadata(did_list, pid, metadata_lookup):
                         metadata_lookup[did] = {}
                         metadata_lookup[did][f] = value
                 
-        #except:
-        #    print 'could not find or read',table,'Skipping'
-    print
-    #print 'metadata_lookup2',metadata_lookup
-    #sys.exit()
+       
+    print()
+  
     return metadata_lookup
     
 def read_original_taxcounts():
@@ -462,12 +445,12 @@ def read_original_taxcounts():
     except:
         
         file_path2 = os.path.join(args.json_file_path,NODE_DATABASE+'--taxcounts.json')
-        print "could not read json file",file_path1,'Now Trying',file_path2
+        print("could not read json file",file_path1,'Now Trying',file_path2)
         try:    
             with open(file_path2) as data_file:    
                 data = json.load(data_file) 
         except:
-            print "could not read json file",file_path2,'--Exiting'
+            print("could not read json file",file_path2,'--Exiting')
             sys.exit(1)
     return data 
      
@@ -477,7 +460,7 @@ def read_original_metadata():
         with open(file_path) as data_file:    
             data = json.load(data_file)
     except:
-        print "could not read json file",file_path,'-Exiting'
+        print("could not read json file",file_path,'-Exiting')
         sys.exit(1)
     return data 
 
@@ -505,14 +488,14 @@ def go(args):
             else:
                 line = line.strip()
                 line_items = [x.strip('"') for x in line.split(',')]
-                #print line_items
+                
                 
                 if line_items[dataset_index] in args.dataset_list:
                     ds_collector.append(line_items[dataset_index])
                     f_out.write(line.replace('JCM_COBR_Bv4v5',args.project)+'\n')
     for ds in args.dataset_list:
         if ds not in ds_collector:
-            print "Missing",ds
+            print("Missing",ds)
             
     f_out.close()  
             
@@ -523,7 +506,7 @@ def get_datasets(args):
     with open(args.dataset_file) as data_file: 
         for f in data_file:
             datasets = f.strip().split(',')
-    print 'DS Count',len(datasets)    
+    print('DS Count',len(datasets)    )
     return datasets
     
 
@@ -554,13 +537,13 @@ if __name__ == '__main__':
                 required=True,  action='store',  dest = "file_type",  
                 help="")
     if len(sys.argv[1:]) == 0:
-        print myusage
+        print(myusage)
         sys.exit() 
     args = parser.parse_args()
     
     
     args.dataset_list = get_datasets(args)
-    #print args.dataset_list
+   
     go(args)
     
         

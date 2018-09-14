@@ -44,7 +44,7 @@ def start_gast_byhand(args):
     if args.use64bit:
         vamps_gast_cmd += ' --use64bit'
     
-    print vamps_gast_cmd
+    print(vamps_gast_cmd)
     proc = subprocess.Popen(vamps_gast_cmd, shell=True)
 
 
@@ -105,8 +105,8 @@ if __name__ == '__main__':
     # use_cluster is set to true by default in the php code
     # here it can be set to False
     #args.use_cluster=False
-    print myusage
-    print """Did you run this command: 
+    print(myusage)
+    print("""Did you run this command: 
     
     source /groups/vampsweb/vamps/seqinfobin/vamps_environment.sh
     
@@ -116,9 +116,9 @@ and are you in the correct directory?""",args.output_dir,"""
 And with the proper permissions set:
 cleanup gast directory
 sudo -u vamps(dev)httpd chmod -R ug+rw ../()*
-"""
-    print "use_cluster and use64bit are turned on by default"
-    print
+""")
+    print("use_cluster and use64bit are turned on by default")
+    print()
     raw_input("Press Enter to continue...")
 
     

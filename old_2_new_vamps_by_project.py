@@ -15,7 +15,7 @@
 t0 = time.time()
 t1 = time.time()
 total = t1-t0
-print "time_res = %s s" % total
+print("time_res = %s s" % total)
 
 
 *) cd vamps-node.js/public/scripts/maintenance_scripts; time python old_to_new_vamps_by_project.py -s sequences.csv -m metadata.csv -owner admin -p "ICM_AGW_Bv6"
@@ -102,7 +102,7 @@ class Mysql_util:
             read_default_file = os.path.expanduser("~/.my.cnf_local")
           else:
             read_default_file = os.path.expanduser("~/.my.cnf_node")
-        print ("read_default_file = %s" % read_default_file)
+        print("read_default_file = %s" % read_default_file)
 
         try:
             self.utils.print_both("=" * 40)
@@ -110,7 +110,7 @@ class Mysql_util:
             self.utils.print_both("=" * 40)
 
             self.conn = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port)
-            print ("host = %s, db = %s, read_default_file = %s" % (host, db, read_default_file))
+            print("host = %s, db = %s, read_default_file = %s" % (host, db, read_default_file))
             
           # else:
           #   self.conn = MySQLdb.connect(host = host, db = db, read_default_file)
@@ -129,8 +129,7 @@ class Mysql_util:
             raise                       # re-throw caught exception
 
     def execute_fetch_select(self, sql):
-      # print "+" * 20
-      # print sql
+     
       if self.cursor:
         try:
           self.cursor.execute(sql)
@@ -158,9 +157,9 @@ class Mysql_util:
                 field = field.strip()
                 sql += field+"=VALUES("+field+"),"
             sql = sql.rstrip(',') # remove last comma        
-        #print ('sql2',sql)
+        
         #if table_name == 'dataset' or table_name == 'project':
-        #    print ('sql',sql)
+       
         if self.cursor:
             self.cursor.execute(sql)
             self.conn.commit()
@@ -214,7 +213,7 @@ class Utils:
         pass
 
     def is_local(self):
-        print ('xx',os.uname()[1])
+        print('xx',os.uname()[1])
 
         dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local", "Annas-MacBook-new.local", "Annas-MacBook.local",'Andrews-Mac-Pro.local']
 
@@ -225,7 +224,7 @@ class Utils:
             return False
 
     def is_vamps(self):
-        print (os.uname()[1])
+        print(os.uname()[1])
         dev_comps = ['bpcweb8','bpcweb7','bpcweb7.bpcservers.private', 'bpcweb8.bpcservers.private']
         if os.uname()[1] in dev_comps:
             return True
@@ -233,7 +232,7 @@ class Utils:
             return False
             
     def is_vamps_prod(self):
-        print (os.uname()[1])
+        print(os.uname()[1])
         dev_comps = ['bpcweb8', 'bpcweb8.bpcservers.private']
         if os.uname()[1] in dev_comps:
             return True
@@ -241,12 +240,12 @@ class Utils:
             return False
             
     def print_both(self, message):
-        print (message)
+        print(message)
         logging.debug(message)
 
     def print_array_w_title(self, message, title = 'message'):
-      print (title)
-      print (message)
+      print(title)
+      print(message)
 
     def read_csv_into_list(self, file_name):
       fh = open(file_name, 'r', encoding='utf-8', newline='')
@@ -260,8 +259,7 @@ class Utils:
         csv_file_fields      = []
         csv_file_content     = []
         
-      #print('csv_file_content')
-      #print( csv_file_content[0:4] )
+      
       return (csv_file_fields, csv_file_content)
       # return list(csv.reader(open(file_name, 'rb'), delimiter = ','))[1:]
 
@@ -274,10 +272,10 @@ class Utils:
         return wrapped
 
     def benchmarking(self, func, func_name, *args, **kwargs):
-      print ("START %s" % func_name)
+      print("START %s" % func_name)
       wrapped  = utils.wrapper(func, *args)
       time_res = timeit.timeit(wrapped, number = 1)
-      print ('time: %.2f s' % time_res)
+      print('time: %.2f s' % time_res)
       
 
     def search_in_2d_list(self, search, data):
@@ -309,8 +307,7 @@ class Utils:
 
     def write_to_csv_file(self, file_name, res, file_mode = "wb"):
       data_from_db, field_names = res
-      # print ("VVVV")
-      # print (field_names)
+      
 
       with open(file_name, file_mode) as csv_file:
         csv_writer = csv.writer(csv_file)
@@ -437,10 +434,10 @@ class Taxonomy:
     >>> obj1 = (6, 1, 2, 6, 3)
     >>> obj2 = list(obj1) #Convert to list
     >>> obj2.append(8)
-    >>> print obj2
+    >>> print(obj2)
     [6, 1, 2, 6, 3, 8]
     >>> obj1 = tuple(obj2) #Convert back to tuple
-    >>> print obj1
+    >>> print(obj1)
     (6, 1, 2, 6, 3, 8)
 
     """
@@ -636,7 +633,7 @@ class Project:
         print('This project is already in database -- you must delete it first if you want to update; pid=',pid)
         sys.exit()
     else:
-        print ('project okay')
+        print('project okay')
     
     self.utils      = Utils()
     self.contact    = ""
@@ -717,8 +714,7 @@ class Dataset:
 #       self.dataset_id_by_name_dict[dataset] = dataset_id
 
   def insert_dataset(self, project_dict):
-    #print "PPP project_dict"
-    #print project_dict
+   
     for project in set(list(self.dataset_project_dict.values())):
       project_id = project_dict[project]
       self.put_project_id_into_dataset_file_content(project_id)
@@ -735,8 +731,8 @@ class Dataset:
   def make_all_dataset_id_by_project_dict(self):
     for dat, proj in sorted(self.dataset_project_dict.items()):
         self.all_dataset_id_by_project_dict[proj].append(self.dataset_id_by_name_dict[dat])
-    #print ("all_dataset_id_by_project_dict")
-    #print self.all_dataset_id_by_project_dict
+    #print("all_dataset_id_by_project_dict")
+    
     # {'ICM_SMS_Bv6': [1062, 1063, 1064, 1065, 1066, 1067, 1068, 1069, 1070, 1071, 1072, 1073, 1074, 1075, 1076, 1077]})
 
   def add_dataset_id_to_list(self, some_list, project):
@@ -764,7 +760,7 @@ class Sequence:
         sequences_w_ids = []
         split = len(self.sequences)/self.utils.chunk_split  # how many pieces
         for i,seqs in enumerate(self.utils.chunks(self.sequences, int(math.ceil(split)))):
-            print (i+1,'/',self.utils.chunk_split,' -- len seqs chunk:',len(seqs))
+            print(i+1,'/',self.utils.chunk_split,' -- len seqs chunk:',len(seqs))
             comp_seq = "COMPRESS(%s)" % '), COMPRESS('.join(["'%s'" % key for key in seqs])
             sequences_w_ids.extend( mysql_util.get_all_name_id('sequence', '', 'CONVERT(UNCOMPRESS(sequence_comp) USING utf8)', 'WHERE sequence_comp in (%s)' % comp_seq) )
         
@@ -777,14 +773,14 @@ class Sequence:
     # self.utils.print_array_w_title(sequences_w_ids, "sequences_w_ids from get_seq_ids")
 
   def insert_seq(self):
-    print ('type self.sequences:',type(self.sequences))
-    print ('len self.sequences:',len(self.sequences)  )
+    print('type self.sequences:',type(self.sequences))
+    print('len self.sequences:',len(self.sequences)  )
     
     if len(self.sequences) > self.utils.min_seqs:
         split = len(self.sequences)/self.utils.chunk_split  # how many pieces
         print('split',int(math.ceil(split)))
         for i,seqs in enumerate(self.utils.chunks(self.sequences, int(math.ceil(split)))):
-            print (i+1,'/',self.utils.chunk_split,' -- len seq chunk:',len(seqs))
+            print(i+1,'/',self.utils.chunk_split,' -- len seq chunk:',len(seqs))
             comp_seq = "COMPRESS(%s)" % ')), (COMPRESS('.join(["'%s'" % key for key in seqs])
             rows_affected = mysql_util.execute_insert("sequence", "sequence_comp", comp_seq)
             self.utils.print_array_w_title(rows_affected, "rows affected by mysql_util.execute_insert(sequence, sequence_comp, comp_seq)")
@@ -820,7 +816,7 @@ class Seq_csv:
     self.seq_id_w_silva_taxonomy_info_per_seq_id = ()
     self.sequence_uniq_info_values = ""
 
-    # print (self.seqs_file_content)
+    
     """
     [['278176', 'TGGACTTGACATGCACTTGTAAGCCATAGAGATATGGCCCCTCTTCGGAGC', 'ICM_SMS_Bv6', 'SMS_0001_2007_09_19', 'Bacteria;Proteobacteria;Deltaproteobacteria;Desulfobacterales;Nitrospinaceae;Nitrospina', 'v6_DU318 v6_DU349 v6_DU400 v6_DU416', 'genus', '2', '0.000136008160489629', '0.03900', 'FL6XCJ201ALT42', 'ICM_SMS_Bv6--SMS_0001_2007_09_19']...]
     """
@@ -853,8 +849,8 @@ class Seq_csv:
   
   def make_sequence_pdr_info_content(self, dataset_dict):
     print('self.seq_ids_by_name_dict')
-    #print( len(self.seq_ids_by_name_dict))
-    #print( dict(list(self.seq_ids_by_name_dict.items())[0:2] ))
+    #print(len(self.seq_ids_by_name_dict))
+    #print(dict(list(self.seq_ids_by_name_dict.items())[0:2] ))
     #for a in self.seq_ids_by_name_dict:
     #    print('a')
     #    print(a)
@@ -886,7 +882,7 @@ class Seq_csv:
         split = len(self.sequence_pdr_info_content)/self.utils.chunk_split  # how many pieces
         for i,vals in enumerate(self.utils.chunks(self.sequence_pdr_info_content, int(math.ceil(split)))):
             insert_seq_pdr_vals = self.utils.make_insert_values(vals)
-            print (i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(insert_seq_pdr_vals) )
+            print(i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(insert_seq_pdr_vals) )
             rows_affected = mysql_util.execute_insert('sequence_pdr_info', fields, insert_seq_pdr_vals)
             self.utils.print_array_w_title(rows_affected, "rows_affected by insert_seq_pdr_vals")
     else:
@@ -920,7 +916,7 @@ class Seq_csv:
     # self.utils.print_array_w_title(taxonomy.silva_taxonomy_id_per_taxonomy_dict, "taxonomy.taxonomy.silva_taxonomy_id_per_taxonomy_dict from silva_taxonomy_info_per_seq = ")
 
     # self.utils.print_array_w_title(self.seq_ids_by_name_dict, "\n---\nself.seq_ids_by_name_dict from silva_taxonomy_info_per_seq = ")
-    # print ("SSSSS")
+    # print("SSSSS")
     # seq_csv_file_fields = ["id","sequence","project","dataset","taxonomy","refhvr_ids","rank","seq_count","frequency","distance","rep_id","project_dataset"]
     # all_rank_w_id
     # (('domain', 78), ('family', 82), ('genus', 83), ('klass', 80), ('NA', 87), ('order', 81), ('phylum', 79), ('species', 84), ('strain', 85), ('superkingdom', 86))
@@ -953,7 +949,7 @@ class Seq_csv:
         split = len(self.silva_taxonomy_info_per_seq_list)/self.utils.chunk_split  # how many pieces
         for i,vals in enumerate(self.utils.chunks(self.silva_taxonomy_info_per_seq_list, int(math.ceil(split)))):
             all_insert_dat_vals = self.utils.make_insert_values(vals)
-            print (i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(all_insert_dat_vals))
+            print(i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(all_insert_dat_vals))
             rows_affected = mysql_util.execute_insert("silva_taxonomy_info_per_seq", field_list, all_insert_dat_vals)
             self.utils.print_array_w_title(rows_affected, "rows_affected by insert_silva_taxonomy_info_per_seq")
     else:
@@ -977,7 +973,7 @@ class Seq_csv:
   def sequence_uniq_info_from_csv(self, sequences_w_ids):
     self.get_seq_id_w_silva_taxonomy_info_per_seq_id()
     # ! sequence_uniq_info (sequence_id, silva_taxonomy_info_per_seq_id, gg_otu_id, oligotype_id)
-    # print ("sequence_uniq_info_values = %s" % sequence_uniq_info_values)
+    # print("sequence_uniq_info_values = %s" % sequence_uniq_info_values)
 
   def insert_sequence_uniq_info(self):
     field_list = "sequence_id, silva_taxonomy_info_per_seq_id"
@@ -985,7 +981,7 @@ class Seq_csv:
         split = len(self.seq_id_w_silva_taxonomy_info_per_seq_id)/self.utils.chunk_split  # how many pieces
         for i,vals in enumerate(self.utils.chunks(self.seq_id_w_silva_taxonomy_info_per_seq_id, int(math.ceil(split)))):
             sequence_uniq_info_values = '), ('.join(str(i1) + "," + str(i2) for i1, i2 in vals)
-            print (i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(sequence_uniq_info_values))
+            print(i+1,'/',self.utils.chunk_split,' -- len vals chunk:',len(sequence_uniq_info_values))
             rows_affected = mysql_util.execute_insert("sequence_uniq_info", field_list, sequence_uniq_info_values)
             self.utils.print_array_w_title(rows_affected, "rows_affected from insert_sequence_uniq_info = ")
     else:
@@ -1163,8 +1159,8 @@ class Metadata:
   def find_required_id(self, term, req_name):
     id = 'id_not_found'
     name = 'unknown'
-    #if not req_name:
-    #print 'term',term,req_name
+    
+   
     #    req_name = 'unknown'
     if term == 'target_gene':
         list = self.target_gene_list
@@ -1210,8 +1206,8 @@ class Metadata:
     return (name,id)
   
   def parse_metadata_csv(self, metadata_csv_file_name):
-    print ("=" * 20)
-    print (metadata_csv_file_name)
+    print("=" * 20)
+    print(metadata_csv_file_name)
     self.metadata_file_fields, self.metadata_file_content = self.utils.read_csv_into_list(metadata_csv_file_name)
     
     """
@@ -1224,8 +1220,7 @@ class Metadata:
   
   def add_names_to_params(self):
     self.metadata_w_names = [utils.make_entry_w_fields_dict(self.metadata_file_fields, row) for row in self.metadata_file_content]
-    # print( "YYY")
-    # print (self.metadata_w_names)
+   
     '''
 [{'parameter_id': '0',
 'notes': 'acb.txt  2009-06-22 PRN  miens update prn 2010_05_19 miens update units --prn 2010_05_19',
@@ -1247,11 +1242,10 @@ class Metadata:
       '''
     
   def add_ids_to_params(self):
-    #print "DDD dataset.dataset_id_by_name_dict:"
-    #print dataset.dataset_id_by_name_dict
+   
     for param_per_dataset in self.metadata_w_names:
-      print ("PPP param_per_dataset:")
-      print (param_per_dataset)
+      print("PPP param_per_dataset:")
+      print(param_per_dataset)
       if param_per_dataset['dataset'] in dataset.dataset_id_by_name_dict:
         param_per_dataset['dataset_id'] = dataset.dataset_id_by_name_dict[param_per_dataset['dataset']]
        
@@ -1287,7 +1281,7 @@ class Metadata:
       existing_required_metadata_fields_values_per_dataset[param_per_dataset['dataset']][param_per_dataset['structured_comment_name']] = param_per_dataset['parameterValue']
     
     intr = structured_comment_names.intersection(self.existing_required_metadata_fields.values())
-    #print 'existing_required_metadata_fields_values_per_dataset',existing_required_metadata_fields_values_per_dataset
+   
     for dataset_name, metadata in existing_required_metadata_fields_values_per_dataset.items():    
       if dataset_name in dataset.dataset_id_by_name_dict:
           dataset_id = dataset.dataset_id_by_name_dict[dataset_name]
@@ -1297,15 +1291,14 @@ class Metadata:
             """
               AAV::  If field_name is absent this will add a blank rather than crashing
             """
-            #print 'metadata',metadata
-            #print 'field name',field_name
+           
             if field_name in metadata:
                 temp_dict[key[0]] = metadata[field_name]
             else:
                 temp_dict[key[0]] = ''
           temp_dict['dataset_id'] = str(dataset_id)
           self.required_metadata.append(temp_dict)
-    #print 'self.required_metadata',self.required_metadata 
+   
       
   def required_metadata_for_insert(self):
     all_required_metadata = []
@@ -1344,7 +1337,7 @@ class Metadata:
         rows_affected = mysql_util.execute_insert("required_metadata_info", self.required_metadata_field_list, self.required_metadata_insert_values)    
         self.utils.print_array_w_title(rows_affected, "rows_affected from insert_required_metadata")
     else:
-        print ('No required metadata found or entered.')
+        print('No required metadata found or entered.')
   # ==== Custom metadata =====
   
   # add fields per dataset to custom_metadata_fields (project_id, field_name, field_units, example)
@@ -1356,7 +1349,7 @@ class Metadata:
     # TODO: too long and does more then one thing - change!
     custom_metadata_fields_for_tbl         = []
     custom_metadata_fields_uniqued_for_tbl = []
-    print ('self.custom_metadata_fields')
+    print('self.custom_metadata_fields')
    
     for param_per_dataset in self.metadata_w_names:
       field_name = self.correct_field_name(param_per_dataset['structured_comment_name'])
@@ -1387,13 +1380,12 @@ class Metadata:
     '''
 
     # aux_bec_simulated_phosphate__um_
-    # print "self.custom_metadata_fields_insert_values VVV"
-    # print self.custom_metadata_fields_insert_values
+   
     if self.custom_metadata_fields_insert_values:
         rows_affected = mysql_util.execute_insert("custom_metadata_fields", field_list, self.custom_metadata_fields_insert_values)
         self.utils.print_array_w_title(rows_affected, "rows_affected from insert_custom_metadata_fields")
     else:
-        print ('No custom metadata found or entered.')
+        print('No custom metadata found or entered.')
 
   # create table per project
   def get_data_from_custom_metadata_fields(self, project_dict):
@@ -1406,7 +1398,7 @@ class Metadata:
     return field_name.replace("(", "_").replace(")", "_").replace(",", "-").lower()  # LOWERCASE decided for all fields 2017-11-29
     
   def create_custom_metadata_pr_id_table(self):    
-    # print self.project_ids
+    
     # set([275])
     
     # [(275, 'aux_bec_simulated_nitrate_(um)', 'unknown'), (275, 'depth_end', 'meter'), (275, 'aux_bec_simulated_phosphate_(um)', 'unknown'), (275, 'aux_sunset_hr', 'unknown'), 
@@ -1437,19 +1429,18 @@ class Metadata:
         
         """AAV - Want to start with a clean table"""
         q = "DROP TABLE IF EXISTS %s" % (table_name)
-        print (mysql_util.execute_no_fetch(q))
+        print(mysql_util.execute_no_fetch(q))
         
         table_description = "ENGINE=InnoDB"
-        print ('field_descriptions')
-        print (field_descriptions)
-        print ('field_descriptions')
+        print('field_descriptions')
+        print(field_descriptions)
+        print('field_descriptions')
         #sys.exit()
         #field_descriptions = list(set(field_descriptions)) ## THIS uniques
         q = "CREATE table %s (%s) %s" % (table_name, field_descriptions, table_description)
         # should unique the field_descriptions
-        #print field_descriptions
-        #print q    
-        print (mysql_util.execute_no_fetch(q))
+        
+        print(mysql_util.execute_no_fetch(q))
 
   def make_custom_metadata_per_project_dataset_dict(self):
     for param_per_dataset in self.metadata_w_names:
@@ -1490,71 +1481,63 @@ class Metadata:
     table_name  = "target_gene"
     where_part  = ""
     self.target_gene_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print ('got target_gene list')
-    #print (self.target_gene_list)
+   
 
   def get_dna_region_ids(self):
     field_names = "dna_region_id, dna_region"
     table_name  = "dna_region"
     where_part  = ""
     self.dna_region_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print ('got dna_region list')
-    #print (self.dna_region_list)
+    
   def get_domain_ids(self):
     field_names = "domain_id, domain"
     table_name  = "domain"
     where_part  = ""
     self.domain_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print 'got domain list'
-    #print self.domain_list
+    
   def get_sequencing_platform_ids(self):
     field_names = "sequencing_platform_id, sequencing_platform"
     table_name  = "sequencing_platform"
     where_part  = ""
     self.sequencing_platform_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print 'got sequencing_platform list'
+   
     
   def get_term_ids(self):
     field_names = "term_id, term_name"
     table_name  = "term"
     where_part  = ""
     self.term_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print 'got term list'
+    
   def get_package_ids(self):
     field_names = "env_package_id, env_package"
     table_name  = "env_package"
     where_part  = ""
     self.package_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print 'got package list'
-    #print self.env_biome_list
+    
   def get_adapter_sequence_ids(self):
     field_names = "run_key_id, run_key"
     table_name  = "run_key"
     where_part  = ""
     self.adapter_sequence_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print 'got adapter_sequence list'
-    #print self.adapter_sequence_list
+    
   def get_illumina_index_ids(self):
     field_names = "illumina_index_id, illumina_index"
     table_name  = "illumina_index"
     where_part  = ""
     self.illumina_index_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print 'got illumina_index list'
-    #print self.index_sequence_list
+    
   def get_primer_suite_ids(self):
     field_names = "primer_suite_id, primer_suite"
     table_name  = "primer_suite"
     where_part  = ""
     self.primer_suite_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print 'got primer_suite list'
-    #print self.primer_suite_list
+    
   def get_run_ids(self):
     field_names = "run_id, run"
     table_name  = "run"
     where_part  = ""
     self.run_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-    #print 'got run list'
-    #print self.primer_suite_list
+    
     
 if __name__ == '__main__':
   import subprocess
@@ -1666,15 +1649,15 @@ if __name__ == '__main__':
     
   
   if len(sys.argv[1:]) == 0:
-        print (myusage)
+        print(myusage)
         sys.exit() 
   args = parser.parse_args()
-  print (args)
+  print(args)
   if args.non_mbl_format:
-    print ('This is a non MBL Formatted project -- using command line metadata')
+    print('This is a non MBL Formatted project -- using command line metadata')
   else:
     pparts = args.project.split('_') 
-    print (pparts   )
+    print(pparts   )
     if len(pparts) != 3:
         sys.exit('project in not formatted correctly. Use (-non_mbl_format) and command line metadata for domain, dna_region, primer_suite, target_gene')
     
@@ -1716,14 +1699,14 @@ if __name__ == '__main__':
     elif args.dna_region == 'v9':
         args.primer_suite +='l V9 Suite'
     else:
-        print ('No good primer suite found')
+        print('No good primer suite found')
   
   utils = Utils()
   
-  print ("args = ")
-  print (args)
-  print ("args.write_files")
-  print (args.write_files)
+  print("args = ")
+  print(args)
+  print("args.write_files")
+  print(args.write_files)
 
   host_prod   = "bpcweb7"
   to_database = 'vamps2'
@@ -1739,7 +1722,7 @@ if __name__ == '__main__':
 
     
     #prod_mysql_util = Mysql_util(host = host_prod, db = "vamps2", read_default_file = read_default_file_prod, port = port_prod)
-    # print "START run_csv_dump"
+   
 #     t0 = time.time()
 #     if args.metadata_only:
 #         metadata_csv_file_name = csv_files.run_md_dump(prod_mysql_util)
@@ -1747,7 +1730,7 @@ if __name__ == '__main__':
 #         metadata_csv_file_name, seq_csv_file_name, project_csv_file_name, dataset_csv_file_name, user_contact_csv_file_name = csv_files.run_csv_dump(prod_mysql_util)
 #     t1 = time.time()
 #     total = t1-t0
-#     print "time_res = %s s" % total
+
     
  # else:
 # todo: get file_names and path from args
@@ -1779,10 +1762,10 @@ if __name__ == '__main__':
 
   # ========
 
-  print ("metadata_csv_file_name = %s, seq_csv_file_name = %s, project_csv_file_name = %s, dataset_csv_file_name = %s, user_contact_csv_file_name = %s" % (metadata_csv_file_name, seq_csv_file_name, project_csv_file_name, dataset_csv_file_name, user_contact_csv_file_name))
+  print("metadata_csv_file_name = %s, seq_csv_file_name = %s, project_csv_file_name = %s, dataset_csv_file_name = %s, user_contact_csv_file_name = %s" % (metadata_csv_file_name, seq_csv_file_name, project_csv_file_name, dataset_csv_file_name, user_contact_csv_file_name))
   
   mysql_util = Mysql_util(host = host_prod, db = 'vamps2')
-  print ('reading seqs')
+  print('reading seqs')
   seq_csv_parser = Seq_csv(seq_csv_file_name, mysql_util)
   taxonomy       = Taxonomy(seq_csv_parser.taxa, mysql_util)
   #refhvr_id      = Refhvr_id(seq_csv_parser.refhvr_id, mysql_util)
@@ -1832,20 +1815,20 @@ if __name__ == '__main__':
         elif term == 'platform':
             mdlist = metadata.sequencing_platform_list
         elif term == 'geo_loc_name':
-            mdlist = 'list is too big to print here -- see database'  #metadata.term_list
+            mdlist = 'list is too big to print here-- see database'  #metadata.term_list
         elif term == 'env_material' or term == 'env_feature' or term == 'env_biome':
-            mdlist = 'term list is too big to print here -- see database'  #metadata.term_list
+            mdlist = 'term list is too big to print here-- see database'  #metadata.term_list
         elif term == 'env_package':
             mdlist = metadata.package_list
         elif term == 'adapter_sequence':
-            mdlist = 'run_key list is too big to print here -- see database'  #metadata.adapter_sequence_list
+            mdlist = 'run_key list is too big to print-here -- see database'  #metadata.adapter_sequence_list
         elif term == 'illumina_index':
             mdlist = metadata.illumina_index_list
         elif term == 'primer_suite':
             mdlist = metadata.primer_suite_list  
         elif term == 'run':
-            mdlist = 'list is too big to print here -- see database'
-        print ('tag is -`'+term + "`; Enter the name not the id")
+            mdlist = 'list is too big to print-here -- see database'
+        print('tag is -`'+term + "`; Enter the name not the id")
         print('Choose from the list:',mdlist)
         req_md_okay = False
   if not req_md_okay:
@@ -1921,15 +1904,14 @@ if __name__ == '__main__':
   # METADATA
   
 
- #  print "** Skipping Metadata ** ",args.project,"--ProjectID:",pr.project_id
-#   sys.exit('Skipping Metadata for Testing (remove this if on production)')
+
 #   
   
   utils.benchmarking(metadata.parse_metadata_csv, "parse_metadata_csv", metadata_csv_file_name)
   
   ## TODO Required Metadata should run regardless of if MD was found in old vamps
   if not metadata.metadata_file_fields:
-    print ("No Metadata Found in file")
+    print("No Metadata Found in file")
     
   utils.benchmarking(metadata.add_names_to_params, "add_names_to_params")
   utils.benchmarking(metadata.add_ids_to_params, "add_ids_to_params")  
@@ -1955,7 +1937,7 @@ if __name__ == '__main__':
     utils.benchmarking(metadata.insert_custom_metadata, "insert_custom_metadata")
 
       
-  print ("** Finished ** ",args.project,"--ProjectID:",pr.project_id)
+  print("** Finished ** ",args.project,"--ProjectID:",pr.project_id)
   # import winsound
 #   Freq = 2500 # Set Frequency To 2500 Hertz
 #   Dur = 1000 # Set Duration To 1000 ms == 1 second
@@ -1982,6 +1964,6 @@ if __name__ == '__main__':
 # done) combine creation metadata values and then insert required or custom_metadata
 # done) change 108 to 119 in the git db
 # *) required_metadata_info -4??? see on vampsprod for pr MBE_1666G_Bv4
-# *) change print to print_both
+
 # *) use more the one project at once
 

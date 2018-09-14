@@ -90,7 +90,7 @@ def start(args):
     logging.debug("running get_config_data")
     get_config_data(args)
 
-    print CONFIG_ITEMS
+    print (CONFIG_ITEMS)
     #print DATASET_ID_BY_NAME
     #print PROJECT_ID_BY_NAME
     
@@ -202,8 +202,8 @@ def recreate_ranks(my_class):
     my_class.mysql_util.conn.commit()
 
 def push_dataset():
-    print "IN push_dataset CONFIG_ITEMS"
-    print CONFIG_ITEMS
+    print("IN push_dataset CONFIG_ITEMS")
+    print(CONFIG_ITEMS)
     fields = ['dataset','dataset_description','env_sample_source_id','project_id']
     q = "INSERT ignore into dataset ("+(',').join(fields)+")"
     q += " VALUES('%s','%s','%s','%s')"
@@ -219,8 +219,8 @@ def push_dataset():
         except:
             logging.debug('ERROR: MySQL Integrity ERROR -- duplicate dataset')
             sys.exit('ERROR: MySQL Integrity ERROR -- duplicate dataset')
-    print "DATASET_ID_BY_NAME"
-    print DATASET_ID_BY_NAME
+    print("DATASET_ID_BY_NAME")
+    print(DATASET_ID_BY_NAME)
     mysql_conn.commit()
 
 def push_project(PROJECT_ID_BY_NAME):
@@ -754,7 +754,7 @@ class Utils:
         pass          
     
     def is_local(self):
-        print os.uname()[1]
+        print(os.uname()[1])
         dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local", "Annas-MacBook-new.local", "Annas-MacBook.local"]
         if os.uname()[1] in dev_comps:
             return True
@@ -762,7 +762,7 @@ class Utils:
             return False
             
     def is_vamps(self):
-        print os.uname()[1]
+        print(os.uname()[1])
         dev_comps = ['bpcweb8','bpcweb7','bpcweb7.bpcservers.private', 'bpcweb8.bpcservers.private']
         if os.uname()[1] in dev_comps:
             return True
@@ -770,7 +770,7 @@ class Utils:
             return False
             
     def print_both(self, message):
-        print message
+        print(message)
         logging.debug(message)
     
 class Mysql_util:
@@ -892,8 +892,8 @@ class Old_vamps_data:
       all_cust_keys = []  # to create new table
       logging.debug("CONFIG_ITEMS['datasets'] = ")
       logging.debug(CONFIG_ITEMS['datasets'])
-      print "CUST_METADATA_ITEMS = "
-      print CUST_METADATA_ITEMS
+      print("CUST_METADATA_ITEMS = ")
+      print(CUST_METADATA_ITEMS)
       for ds in CONFIG_ITEMS['datasets']:
           did = str(self.dataset_id_by_name_dict[ds])
           logging.debug("DATASET_ID_BY_NAME[ds] = ")
@@ -938,8 +938,8 @@ class Old_vamps_data:
                 q2 += "'"+str(CUST_METADATA_ITEMS[did][key])+"')"
                 logging.debug("q2 = ")
                 logging.debug(q2)
-                print "q2 = "
-                print q2
+                print("q2 = ")
+                print(q2)
                 self.cursor.execute(q2)
           except:
             raise
@@ -1038,7 +1038,7 @@ if __name__ == '__main__':
     
     
 
-    print 'DATABASE:',args.NODE_DATABASE
+    print('DATABASE:',args.NODE_DATABASE)
     print('See '+LOG_FILENAME)
 
 
@@ -1046,13 +1046,13 @@ if __name__ == '__main__':
     
     if args.project and args.seqs_file and args.metadata_file:
         pid = start(args)
-        print "PID=", str(pid)
-        print "Now Run: './taxcounts_metadata_files_utils.py -pid "+str(pid)+" -add' (-json_file_path; -host)"
-        print "And re-start the server"
+        print("PID=", str(pid))
+        print("Now Run: './taxcounts_metadata_files_utils.py -pid "+str(pid)+" -add' (-json_file_path; -host)")
+        print("And re-start the server")
         logging.debug("Finished database_importer.py")
         logging.debug("Now Run: './taxcounts_metadata_files_utils.py -pid "+str(pid)+" -add' (-json_file_path; -host)")
         logging.debug("And re-start the server")
     else:
-        print myusage
+        print(myusage)
 
 

@@ -54,10 +54,7 @@ def go_list(args):
     project_id_order.sort()
     #metadata_dids = metadata_lookup.keys()
     #
-    #print file_dids
-    #print len(file_dids)
-    #q =  "SELECT dataset_id,dataset.project_id,project from project"
-    #q += " JOIN dataset using(project_id) order by project"
+   
     failed_projects = []
     no_req_data_found = 0
     no_file_found = {}          # 2only for metadata BULK FILE: if did NOT found
@@ -102,7 +99,7 @@ def go_list(args):
             did_file1 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119', str(did)+'.json')
             did_file2 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_rdp2.6"',  str(did)+'.json')
             did_file3 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_generic',  str(did)+'.json')
-            #print 'did',did
+            
             #if did == '3938':
             if did not in metadata_lookup:
                 if pid not in no_file_found:
@@ -110,7 +107,7 @@ def go_list(args):
                 clean_project = False
             else:
                 for i,item in enumerate(required_metadata_fields):
-                    #print(item, row[i+1])
+                   
                     if item in metadata_lookup[did]:
                         db_val = str(row[i+1])
                         if str(metadata_lookup[did][item]) != db_val :
@@ -121,7 +118,7 @@ def go_list(args):
                             clean_project = False
                     else:
                          if args.verbose:
-                            print( 'pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- `'+item+'` item not found in req metadata file-1\n')
+                            print('pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- `'+item+'` item not found in req metadata file-1\n')
                          if pid not in other_problem:
                             other_problem[pid] = project_lookup[pid]
                          clean_project = False
@@ -137,7 +134,7 @@ def go_list(args):
             except:
                 did_file_problem[pid] = project_lookup[pid]
                 if args.verbose:
-                    print( 'pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- Could not open did file-1\n')
+                    print('pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- Could not open did file-1\n')
         
         
         
@@ -151,11 +148,11 @@ def go_list(args):
             cur.execute(q1)
             rows = cur.fetchall()
             for row in rows:
-                #print row
+                
                 field = str(row[0])
                 if field !=  custom_metadata_file+'_id' and field != 'dataset_id' and field != 'project_id':
                     fields.append(field) # starts with idx 2
-            #print 'fields',fields
+            
             if args.verbose:
                 print(q2)
             # query2 q2 = "SELECT * from "+custom_metadata_file
@@ -167,8 +164,7 @@ def go_list(args):
             rows = cur.fetchall()
             for row in rows:
                 did = str(row[1]) # first is custom_metadata_<pid>_id, second is did
-                #print
-                #print 'row',row
+                
                 for i,item in enumerate(fields):
 
                     #print('pid:',pid,'did:',did, 'item:',item, metadata_lookup[did], project_lookup[pid])
@@ -189,7 +185,6 @@ def go_list(args):
                             other_problem[pid] = project_lookup[pid]
                         clean_project = False
         except:
-            #print "FYI: No Custom Metadata:",custom_metadata_file,"is missing"
             pass
         #sys.exit()
         #if not clean_project:
@@ -224,8 +219,8 @@ def go_list(args):
         print('\t **Clean**')
     else:
         for pid in mismatch_data:
-            print( '\t pid:',pid,' -- ',mismatch_data[pid])
-        print ('\t PID List:',','.join([str(n) for n in mismatch_data.keys()]))
+            print('\t pid:',pid,' -- ',mismatch_data[pid])
+        print('\t PID List:',','.join([str(n) for n in mismatch_data.keys()]))
     print()
     print('\t2) NO DID FOUND IN METADATA BULK FILE (Assumes no did file found either) (re-build should work):')
     if not len(no_file_found):
@@ -249,7 +244,7 @@ def go_list(args):
     else:
         for pid in cust_rowcount_data:
             print('\t pid:',pid,' -- ',cust_rowcount_data[pid])
-        print  ('\t PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
+        print('\t PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
     print()
     print('\t5) DID FILES: zero-length file or taxcounts={}:')
     if not len(did_file_problem):
@@ -257,7 +252,7 @@ def go_list(args):
     else:
         for pid in did_file_problem:
             print('\t pid:',pid,' -- ',did_file_problem[pid])
-        print  ('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
+        print('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
 
         if args.show_dids:
             for pid, dids in did_file_problem_by_pid.items():
@@ -270,7 +265,7 @@ def go_list(args):
     else:
         for pid in other_problem:
             print('\t pid:',pid,' -- ',other_problem[pid])
-        print  ('\t PID List:',','.join([str(n) for n in other_problem.keys()]))
+        print('\t PID List:',','.join([str(n) for n in other_problem.keys()]))
     
     print()
     if args.search_seqs:
@@ -280,7 +275,7 @@ def go_list(args):
         else:
             for pid in missing_seqs:
                 print('\t pid:',pid,' -- ',missing_seqs[pid])
-            print  ('\t PID List:',','.join([str(n) for n in missing_seqs.keys()]))
+            print('\t PID List:',','.join([str(n) for n in missing_seqs.keys()]))
         print()
     all_to_rebuild = list(other_problem.keys()) + list(mismatch_data.keys()) + list(no_file_found.keys()) + list(did_file_problem.keys()) 
      
@@ -315,7 +310,7 @@ def get_project_lookup(args):
 
     num = 0
     cur.execute(q)
-    #print 'List of projects in: '+in_file
+   
     projects_by_did = {}
     project_id_lookup = {}
     project_lookup = {}

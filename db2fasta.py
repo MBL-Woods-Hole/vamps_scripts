@@ -37,17 +37,21 @@ import pymysql as MySQLdb
     
 def start(args):
     #  https://www.ncbi.nlm.nih.gov/books/NBK279688/
-    sqlQuery = "SELECT sequence_id, project, dataset, SUM(seq_count), UNCOMPRESS(sequence_comp) as sequence" 
+    sqlQuery = "SELECT sequence_id, project, dataset, SUM(seq_count) as knt, UNCOMPRESS(sequence_comp) as sequence" 
     if args.tax:
         sqlQuery += ", concat_ws(';',domain,phylum,klass,`order`,family,genus,species) as tax"
+    if args.latlon:
+        sqlQuery += ", latitude,longitude"
     sqlQuery += " FROM sequence" 
     sqlQuery += " JOIN sequence_pdr_info using(sequence_id)"
     sqlQuery += " JOIN dataset using(dataset_id)"
     sqlQuery += " JOIN project using(project_id) "
+    if args.latlon:
+        sqlQuery += " JOIN required_metadata_info using(dataset_id) "
     if args.tax:
         sqlQuery += " JOIN silva_taxonomy_info_per_seq using(sequence_id)" 
         sqlQuery += " JOIN silva_taxonomy using(silva_taxonomy_id)"
-        sqlQuery += " JOIN domain using(domain_id)"
+        sqlQuery += " JOIN domain on(domain.domain_id=silva_taxonomy.domain_id)"
         sqlQuery += " JOIN phylum using(phylum_id)"
         sqlQuery += " JOIN klass using(klass_id)"
         sqlQuery += " JOIN `order` using(order_id)"
@@ -62,6 +66,8 @@ def start(args):
     else:
         sys.exit('either enter a project(-p) or where clause(-sql)')
     sqlQuery += " GROUP BY project, dataset, sequence"
+    if args.limit:
+        sqlQuery += " limit "+args.limit
     print(' ')
     print(sqlQuery)
     cur.execute(sqlQuery) 
@@ -71,18 +77,23 @@ def start(args):
     fp = open(args.out_file_name,'w')
     fa_rowcount=0
     for row in rows:
-        seqid = str(row[0])
-        project = row[1]
-        dataset=row[2]
-        freq = row[3]
-        seq = str(row[4],'utf8')
+        seqid = str(row['sequence_id'])
+        project = row['project']
+        dataset=row['dataset']
+        freq = row['knt']
+        seq = str(row['sequence'],'utf8')
         pjds = project+'--'+dataset
         #id = '>'+seqid+' project='+project+'|dataset='+dataset+'|frequency='+str(freq)
         # id formatting from https://www.ncbi.nlm.nih.gov/books/NBK279688/
         id = '>'+pjds+'|'+seqid
         
         if args.tax:
-            id += '|'+row[5].rstrip(';')
+            id += '|'+row['tax'].rstrip(';')
+        if args.latlon:
+            if row['latitude'] and row['longitude']:
+                id += '|'+str(row['latitude'])+';'+str(row['longitude'])
+            else:
+                id += '|none;none'
         id += '|frequency:'+str(freq)
         
         if args.expand:
@@ -125,6 +136,8 @@ if __name__ == '__main__':
          db2fasta.py -host vamps  -sql "WHERE dataset_id=\'12342\'"
          db2fasta.py -host vamps  -sql "WHERE project like \'ICM%%\'"
          
+         For VAMPS2 Blast databases see: /groups/vampsweb/vamps_node_data/blast/README
+         db2fasta.py -host vamps -tax -sql "where public='1' and project like '%Ev9'" -o Ev9
 
   Options:  
             -host/--host      hostname [default = jbpcdb]
@@ -191,8 +204,13 @@ if __name__ == '__main__':
     parser.add_argument("-tax", "--tax",          
                 required=False,  action='store_true', dest = "tax", default=False,
                 help="Include GAST taxonomy in defline")
-   
-                      
+    parser.add_argument("-latlon", "--latlon",          
+                required=False,  action='store_true', dest = "latlon", default=False,
+                help="Include lat--lon in defline")
+    parser.add_argument("-limit", "--limit",          
+                required=False,  action='store', dest = "limit", default='',
+                help="Include lat--lon in defline")                 
+    
     args = parser.parse_args()    
     if args.project and args.sql_where:
         print('Found both Project AND SQL: will use project only')
@@ -216,6 +234,6 @@ if __name__ == '__main__':
 
     #db = MySQLdb.connect(host="localhost", # your host, usually localhost
     #                         read_default_file="~/.my.cnf"  ) 
-    cur = args.obj.cursor()
+    cur = args.obj.cursor(MySQLdb.cursors.DictCursor)
 
     start(args)

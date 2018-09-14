@@ -63,7 +63,7 @@ class Mysql_util:
             read_default_file = os.path.expanduser("~/.my.cnf_local")
           else:
             read_default_file = os.path.expanduser("~/.my.cnf_node")
-        print "read_default_file = %s" % read_default_file
+        print("read_default_file = %s" % read_default_file)
 
         try:
             self.utils.print_both("=" * 40)
@@ -71,7 +71,7 @@ class Mysql_util:
             self.utils.print_both("=" * 40)
 
             self.conn = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port)
-            print "host = %s, db = %s, read_default_file = %s" % (host, db, read_default_file)
+            print("host = %s, db = %s, read_default_file = %s" % (host, db, read_default_file))
             
           # else:
           #   self.conn = MySQLdb.connect(host = host, db = db, read_default_file)
@@ -90,8 +90,7 @@ class Mysql_util:
             raise                       # re-throw caught exception
 
     def execute_fetch_select(self, sql):
-      # print "+" * 20
-      # print sql
+      
       if self.cursor:
         try:
           self.cursor.execute(sql)
@@ -118,9 +117,7 @@ class Mysql_util:
                 field = field.strip()
                 sql += field+"=VALUES("+field+"),"
             sql = sql.rstrip(',') # remove last comma
-            #print 'sql2',sql
-        #if table_name == 'dataset' or table_name == 'project':
-        #    print 'sql',sql
+            
         if self.cursor:
             self.cursor.execute(sql)
             self.conn.commit()
@@ -172,7 +169,7 @@ class Utils:
         pass
 
     def is_local(self):
-        print 'xx',os.uname()[1]
+        print('xx',os.uname()[1])
 
         dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local", "Annas-MacBook-new.local", "Annas-MacBook.local",'Andrews-Mac-Pro.local']
 
@@ -183,7 +180,7 @@ class Utils:
             return False
 
     def is_vamps(self):
-        print os.uname()[1]
+        print(os.uname()[1])
         dev_comps = ['bpcweb8','bpcweb7','bpcweb7.bpcservers.private', 'bpcweb8.bpcservers.private']
         if os.uname()[1] in dev_comps:
             return True
@@ -191,7 +188,7 @@ class Utils:
             return False
             
     def is_vamps_prod(self):
-        print os.uname()[1]
+        print(os.uname()[1])
         dev_comps = ['bpcweb8', 'bpcweb8.bpcservers.private']
         if os.uname()[1] in dev_comps:
             return True
@@ -199,17 +196,17 @@ class Utils:
             return False
             
     def print_both(self, message):
-        print message
+        print(message)
         logging.debug(message)
 
     def print_array_w_title(self, message, title = 'message'):
-      print title
-      print message
+      print(title)
+      print(message)
 
     def read_csv_into_list(self, file_name):
       xx = open(file_name, 'rb')
       yy = csv.reader(xx, delimiter = ',')
-      print yy
+      print(yy)
       csv_file_content_all = list(yy)
       try:
         csv_file_fields      = csv_file_content_all[0]
@@ -229,10 +226,10 @@ class Utils:
         return wrapped
 
     def benchmarking(self, func, func_name, *args, **kwargs):
-      print "START %s" % func_name
+      print("START %s" % func_name)
       wrapped  = utils.wrapper(func, *args)
       time_res = timeit.timeit(wrapped, number = 1)
-      print 'time: %.2f s' % time_res
+      print('time: %.2f s' % time_res)
       
 
     def search_in_2d_list(self, search, data):
@@ -264,8 +261,7 @@ class Utils:
 
     def write_to_csv_file(self, file_name, res, file_mode = "wb"):
       data_from_db, field_names = res
-      # print "VVVV"
-      # print field_names
+     
 
       with open(file_name, file_mode) as csv_file:
         csv_writer = csv.writer(csv_file)
@@ -301,7 +297,7 @@ class User:
   def insert_user(self):
     #field_list    = "username, email, institution, first_name, last_name, active, security_level, encrypted_password"
     field_list    = "username, email, institution, first_name, last_name, active, security_level, encrypted_password"
-    print self.user_data
+    print(self.user_data)
     try:
       insert_values = ', '.join(["'%s'" % key for key in self.user_data[2:]])+",'XXXXXXtemp'"
       self.user = ''
@@ -322,7 +318,7 @@ class User:
     
     
   def get_user_id(self):
-    print '2',self.user_data
+    print('2',self.user_data)
     try:
       
         if self.user == 'admin':
@@ -344,7 +340,7 @@ class Project:
         print('This project is already in database -- you must delete it first if you want to update; pid=',pid)
         sys.exit()
     else:
-        print 'project okay'
+        print('project okay')
     
     self.utils      = Utils()
     self.contact    = ""
@@ -365,7 +361,7 @@ class Project:
     self.project         = self.project_file_content[0][0]    
 
   def insert_project(self, user_id, project,title,description,funding):
-    print "user_id, project,title,description,funding",user_id, project,title,description,funding,self.public
+    print("user_id, project,title,description,funding",user_id, project,title,description,funding,self.public)
     #project, title, project_description, funding, env_sample_source_id, contact, email, institution = self.project_file_content[0]
 
     field_list     = "project, title, project_description, rev_project_name, funding, owner_user_id, public, metagenomic"
@@ -379,7 +375,7 @@ class Project:
     self.utils.print_array_w_title(rows_affected, "rows_affected by insert_project")
 
     self.project_id = mysql_util.get_id("project_id", "project", "WHERE project = '%s'" % (self.project), rows_affected)
-    print 'XXXX',self.project_id
+    print('XXXX',self.project_id)
     # self.utils.print_array_w_title(self.project_dict, "===\nSSS self.project_dict from insert_project ")
     
   def get_project_id(self):
@@ -538,9 +534,7 @@ class Metadata:
     def find_required_id(self, term, req_name):
         id = 'id_not_found'
         name = 'unknown'
-        #if not req_name:
-        #print 'term',term,req_name
-        #    req_name = 'unknown'
+       
         if term == 'target_gene':
             list = self.target_gene_list
         elif term == 'dna_region':
@@ -588,78 +582,70 @@ class Metadata:
         table_name  = "target_gene"
         where_part  = ""
         self.target_gene_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got target_gene list'
-        #print self.target_gene_list
+        
 
     def get_dna_region_ids(self):
         field_names = "dna_region_id, dna_region"
         table_name  = "dna_region"
         where_part  = ""
         self.dna_region_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got dna_region list'
-        #print self.dna_region_list
+       
     def get_domain_ids(self):
         field_names = "domain_id, domain"
         table_name  = "domain"
         where_part  = ""
         self.domain_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got domain list'
-        #print self.domain_list
+       
     def get_sequencing_platform_ids(self):
         field_names = "sequencing_platform_id, sequencing_platform"
         table_name  = "sequencing_platform"
         where_part  = ""
         self.sequencing_platform_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got sequencing_platform list'
+        
 
     def get_term_ids(self):
         field_names = "term_id, term_name"
         table_name  = "term"
         where_part  = ""
         self.term_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got term list'
+        
     def get_package_ids(self):
         field_names = "env_package_id, env_package"
         table_name  = "env_package"
         where_part  = ""
         self.package_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got package list'
-        #print self.env_biome_list
+        
     def get_adapter_sequence_ids(self):
         field_names = "run_key_id, run_key"
         table_name  = "run_key"
         where_part  = ""
         self.adapter_sequence_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got adapter_sequence list'
-        #print self.adapter_sequence_list
+       
     def get_illumina_index_ids(self):
         field_names = "illumina_index_id, illumina_index"
         table_name  = "illumina_index"
         where_part  = ""
         self.illumina_index_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got illumina_index list'
-        #print self.index_sequence_list
+        
     def get_primer_suite_ids(self):
         field_names = "primer_suite_id, primer_suite"
         table_name  = "primer_suite"
         where_part  = ""
         self.primer_suite_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got primer_suite list'
-        #print self.primer_suite_list
+        
     def get_run_ids(self):
         field_names = "run_id, run"
         table_name  = "run"
         where_part  = ""
         self.run_list = mysql_util.execute_simple_select(field_names, table_name, where_part)
-        #print 'got run list'
-        #print self.primer_suite_list
+        
             
     def parse_metadata_csv(self, metadata_csv_file_name):
-        print "=" * 20
-        print metadata_csv_file_name
+        print("=" * 20)
+        print(metadata_csv_file_name)
         self.metadata_file_fields, self.metadata_file_content = self.utils.read_csv_into_list(metadata_csv_file_name)
-        print self.metadata_file_fields
-        print self.metadata_file_content
+        print(self.metadata_file_fields)
+        print(self.metadata_file_content)
         
     def insert_dataset(self,pid):
         
@@ -670,7 +656,7 @@ class Metadata:
         q = "INSERT into dataset (dataset,dataset_description,project_id) VALUES"
         vals = []
         for lst in self.metadata_file_content:
-            #print lst # ie 
+            
             ds = lst[self.dataset_idx]
             self.cust_metadata_values[ds] = {}
             dd = lst[self.dataset_desc_idx]
@@ -697,8 +683,7 @@ class Metadata:
         
         
     def create_custom_metadata_pr_id_table(self, pid):    
-    # print self.project_ids
-    # set([275])
+    
     
     # [(275, 'aux_bec_simulated_nitrate_(um)', 'unknown'), (275, 'depth_end', 'meter'), (275, 'aux_bec_simulated_phosphate_(um)', 'unknown'), (275, 'aux_sunset_hr', 'unknown'), 
    
@@ -721,19 +706,18 @@ class Metadata:
             """ % (table_name)
         
         q = "DROP TABLE IF EXISTS %s" % (table_name)
-        print mysql_util.execute_no_fetch(q)
+        print(mysql_util.execute_no_fetch(q))
         
         table_description = "ENGINE=InnoDB"
-        print 'field_descriptions'
-        print field_descriptions
-        print 'field_descriptions'
+        print('field_descriptions')
+        print(field_descriptions)
+        print('field_descriptions')
         #sys.exit()
         #field_descriptions = list(set(field_descriptions)) ## THIS uniques
         q = "CREATE table %s (%s) %s" % (table_name, field_descriptions, table_description)
         # should unique the field_descriptions
-        #print field_descriptions
-        #print q    
-        print mysql_util.execute_no_fetch(q)
+       
+        print(mysql_util.execute_no_fetch(q))
 
     def insert_required_metadata(self):
         #q = "INSERT into required_metadata_info (dataset_id,target_gene_id,dna_region_id,platform_id, domain_id,geo_loc_name_id,env_biome_id,env_feature_id,env_material_id,env_package_id,adapter_sequence_id,illumina_index_id,primer_suite_id,run_id)        
@@ -761,13 +745,12 @@ class Metadata:
         fld_list = 'dataset_id'+","+','.join(field_list)   
         vals = []
         for ds in self.dataset_id_by_name_dict:
-            print 'self.env_source_id_from_file',self.env_source_id_from_file
+            print('self.env_source_id_from_file',self.env_source_id_from_file)
             
             env_sample_source = env_package_dict[self.env_source_id_from_file[ds]]  # eg 20 => 'sediment'
-            #print 'previous envid',self.env_package_id
-            #print 'env_sample_source',env_sample_source
+            
             (env_package,self.env_package_id)                = self.find_required_id('env_package', env_sample_source)
-            #print 'env_sample_sourceID',env_package,self.env_package_id
+           
             command_line_req_met_list['env_package_id'] = self.env_package_id
             did = self.dataset_id_by_name_dict[ds]
             l = "'"+str(did)+"'"
@@ -778,12 +761,12 @@ class Metadata:
         mysql_util.execute_insert('required_metadata_info',fld_list,val_str)
         
     def gather_custom_metadata(self):
-        print self.cust_metadata_values
+        print(self.cust_metadata_values)
         n = 0
         for ds in self.cust_metadata_values:
             if n==0:
                 for field in self.cust_metadata_values[ds]:
-                    print field
+                    print(field)
                     self.custom_metadata_fields.append(field)
                     self.custom_metadata_fields_uniqued_for_tbl.append(field)
             n +=1
@@ -795,7 +778,7 @@ class Metadata:
         custom_metadata_table_name = "custom_metadata_%s" % pid
         insert_values              = ""
         vals = []  
-        print field_str
+        print(field_str)
         
         for ds in self.cust_metadata_values:
             #{'WashingtonMargin_GC4_150cmbsf': {'concentration': '1.0000', 'quant_method': 'nanodrop', 'env_sample_source_id': '20'}
@@ -915,7 +898,7 @@ if __name__ == '__main__':
     args.do_not_update = True
     # ========
 
-    print "metadata_csv_file_name = %s,  project_csv_file_name = %s,  user_csv_file_name = %s" % (metadata_csv_file_name,  project_csv_file_name, user_csv_file_name)
+    print("metadata_csv_file_name = %s,  project_csv_file_name = %s,  user_csv_file_name = %s" % (metadata_csv_file_name,  project_csv_file_name, user_csv_file_name))
     host_prod   = "bpcweb7"
     to_database = 'vamps2'
     if args.host == 'vamps' or args.host == 'vampsdb':
@@ -935,12 +918,12 @@ if __name__ == '__main__':
     pr_auth_id = project_file_content[2]
     pr_title = project_file_content[4]
     pr_desc = project_file_content[5]
-    print 'auth_id',pr_auth_id, 'Owner Line:',project_file_content
+    print('auth_id',pr_auth_id, 'Owner Line:',project_file_content)
     
     user = User(pr_auth_id, user_csv_file_name, mysql_util)
-    print user
+    print(user)
     
-    print pr.project_dict
+    print(pr.project_dict)
     
     #metadata = Metadata(mysql_util, dataset, pr.project_dict)
     metadata = Metadata(mysql_util, pr.project_dict)
@@ -991,7 +974,7 @@ if __name__ == '__main__':
     req_md_okay = True
     for term in command_line_req_met_list:
         if command_line_req_met_list[term] == '' or command_line_req_met_list[term] == 'unknown':
-            print
+            print()
             print('You left ' + term + " to be 'unknown'")
             if term == 'target_gene':
                 mdlist = metadata.target_gene_list
@@ -1002,24 +985,24 @@ if __name__ == '__main__':
             elif term == 'platform':
                 mdlist = metadata.sequencing_platform_list
             elif term == 'geo_loc_name':
-                mdlist = 'list is too big to print here -- see database'  #metadata.term_list
+                mdlist = 'list is too big to print-- here -- see database'  #metadata.term_list
             elif term == 'env_material' or term == 'env_feature' or term == 'env_biome':
-                mdlist = 'term list is too big to print here -- see database'  #metadata.term_list
+                mdlist = 'term list is too big to print-- here -- see database'  #metadata.term_list
             elif term == 'env_package':
                 mdlist = metadata.package_list
             elif term == 'adapter_sequence':
-                mdlist = 'run_key list is too big to print here -- see database'  #metadata.adapter_sequence_list
+                mdlist = 'run_key list is too big to print-- here -- see database'  #metadata.adapter_sequence_list
             elif term == 'illumina_index':
                 mdlist = metadata.illumina_index_list
             elif term == 'primer_suite':
                 mdlist = metadata.primer_suite_list  
             elif term == 'run':
-                mdlist = 'list is too big to print here -- see database'    
-            print 'tag is -'+term + "; Enter the name not the id"
+                mdlist = 'list is too big to print-- here -- see database'    
+            print('tag is -'+term + "; Enter the name not the id")
             print('Choose from the list:',mdlist)
             req_md_okay = False
     if not req_md_okay:
-        print metadata.report
+        print(metadata.report)
         ans = raw_input("Do you want to continue? (type 'Y' to continue): ")
         if ans.upper() != 'Y':
             sys.exit()
@@ -1050,20 +1033,20 @@ if __name__ == '__main__':
 #     utils.benchmarking(dataset.make_all_dataset_id_by_project_dict, "make_all_dataset_id_by_project_dict")
 
     # METADATA
-    #  print "** Skipping Metadata ** ",args.project,"--ProjectID:",pr.project_id
+   
     #   sys.exit('Skipping Metadata for Testing (remove this if on production)')
     #   
 
     utils.benchmarking(metadata.parse_metadata_csv, "parse_metadata_csv", metadata_csv_file_name)
-    print 'pid',pr.project_id
+    print('pid',pr.project_id)
     
     metadata.insert_dataset(pr.project_id)
     metadata.collect_dataset_ids(pr.project_id)
-    print metadata.dataset_id_by_name_dict
+    print(metadata.dataset_id_by_name_dict)
     
     ## TODO Required Metadata should run regardless of if MD was found in old vamps
     if not metadata.metadata_file_fields:
-        print "No Metadata Found in file"
+        print("No Metadata Found in file")
 
     #utils.benchmarking(metadata.add_names_to_params, "add_names_to_params")
     #utils.benchmarking(metadata.add_ids_to_params, "add_ids_to_params")  
@@ -1091,7 +1074,7 @@ if __name__ == '__main__':
 #     if (args.do_not_insert == False):
 #         utils.benchmarking(metadata.insert_custom_metadata, "insert_custom_metadata")
   
-    print "** Finished ** ",args.project,"--ProjectID:",pr.project_id
+    print("** Finished ** ",args.project,"--ProjectID:",pr.project_id)
     # import winsound
     #   Freq = 2500 # Set Frequency To 2500 Hertz
     #   Dur = 1000 # Set Duration To 1000 ms == 1 second

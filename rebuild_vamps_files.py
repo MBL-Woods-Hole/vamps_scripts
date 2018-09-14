@@ -297,7 +297,8 @@ def get_counts_per_tax(did_sql, units, short_list):
                 pids_by_did = get_all_pids_by_did_dict()
                 pid = pids_by_did[short_list[0]]
                 print('Error while processing project: ', pid)
-                sys.exit()
+                # sys.exit()
+                continue
             counts_per_tax_dict[rank] = rows
         except:
             logging.debug("Failing to query with: "+query)

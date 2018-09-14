@@ -66,7 +66,7 @@ def load_trimmed_seqs(myobject):
     domain  = myobject['domain']
     file_base = myobject['file_base']
     status_file = os.path.join(file_base,'STATUS.txt')
-    print (status_file)
+    print(status_file)
     fh = open(status_file,'a')
     execute_error = False
     if not domain:
@@ -94,7 +94,7 @@ def load_trimmed_seqs(myobject):
     loadquery += " domain = '"+domain+"',           \n"
     loadquery += " countN = '0',                    \n"
     loadquery += " delete_reason = ''"
-    print (loadquery)
+    print(loadquery)
 
     try:
         cursor.execute(loadquery)
@@ -174,7 +174,7 @@ if __name__ == '__main__':
 
 
     if len(sys.argv[1:])==0:
-        print (myusage)
+        print(myusage)
         sys.exit()
     args = parser.parse_args()
 
@@ -207,7 +207,7 @@ if __name__ == '__main__':
         db_name = 'vampsdev_user_uploads'
         db_home = '/xraid2-2/vampsweb/vampsdev/'
 
-    print (db_host, db_name, db_home)
+    print(db_host, db_name, db_home)
     obj=Conn(db_host, db_name, db_home)
     #c = obj.get_cursor()
     data_object['obj'] = obj

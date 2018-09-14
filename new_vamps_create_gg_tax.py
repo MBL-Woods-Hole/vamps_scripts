@@ -54,7 +54,7 @@ class FastaReader:
             return True  
             
 def run_taxonomy(args, ds, ds_count, files):
-    print 'tax'
+    print('tax')
     project_dataset = args.project+'--'+ds
     taxa_lookup = {}
     read_id_lookup={}
@@ -65,7 +65,7 @@ def run_taxonomy(args, ds, ds_count, files):
             line = line.strip()
             items = line.split("\t")
             if args.verbose:
-                print items
+                print(items)
             taxa = items[1]
             if taxa[-3:] == ';NA':
                 taxa = taxa[:-3]
@@ -77,8 +77,8 @@ def run_taxonomy(args, ds, ds_count, files):
                 read_id = items[0].split()[1]  #10445.7p2_22437835 IIU3AEM07H62IP orig_bc=ACGAGTGCGT new_bc=ACGAGTGCGT bc_diffs=0|frequency:1
                 freq_from_defline = items[0].split()[-1].split(':')[1]
             if args.verbose:
-                print 'id=',read_id
-                print '  freq=',freq_from_defline
+                print('id=',read_id)
+                print('  freq=',freq_from_defline)
             read_id_lookup[read_id] = taxa
         
             # the count here is the frequency of the taxon in the datasets
@@ -99,7 +99,7 @@ def run_taxonomy(args, ds, ds_count, files):
     # taxa_lookup: {'Unknown': 146, 'Bacteria': 11888, 'Bacteria;Chloroflexi': 101}
     # dataset_count is 3 (3 taxa in this dataset)
     # frequency is 3/144
-    print 'Running data_cube'
+    print('Running data_cube')
     fh1 = open(files['taxes_file'],'w')
 
     fh1.write("\t".join( ["HEADER","project", "dataset", "taxonomy", "superkingdom", 
@@ -109,7 +109,7 @@ def run_taxonomy(args, ds, ds_count, files):
     summer=0
     for tax,knt in taxa_lookup.iteritems():
         if args.verbose:
-            print tax,knt
+            print(tax,knt)
         summer += knt
         datarow = ['',args.project,ds]
     
@@ -136,7 +136,7 @@ def run_taxonomy(args, ds, ds_count, files):
         datarow.append('GAST')
     
         w = "\t".join(datarow)
-        #print w
+        
         fh1.write(w+"\n")
    
         tax_collector[tax]['rank'] = rank
@@ -150,7 +150,7 @@ def run_taxonomy(args, ds, ds_count, files):
     # SUMMED DATA CUBE TABLE
     #
     ########################################
-    print 'Running summed_(junk)_data_cube'
+    print('Running summed_(junk)_data_cube')
     fh2 = open(files['summed_taxes_file'],'w')
     
     fh2.write("\t".join(["HEADER","taxonomy", "sum_tax_counts", "frequency", "dataset_count","rank", 
@@ -171,14 +171,14 @@ def run_taxonomy(args, ds, ds_count, files):
             if taxon in tax_collector:
                 knt = tax_collector[taxon]['knt']
             else:
-                print 'ERROR tax not found in tax_collector: assigning zero'
+                print('ERROR tax not found in tax_collector: assigning zero')
                 knt = 0
             idx = len(ranks_subarray)
             l=[]
             for k in range(3,idx+3):                    
                 l.append(line[k])
             tax = ';'.join(l)
-            #print 'rl tax',ranks_list,tax
+           
             
             
             if tax in rank_list_lookup:
@@ -190,7 +190,7 @@ def run_taxonomy(args, ds, ds_count, files):
       
     for tax,knt in rank_list_lookup.iteritems():
         
-        #print 'tax2',tax
+        
         taxa = tax.split(';')
         #if taxa[0] in C.domains:
         rank = len( taxa ) -1
@@ -211,7 +211,7 @@ def run_taxonomy(args, ds, ds_count, files):
             datarow.append('GAST')
         
             w = "\t".join(datarow)
-            #print w
+            
             fh2.write(w+"\n")
             
 
@@ -223,7 +223,7 @@ def run_taxonomy(args, ds, ds_count, files):
     # DISTINCT TAXONOMY
     #
     ####################################
-    print 'Running taxonomy'
+    print('Running taxonomy')
     fh3 = open(files['distinct_taxes_file'],'w')
     fh3.write("\t".join(["HEADER","taxon_string", "rank", "num_kids"] )+"\n")
     taxon_string_lookup={}
@@ -232,7 +232,7 @@ def run_taxonomy(args, ds, ds_count, files):
             continue
         items = line.strip().split("\t")            
         taxon_string = items[0]
-        #print taxon_string
+       
         if taxon_string in taxon_string_lookup:
             taxon_string_lookup[taxon_string] += 1
         else:
@@ -251,14 +251,14 @@ def run_taxonomy(args, ds, ds_count, files):
                 num_kids = '1'
             datarow.append(num_kids)
             w = "\t".join(datarow)
-            #print 'w',w
+            
             fh3.write(w+"\n")
     fh3.close()
     
     return (tax_collector,read_id_lookup)
     
 def run_sequences(args, ds, tax_collector, read_id_lookup, files):
-    print 'Running sequences'
+    print('Running sequences')
     refid_collector={}
     project_dataset = args.project+'--'+ds
     with open(files['gast_file'],'r') as f:
@@ -268,7 +268,7 @@ def run_sequences(args, ds, tax_collector, read_id_lookup, files):
         
             items=line.split("\t")
             if args.verbose:
-                print items
+                print(items)
             if args.datasetname_not_in_unique_file:
                 id = items[0]
             else:
@@ -276,7 +276,7 @@ def run_sequences(args, ds, tax_collector, read_id_lookup, files):
             distance = items[2]
             refhvr_ids = items[-1] # always last? separated by ,,
             if args.verbose:
-                print 'refhvr_ids',refhvr_ids
+                print('refhvr_ids',refhvr_ids)
             refid_collector[id] = {}
             refid_collector[id]['distance'] = distance
             refid_collector[id]['refhvr_ids'] = refhvr_ids
@@ -297,14 +297,14 @@ def run_sequences(args, ds, tax_collector, read_id_lookup, files):
                        
         cnt = defline_items[-1].split(':')[-1]
         if args.verbose:
-            print 'cnt from uniques file',cnt
+            print('cnt from uniques file',cnt)
         seq = f.seq.upper()
         if id in read_id_lookup:
             if args.verbose:
-                print 'FOUND TAX for sequences file'
+                print('FOUND TAX for sequences file')
             tax = read_id_lookup[id]
         else: 
-            print 'ERROR:: NO TAX for sequences file'
+            print('ERROR:: NO TAX for sequences file')
             tax = ''
             
         if tax in tax_collector:
@@ -336,14 +336,14 @@ def run_sequences(args, ds, tax_collector, read_id_lookup, files):
         datarow.append(id)
         datarow.append(project_dataset)
         w = "\t".join(datarow)
-        #print 'w',w
+       
         fh.write(w+"\n")
     fh.close()
     return refid_collector      
     
             
 def run_projects(args, ds, ds_count, files):
-    print 'Running projects'
+    print('Running projects')
     project_dataset = args.project+'--'+ds
     date_trimmed = 'unknown'
     dataset_description = ds
@@ -356,15 +356,15 @@ def run_projects(args, ds, ds_count, files):
     fh.close()
     
 def run_info(args, ds, files, project_count):
-    print 'Running info'
+    print('Running info')
     
     try:
         # get 'real' data from database
         db = get_db_connection(args)
         cursor = db.cursor()
-        print 'Connecting to '+args.site+' database, to get user "'+args.user+'" information'
+        print('Connecting to '+args.site+' database, to get user "'+args.user+'" information')
         query = "SELECT last_name,first_name,email,institution from vamps_auth where user='%s'" % (args.user)
-        print query
+        print(query)
         
         cursor.execute(query)
         data = cursor.fetchone()
@@ -372,7 +372,7 @@ def run_info(args, ds, files, project_count):
         email= data[2]
         institution= data[3]
     except:
-        print 'TESTING -- no writing to '+args.site+' db'
+        print('TESTING -- no writing to '+args.site+' db')
         contact= 'test,test'
         email= 'test@no-reply.edu'
         institution= 'TEST U.'
@@ -409,7 +409,7 @@ def create_vamps_files(args, ds, ds_count, project_count):
          run_projects(args, ds, ds_count, files)
          run_info(args, ds, files, project_count)
     else:
-        print "no tagtax file found or no dataset_count -- continuing to next dataset..." 
+        print("no tagtax file found or no dataset_count -- continuing to next dataset..." )
     return files
            
 def gather_files_per_ds(args, ds):
@@ -438,7 +438,7 @@ def get_datasets(args):
         base = os.path.basename(file)
         ds = base[:-10]
         if args.verbose:
-            print 'ds',ds
+            print('ds',ds)
         r = FastaReader(file)
         while r.next():
             defline = r.id
@@ -449,13 +449,12 @@ def get_datasets(args):
             else:
                 true_id = parts[1]
             cnt = parts[-1].split(':')[1]
-            #ds = parts[0].split('_')[0]
-            #print true_id,cnt
+            
             ds_count += int(cnt)
             seq = r.seq
         project_count += int(ds_count)
         ds_list[ds]=ds_count
-    print ds_list
+    print(ds_list)
     return (ds_list, project_count)
     
 
@@ -469,14 +468,14 @@ def start_vamps_file_creation(args, ds_list, project_count):
     file_collector={}
     args.outdir = create_out_dir(args, ds_list)
     for i,ds in enumerate(ds_list):
-        print
+        print()
         
         if ds_list[ds] >= int(args.min_ds_count):
-            print 'CreatingFiles',args.project,ds,i,'/',len(ds_list)
+            print('CreatingFiles',args.project,ds,i,'/',len(ds_list))
             check_for_infiles(args, ds)
             file_collector[ds] = create_vamps_files(args, ds, ds_list[ds], project_count)
         else:
-            print 'Skipping',ds,'count is less than',args.min_ds_count
+            print('Skipping',ds,'count is less than',args.min_ds_count)
     
     return file_collector
     
@@ -493,7 +492,7 @@ def check_for_infiles(args,ds):
         sys.exit( 'no gast file found--exiting')
     if not os.path.isfile(unique):
         sys.exit( 'no unique file found--exiting')
-    print 'all files found for '+ds+'*'
+    print('all files found for '+ds+'*')
     
 
     
@@ -595,7 +594,7 @@ if __name__ == '__main__':
     parser.add_argument("-otu",      "--otu_table",  required=True,  action="store",   
                         dest = "otu_table", default=False)                                                                                                                                                           
     if len(sys.argv[1:]) == 0:
-        print myusage
+        print(myusage)
         sys.exit() 
     args = parser.parse_args()
     

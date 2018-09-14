@@ -15,7 +15,7 @@
 t0 = time.time()
 t1 = time.time()
 total = t1-t0
-print "time_res = %s s" % total
+print("time_res = %s s" % total)
 
 
 *) cd vamps-node.js/public/scripts/maintenance_scripts; time python old_to_new_vamps_by_project.py -s sequences.csv -m metadata.csv -owner admin -p "ICM_AGW_Bv6"
@@ -102,7 +102,7 @@ class Mysql_util:
             read_default_file = os.path.expanduser("~/.my.cnf_local")
           else:
             read_default_file = os.path.expanduser("~/.my.cnf_node")
-        print "read_default_file = %s" % read_default_file
+        print("read_default_file = %s" % read_default_file)
 
         try:
             self.utils.print_both("=" * 40)
@@ -110,7 +110,7 @@ class Mysql_util:
             self.utils.print_both("=" * 40)
 
             self.conn = MySQLdb.connect(host = host, db = db, read_default_file = read_default_file, port = port)
-            print "host = %s, db = %s, read_default_file = %s" % (host, db, read_default_file)
+            print("host = %s, db = %s, read_default_file = %s" % (host, db, read_default_file))
             
           # else:
           #   self.conn = MySQLdb.connect(host = host, db = db, read_default_file)
@@ -129,8 +129,7 @@ class Mysql_util:
             raise                       # re-throw caught exception
 
     def execute_fetch_select(self, sql):
-      # print "+" * 20
-      # print sql
+     
       if self.cursor:
         try:
           self.cursor.execute(sql)
@@ -150,9 +149,8 @@ class Mysql_util:
     def execute_insert(self, table_name, field_name, val_list, ignore = "IGNORE"):
       try:
         sql = "INSERT %s INTO %s (%s) VALUES (%s)" % (ignore, table_name, field_name, val_list)
-        print 'sql',sql
-        #if table_name == 'dataset':
-        #    print 'sql',sql
+        print('sql',sql)
+       
         if self.cursor:
           self.cursor.execute(sql)
           self.conn.commit()
@@ -203,7 +201,7 @@ class Utils:
         pass
 
     def is_local(self):
-        print os.uname()[1]
+        print(os.uname()[1])
 
 
         dev_comps = ['ashipunova.mbl.edu', "as-macbook.home", "as-macbook.local", "Ashipunova.local", "Annas-MacBook-new.local", "Annas-MacBook.local",'Andrews-Mac-Pro.local']
@@ -215,7 +213,7 @@ class Utils:
             return False
 
     def is_vamps(self):
-        print os.uname()[1]
+        print(os.uname()[1])
         dev_comps = ['bpcweb8','bpcweb7','bpcweb7.bpcservers.private', 'bpcweb8.bpcservers.private']
         if os.uname()[1] in dev_comps:
             return True
@@ -223,7 +221,7 @@ class Utils:
             return False
             
     def is_vamps_prod(self):
-        print os.uname()[1]
+        print(os.uname()[1])
         dev_comps = ['bpcweb8', 'bpcweb8.bpcservers.private']
         if os.uname()[1] in dev_comps:
             return True
@@ -231,12 +229,12 @@ class Utils:
             return False
             
     def print_both(self, message):
-        print message
+        print(message)
         logging.debug(message)
 
     def print_array_w_title(self, message, title = 'message'):
-      print title
-      print message
+      print(title)
+      print(message)
 
     def read_csv_into_list(self, file_name):
       csv_file_content_all = list(csv.reader(open(file_name, 'rb'), delimiter = ','))
@@ -287,8 +285,7 @@ class Utils:
 
     def write_to_csv_file(self, file_name, res, file_mode = "wb"):
       data_from_db, field_names = res
-      # print "VVVV"
-      # print field_names
+      
 
       with open(file_name, file_mode) as csv_file:
         csv_writer = csv.writer(csv_file)
@@ -327,7 +324,7 @@ class User:
               WHERE user='%s'""" % (self.username)
     data = self.old_vamps_mysql.execute_fetch_select(query)
     self.user_data = data[0][0]
-    print self.user_data
+    print(self.user_data)
     return 1
             
   def parse_user_contact_csv(self, user_contact_csv_file_name):
@@ -431,16 +428,16 @@ if __name__ == '__main__':
         required = True, action = "store", dest = "site", 
         help = """Site where the script is running""")
   if len(sys.argv[1:]) == 0:
-        print myusage
+        print(myusage)
         sys.exit() 
   args = parser.parse_args()
   
   utils = Utils()
   
-  print "args = "
-  print args
-  print "args.write_files"
-  print args.write_files
+  print("args = ")
+  print(args)
+  print("args.write_files")
+  print(args.write_files)
 
   host_prod   = "vampsdev"
   to_database = 'vamps2'
@@ -458,7 +455,7 @@ if __name__ == '__main__':
 
   # ========
 
-  #print "metadata_csv_file_name = %s, seq_csv_file_name = %s, project_csv_file_name = %s, dataset_csv_file_name = %s, user_contact_csv_file_name = %s" % (metadata_csv_file_name, seq_csv_file_name, project_csv_file_name, dataset_csv_file_name, user_contact_csv_file_name)
+  #print("metadata_csv_file_name = %s, seq_csv_file_name = %s, project_csv_file_name = %s, dataset_csv_file_name = %s, user_contact_csv_file_name = %s" % (metadata_csv_file_name, seq_csv_file_name, project_csv_file_name, dataset_csv_file_name, user_contact_csv_file_name))
   old_vamps_mysql = Mysql_util(host = host_prod, db = "vamps", read_default_file = "~/.my.cnf", port = port_prod)
   new_vamps_mysql = Mysql_util(host = host_prod, db = 'vamps2')
   
@@ -468,7 +465,7 @@ if __name__ == '__main__':
   
   if (args.do_not_insert == False):
     user.insert_user()
-  print user.get_user_id()
+  print(user.get_user_id())
   
   sys.exit()
   
