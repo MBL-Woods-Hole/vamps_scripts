@@ -436,7 +436,7 @@ if __name__ == '__main__':
             -gene/--gene   [Default:16srrna]
                 See RDP README: 16srrna, fungallsu, fungalits_warcup, fungalits_unite
             
-            -limit/--limit  limits the size of the mysql select queriy [Default:no-limit]
+            -limit/--limit  limits the size of the mysql select queriy [Default:10000]
             
         Query used to retrieve empty rdp ids:    
             SELECT count(sequence.sequence_id) from sequence

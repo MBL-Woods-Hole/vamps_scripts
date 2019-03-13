@@ -80,22 +80,25 @@ def go_list(args):
         # go project by project
         sql_dids =  "','".join(project_id_lookup[pid])
         ds_count = len(project_id_lookup[pid]) 
-        q = "SELECT dataset_id, "+ ', '.join(required_metadata_fields) +" from required_metadata_info WHERE dataset_id in ('%s')" % (sql_dids)
+        q = "SELECT dataset_id, "+ ', '.join(required_metadata_fields) +" from required_metadata_info" 
+        q += " WHERE dataset_id in ('%s')" % (sql_dids)
         if args.verbose:
             print(q)
         clean_project = True
         num = 0
+        items_before_required_metadata_fields = 1
         cur.execute(q)
         numrows = cur.rowcount
         if numrows == 0:
             no_req_data_found += 1
             #print(str(no_req_data_found)+') No Required metadata for project: '+str(project_lookup[pid])+' ('+str(pid)+')')
             if pid not in no_req_metadata:
-                    no_req_metadata[pid] = project_lookup[pid]
+                    no_req_metadata[pid] = project_lookup[pid]["p"]
             continue
 
         for row in cur.fetchall():
             did = str(row[0])
+            matrix = str(row[1])
             did_file1 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_silva119', str(did)+'.json')
             did_file2 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_rdp2.6"',  str(did)+'.json')
             did_file3 = os.path.join(args.json_file_path, NODE_DATABASE+'--datasets_generic',  str(did)+'.json')
@@ -103,24 +106,24 @@ def go_list(args):
             #if did == '3938':
             if did not in metadata_lookup:
                 if pid not in no_file_found:
-                    no_file_found[pid] = project_lookup[pid]
+                    no_file_found[pid] = project_lookup[pid]["p"]
                 clean_project = False
             else:
                 for i,item in enumerate(required_metadata_fields):
                    
                     if item in metadata_lookup[did]:
-                        db_val = str(row[i+1])
+                        db_val = str(row[i+items_before_required_metadata_fields])
                         if str(metadata_lookup[did][item]) != db_val :
                             if args.verbose:
-                                print('pid:'+str(pid) +' -- '+project_lookup[pid]+' -- did:' +did+'  no match-1 for `'+item+'`:',metadata_lookup[did][item],' - ',db_val)
+                                print('pid:'+str(pid) +' -- '+project_lookup[pid]["p"]+' -- did:' +did+'  no match-1 for `'+item+'`:',metadata_lookup[did][item],' - ',db_val)
                             if pid not in mismatch_data:
-                                mismatch_data[pid] = project_lookup[pid]
+                                mismatch_data[pid] = project_lookup[pid]["p"]
                             clean_project = False
                     else:
                          if args.verbose:
-                            print('pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- `'+item+'` item not found in req metadata file-1\n')
+                            print('pid:'+str(pid) +' -- '+'--'+project_lookup[pid]["p"]+' -- did:' +did+' -- `'+item+'` item not found in req metadata file-1\n')
                          if pid not in other_problem:
-                            other_problem[pid] = project_lookup[pid]
+                            other_problem[pid] = project_lookup[pid]["p"]
                          clean_project = False
             
             try:
@@ -128,13 +131,13 @@ def go_list(args):
                 fp = open(did_file1)
                 file_data = json.load(fp)
                 if not file_data or not file_data['taxcounts']:
-                    did_file_problem[pid] = project_lookup[pid] 
+                    did_file_problem[pid] = project_lookup[pid]["p"]
                     did_file_problem_by_pid[str(pid)].append(str(did))
                 fp.close()
             except:
-                did_file_problem[pid] = project_lookup[pid]
+                did_file_problem[pid] = project_lookup[pid]["p"]
                 if args.verbose:
-                    print('pid:'+str(pid) +' -- '+'--'+project_lookup[pid]+' -- did:' +did+' -- Could not open did file-1\n')
+                    print('pid:'+str(pid) +' -- '+'--'+project_lookup[pid]["p"]+' -- did:' +did+' -- Could not open did file-1\n')
         
         
         
@@ -159,7 +162,7 @@ def go_list(args):
             cur.execute(q2)
             num_cust_rows = cur.rowcount
             if num_cust_rows != ds_count:
-                cust_rowcount_data[pid] = project_lookup[pid]
+                cust_rowcount_data[pid] = project_lookup[pid]["p"]
             
             rows = cur.fetchall()
             for row in rows:
@@ -167,28 +170,28 @@ def go_list(args):
                 
                 for i,item in enumerate(fields):
 
-                    #print('pid:',pid,'did:',did, 'item:',item, metadata_lookup[did], project_lookup[pid])
+                    #print('pid:',pid,'did:',did, 'item:',item, metadata_lookup[did], project_lookup[pid]["p"])
                     if item in metadata_lookup[did]:
                         #print(item,i,'row',row)
                         db_val = str(row[i+2])
 
                         if str(metadata_lookup[did][item]) != db_val:
                             if args.verbose:
-                                print('pid:'+str(pid) +' -- '+project_lookup[pid]+' -- did:' +did+'  no match-2 for `'+item+'`:',metadata_lookup[did][item],'!=',db_val)
+                                print('pid:'+str(pid) +' -- '+project_lookup[pid]["p"]+' -- did:' +did+'  no match-2 for `'+item+'`:',metadata_lookup[did][item],'!=',db_val)
                             if pid not in mismatch_data:
-                                mismatch_data[pid] = project_lookup[pid]
+                                mismatch_data[pid] = project_lookup[pid]["p"]
                             clean_project = False
                     else:
                         if args.verbose:
-                            print( 'pid:'+str(pid) +' -- '+project_lookup[pid]+' -- did:' +did+' -- `'+item+'` item not found in cust metadata file-2\n')
+                            print( 'pid:'+str(pid) +' -- '+project_lookup[pid]["p"]+' -- did:' +did+' -- `'+item+'` item not found in cust metadata file-2\n')
                         if pid not in other_problem:
-                            other_problem[pid] = project_lookup[pid]
+                            other_problem[pid] = project_lookup[pid]["p"]
                         clean_project = False
         except:
             pass
         #sys.exit()
         #if not clean_project:
-        #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid])
+        #      failed_projects.append('pid:'+str(pid)+' -- '+project_lookup[pid]["p"])
     missing_seqs = {}
     q2_base = "SELECT sequence_pdr_info_id from sequence_pdr_info where dataset_id in ('%s')"
     if args.verbose:
@@ -205,9 +208,9 @@ def go_list(args):
             cur.execute(q2)
             numrows = cur.rowcount
             if numrows == 0:
-                missing_seqs[pid] = project_lookup[pid]
+                missing_seqs[pid] = project_lookup[pid]["p"]
                 if args.verbose:
-                    print('No sequences found::pid:'+str(pid) +' -- '+project_lookup[pid])
+                    print('No sequences found::pid:'+str(pid) +' -- '+project_lookup[pid]["p"])
         
     print()
     print('*'*60)
@@ -219,39 +222,68 @@ def go_list(args):
         print('\t **Clean**')
     else:
         for pid in mismatch_data:
-            print('\t pid:',pid,' -- ',mismatch_data[pid])
+            if project_lookup[pid]["perm"] == '0':   # no temporary projects
+                pass
+            elif project_lookup[pid]["mtx"] == '1':
+                print('\t pid:',pid,' -- ',mismatch_data[pid]+" (matrix)")
+            else:            
+                print('\t pid:',pid,' -- ',mismatch_data[pid])
         print('\t PID List:',','.join([str(n) for n in mismatch_data.keys()]))
+    
     print()
     print('\t2) NO DID FOUND IN METADATA BULK FILE (Assumes no did file found either) (re-build should work):')
     if not len(no_file_found):
         print('\t **Clean**')
     else:
         for pid in no_file_found:
-            print('\t pid:',pid,' -- ',no_file_found[pid])
+            if project_lookup[pid]["perm"] == '0':   # no temporary projects
+                pass
+            elif project_lookup[pid]["mtx"] == '1': # show matrix status
+                print('\t pid:',pid,' -- ',no_file_found[pid]+" (matrix)")
+            else:
+                print('\t pid:',pid,' -- ',no_file_found[pid])
         print('\t PID List:',','.join([str(n) for n in no_file_found.keys()]))
+    
     print()
     print('\t3) NO REQUIRED METADATA FOUND IN DATABASE (re-install project or add by hand -- re-build won\'t help):')
     if not len(no_req_metadata):
         print('\t **Clean**')
     else:
         for pid in no_req_metadata:
-            print('\t pid:',pid,' -- ',no_req_metadata[pid])
+            if project_lookup[pid]["perm"] == '0':   # no temporary projects
+                pass
+            elif project_lookup[pid]["mtx"] == '1': # show matrix status
+                print('\t pid:',pid,' -- ',no_req_metadata[pid]+" (matrix)")
+            else:
+                print('\t pid:',pid,' -- ',no_req_metadata[pid])
         print('\t PID List:',','.join([str(n) for n in no_req_metadata.keys()]))
+    
     print()
     print('\t4) DATABASE: Dataset count is different between `dataset` and `custom_metadata_xxx` tables (re-build won\'t help):')
     if not len(cust_rowcount_data):
         print('\t **Clean**')
     else:
         for pid in cust_rowcount_data:
-            print('\t pid:',pid,' -- ',cust_rowcount_data[pid])
+            if project_lookup[pid]["perm"] == '0':   # no temporary projects
+                pass
+            elif project_lookup[pid]["mtx"] == '1': # show matrix status
+                print('\t pid:',pid,' -- ',cust_rowcount_data[pid]+" (matrix)")
+            else:
+                print('\t pid:',pid,' -- ',cust_rowcount_data[pid])
         print('\t PID List:',','.join([str(n) for n in cust_rowcount_data.keys()]))
+    
     print()
     print('\t5) DID FILES: zero-length file or taxcounts={}:')
     if not len(did_file_problem):
         print('\t **Clean**')
     else:
         for pid in did_file_problem:
-            print('\t pid:',pid,' -- ',did_file_problem[pid])
+            if project_lookup[pid]["perm"] == '0':   # no temporary projects
+                pass
+            elif project_lookup[pid]["mtx"] == '1': # show matrix status
+                print('\t pid:',pid,' -- ',did_file_problem[pid]+" (matrix)")
+            else:
+                print('\t pid:',pid,' -- ',did_file_problem[pid])
         print('\t PID List:',','.join([str(n) for n in did_file_problem.keys()]))
 
         if args.show_dids:
@@ -264,7 +296,12 @@ def go_list(args):
         print('\t **Clean**')
     else:
         for pid in other_problem:
-            print('\t pid:',pid,' -- ',other_problem[pid])
+            if project_lookup[pid]["perm"] == '0':   # no temporary projects
+                pass
+            elif project_lookup[pid]["mtx"] == '1': # show matrix status
+                print('\t pid:',pid,' -- ',other_problem[pid]+" (matrix)")
+            else:
+                print('\t pid:',pid,' -- ',other_problem[pid])
         print('\t PID List:',','.join([str(n) for n in other_problem.keys()]))
     
     print()
@@ -274,13 +311,20 @@ def go_list(args):
             print('\t **Clean**')
         else:
             for pid in missing_seqs:
-                print('\t pid:',pid,' -- ',missing_seqs[pid])
+                if project_lookup[pid]["perm"] == '0':   # no temporary projects
+                    pass
+                elif project_lookup[pid]["mtx"] == '1': # show matrix status
+                    print('\t pid:',pid,' -- ',missing_seqs[pid]+" (matrix)")
+                else:
+                    print('\t pid:',pid,' -- ',missing_seqs[pid])
+                
             print('\t PID List:',','.join([str(n) for n in missing_seqs.keys()]))
         print()
     all_to_rebuild = list(other_problem.keys()) + list(mismatch_data.keys()) + list(no_file_found.keys()) + list(did_file_problem.keys()) 
      
     print("To rebuild: \ncd /groups/vampsweb/new_vamps_maintenance_scripts/; ./rebuild_vamps_files.py -host "+args.dbhost+" -pids '%s'; mail_done" % (", ".join(list(set(all_to_rebuild)))))    
     print("Number of files that should be rebuilt:",len(other_problem)+len(mismatch_data)+len(no_file_found))
+    print("No temporary projects shown")
     print('*'*60)
 
 def read_original_metadata():
@@ -305,7 +349,7 @@ def get_required_metadata_fields(args):
     return md_fields
 
 def get_project_lookup(args):
-    q =  "SELECT dataset_id, dataset.project_id, project from project"
+    q =  "SELECT dataset_id, dataset.project_id,  project, matrix, permanent from project"
     q += " JOIN dataset using(project_id) where project not like '%_Sgun' order by project"
 
     num = 0
@@ -319,7 +363,10 @@ def get_project_lookup(args):
         did = str(row[0])
         pid = str(row[1])
         pj  = row[2]
-        project_lookup[pid]  = pj
+        mtx = str(row[3])
+        perm = str(row[4])
+        
+        project_lookup[pid]  = {"p":pj, "mtx":mtx, "perm":perm}
         projects_by_did[did] = pj
         if pid in project_id_lookup:
             project_id_lookup[pid].append(str(did))
@@ -373,12 +420,12 @@ if __name__ == '__main__':
 
     print(args)
     if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8' :
-        args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         args.dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
 
     elif args.dbhost == 'vampsdev' or args.dbhost == 'bpcweb7':
-        args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         args.dbhost = 'bpcweb7'
     elif args.dbhost == 'localhost' and (socket.gethostname() == 'Annas-MacBook.local' or socket.gethostname() == 'Annas-MacBook-new.local'):

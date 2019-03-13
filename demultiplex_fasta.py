@@ -12,8 +12,8 @@ class Demultiplex:
 
 
   def usage(self):
-    print '''python demultiplex_qiita.py -i <inputfile>
-             '''
+    print ('''python demultiplex_qiita.py -i <inputfile>
+             ''')
 
   def get_args(self, argv):
   
@@ -40,7 +40,7 @@ class Demultiplex:
     output_file_obj.write('%s\n' % seq)
       
   def get_out_file_names(self):
-    print "get_out_file_names"
+    print ("get_out_file_names")
     n = 0
     f_input  = fastalib.SequenceSource(inputfile)
     while f_input.next():
@@ -60,7 +60,7 @@ class Demultiplex:
   # real  0m16.198s
     
   def open_out_sample_files(self):
-    print "open_out_sample_files"
+    print ("open_out_sample_files")
     self.get_out_file_names()
     for sample in self.out_file_names:
       self.out_files[sample] = open(sample, "a")
@@ -78,7 +78,7 @@ class Demultiplex:
     
   
   def demultiplex_input(self, inputfile):
-    print "demultiplex_input"
+    print ("demultiplex_input")
     f_input  = fastalib.SequenceSource(inputfile)
     i = 0
     while f_input.next():
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     demult = Demultiplex()
 
     (inputfile) = demult.get_args(sys.argv[1:])
-    print 'Input file is "%s"' % inputfile
+    print ('Input file is "%s"' % inputfile)
     
     demult.open_out_sample_files()
     demult.demultiplex_input(inputfile)

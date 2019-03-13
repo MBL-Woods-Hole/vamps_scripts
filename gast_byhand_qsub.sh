@@ -4,14 +4,14 @@
 # by uploading fasta in NewVAMPS
 # To run: copy this script to project_dir then edit -- change PROJECT, REFDB and check paths
 # Next steps:
-# /groups/vampsweb/vamps_node_data/scripts/vamps_script_database_loader.py -site vamps -class GAST -project_dir pdir -config INFO.configPATH
-# /groups/vampsweb/vamps_node_data/scripts/vamps_script_upload_metadata.py -site vamps -project_dir pdir -p pname -config INFO.configPATH
-# /groups/vampsweb/vamps_node_data/scripts/vamps_script_create_json_dataset_files.py -site vamps -project_dir pdir -p pname -config INFO.configPATH --jsonfile_dir json
+# /groups/vampsweb/vamps/nodejs/scripts/vamps_script_database_loader.py -site vamps -class GAST -project_dir pdir -config INFO.configPATH
+# /groups/vampsweb/vamps/nodejs/scripts/vamps_script_upload_metadata.py -site vamps -project_dir pdir -p pname -config INFO.configPATH
+# /groups/vampsweb/vamps/nodejs/scripts/vamps_script_create_json_dataset_files.py -site vamps -project_dir pdir -p pname -config INFO.configPATH --jsonfile_dir json
 #
 #
 PROJECT=work
 REFDB=refv4     
-PDIR=/groups/vampsweb/vampsdev_node_data/user_data/avoorhis/project-${PROJECT}
+PDIR=/groups/vampsweb/vampsdev/nodejs/user_data/avoorhis/project-${PROJECT}
 REFDB_PATH=/groups/g454/blastdbs/gast_distributions/${REFDB} 
 
 ls $PDIR/analysis/*/seqfile.unique.fa > $PDIR/filenames.list

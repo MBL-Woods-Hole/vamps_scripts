@@ -23,7 +23,7 @@ import datetime
 import socket
 from collections import defaultdict
 import time
-import logging
+
 
 
 def it_is_py3():
@@ -287,8 +287,6 @@ def get_counts_per_tax(did_sql, units, short_list):
             query = q["queryA"] + query_coreA_matrix +  query_core_join_matrix +  q["queryB"] % did_sql + end_group_query
         print(query)
         try:
-            logging.debug("running mysql query for: "+q['rank'])
-
             rows = myconn.execute_fetch_select(query)
             rank = q['rank']
             if not rows:
@@ -297,11 +295,10 @@ def get_counts_per_tax(did_sql, units, short_list):
                 pids_by_did = get_all_pids_by_did_dict()
                 pid = pids_by_did[short_list[0]]
                 print('Error while processing project: ', pid)
-                # sys.exit()
+                #sys.exit()
                 continue
             counts_per_tax_dict[rank] = rows
-        except:
-            logging.debug("Failing to query with: "+query)
+        except:           
             sys.exit("This Database Doesn't Look Right -- Exiting")
     
     return counts_per_tax_dict
@@ -324,7 +321,8 @@ def make_counts_lookup_dict(counts_per_tax_dict, counts_lookup):
 def make_counts_lookup_by_did(did_list_group, units):
     counts_lookup = defaultdict(dict)
 
-    for short_list in did_list_group:
+    for i,short_list in enumerate(did_list_group):
+        print('1)Counts PROGRESS: '+str(i+1) +'/'+str(len(did_list_group)))
         did_sql = ', '.join(short_list)
         counts_per_tax_dict = get_counts_per_tax(did_sql, units, short_list)
         counts_lookup = make_counts_lookup_dict(counts_per_tax_dict, counts_lookup)
@@ -336,7 +334,8 @@ def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
     metadata_lookup = defaultdict(dict)
     metadata_errors = defaultdict(list)
 
-    for short_list in pid_list_group:
+    for i,short_list in enumerate(pid_list_group):
+        print('2)Metadata PROGRESS: '+str(i+1) +'/'+str(len(pid_list_group)))
         for pid in short_list:
             print("PID: %s" % pid)
             dids = all_dids_per_pid_dict[pid]
@@ -637,7 +636,6 @@ if __name__ == '__main__':
     parser.add_argument("-json_file_path", "--json_file_path",
                         required = False, action = 'store', dest = "json_file_path", default = '../../json',
                         help = "Not usually needed if -host is accurate")
-    # for vampsdev"  /groups/vampsweb/vampsdev_node_data/json
     parser.add_argument("-host", "--host",
                         required = False, action = 'store', dest = "dbhost", default = 'localhost',
                         help = "choices=['vampsdb', 'vampsdev', 'localhost']")
@@ -655,12 +653,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8':
-        args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
 
     elif args.dbhost == 'vampsdev' or args.dbhost == 'bpcweb7':
-        args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         dbhost = 'bpcweb7'
     elif args.dbhost == 'localhost' and (

@@ -117,6 +117,7 @@ def start(args):
     for pid in args.pids:
         # collects seqs project-by-project
         SEQ_COLLECTOR = {}
+        proj = args.pids[pid]["project"]
         pdir = str(pid)+'_rdp'
         if not os.path.exists(pdir):
             os.makedirs(pdir)
@@ -148,7 +149,13 @@ def start(args):
             mysql_conn.commit()
             rdp_out_file = os.path.join(pdir, dname+'.rdp') # to be created
             sys.stdout.write(str(n)+') ')
-            rdp.run_rdp( unique_file, rdp_out_file, args.path_to_classifier, args.gene )
+            if not args.gene and (proj.split('_')[2][0] == 'E' or proj.split('_')[2] in ['ITS','ITS1']):
+                gene = 'fungalits_unite'
+            elif not args.gene:
+                gene = '16srrna'
+            else:
+                gene = args.gene
+            rdp.run_rdp( unique_file, rdp_out_file, args.path_to_classifier, gene )
             n += 1
         logging.info("starting taxonomy")
         print("starting taxonomy")
@@ -497,25 +504,27 @@ def get_pid_data(args):
     pid_dict = {}
     if args.pid_list:
         sql_pids = "','".join(args.pid_list.split(','))
-        q = "Select project_id, dataset, dataset_id from dataset where project_id in('%s')"
+        q = "Select project, project_id, dataset, dataset_id from dataset JOIN project using(project_id) where project_id in('%s')"
         q = q % (sql_pids)
 
     else:
-        q = "Select project_id, dataset, dataset_id from dataset"
+        q = "SELECT project, project_id, dataset, dataset_id from dataset JOIN project using(project_id)"
     print(q)
         #q = "Select project_id, dataset, dataset_id from dataset where project_id='272' order by project_id "
     cur.execute(q)
     rows = cur.fetchall()
     for row in rows:
-        pid = row[0]
-        dname = row[1]
-        did = row[2]
+        p = row[0]
+        pid = row[1]
+        dname = row[2]
+        did = row[3]
         if pid in pid_dict:
             pid_dict[pid]["datasets"][did]  = dname
         else:
             pid_dict[pid]                   = {}
             pid_dict[pid]["datasets"]       = {}
             pid_dict[pid]["datasets"][did]  = dname
+            pid_dict[pid]["project"] = p
 
 
     return pid_dict
@@ -576,7 +585,7 @@ if __name__ == '__main__':
     # Use fungalits_unite for all and ITS (Fungal)
     # THERE IS NO GOOD database for Eukaryal sequences
     parser.add_argument("-gene", "--gene",
-                 required=False,  action="store",   dest = "gene", default="16srrna",            # use 16srrna for all Archaea & Bacteria
+                 required=False,  action="store",   dest = "gene", default="",            # use 16srrna for all Archaea & Bacteria
                  help = 'See RDP README: 16srrna, fungallsu, fungalits_warcup, fungalits_unite') # Use fungalits_unite for all Eukarya and ITS
     parser.add_argument("-pids", "--pids",
                  required=True,  action="store",   dest = "pid_list", default='',

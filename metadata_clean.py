@@ -424,12 +424,12 @@ if __name__ == '__main__':
 
     print(args)
     if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8' :
-        args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         args.dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
 
     elif args.dbhost == 'vampsdev' or args.dbhost == 'bpcweb7':
-        args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         args.dbhost = 'bpcweb7'
     elif args.dbhost == 'localhost' and (socket.gethostname() == 'Annas-MacBook.local' or socket.gethostname() == 'Annas-MacBook-new.local'):

@@ -272,10 +272,10 @@ def push_project(args):
     fund = "Unknown"    
     pub = 1 if args.public else 0
     
-    fields = ['project','title','project_description','rev_project_name','funding','owner_user_id','public']
+    fields = ['project','title','project_description','rev_project_name','funding','owner_user_id','public','active','permanent','user_project']
     q = "INSERT into project ("+(',').join(fields)+")"
-    q += " VALUES('%s','%s','%s','%s','%s','%s','%s')"
-    q = q % (args.project,title,desc,rev,fund,args.oid,pub)
+    q += " VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')"
+    q = q % (args.project,title,desc,rev,fund,args.oid,pub,'1','0','1')
     print q
     
     #print cur.lastrowid
@@ -491,11 +491,11 @@ if __name__ == '__main__':
        
     print "ARGS: dbhost  =",args.site
     if args.site == 'vamps':
-        args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         args.dbhost = 'vampsdb'
     elif args.site == 'vampsdev':
-        args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         args.dbhost = 'bpcweb7'
     else:

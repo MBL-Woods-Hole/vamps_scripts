@@ -107,7 +107,15 @@ def clean(args):
     print (q)
     cur.execute(q)
 
-
+    q = "DELETE from generic_taxonomy_info"
+    q += " WHERE dataset_id in ('"+ "','".join(dids) +"')"
+    print (q)
+    cur.execute(q)
+    
+    q = "DELETE from matrix_taxonomy_info"
+    q += " WHERE dataset_id in ('"+ "','".join(dids) +"')"
+    print (q)
+    cur.execute(q)
     #DELETE from common_name_required_metadata_info_temp WHERE dataset_id in ('1120','1121','1122','1123')
     #DELETE from elevation_required_metadata_info_temp WHERE dataset_id in ('1120','1121','1122','1123')
     #DELETE from required_metadata_info_copy_before_big_changes WHERE dataset_id in ('1120','1121','1122','1123')
@@ -326,10 +334,10 @@ if __name__ == '__main__':
 
     if args.dbhost == 'vampsdb' or args.dbhost == 'vamps':
         args.dbhost = 'vampsdb'
-        args.json_file_path = '/groups/vampsweb/vamps_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
     elif args.dbhost == 'vampsdev':
-        args.json_file_path = '/groups/vampsweb/vampsdev_node_data/json'
+        args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
     else:
         args.NODE_DATABASE = args.db
@@ -369,11 +377,7 @@ if __name__ == '__main__':
 
     print()
     cur.execute("USE "+NODE_DATABASE)
-    # if args.host == 'vampsdev':
-    #     args.file_base = os.path.join('/','groups','vampsweb','vampsdev_node_data','json', NODE_DATABASE+'--datasets')
-    # else:
-    #     args.file_base = os.path.join('../json', NODE_DATABASE+'--datasets')
-
+    
     if args.all:
         all_really = input("\nDo you REALLY want to delete all??? from: "+NODE_DATABASE+ ' (y/N)')
         if all_really == 'y' or all_really == 'y':

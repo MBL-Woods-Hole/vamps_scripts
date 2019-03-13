@@ -656,9 +656,9 @@ class Project:
   def insert_project(self, user_id):
     project, title, project_description, funding, env_sample_source_id, contact, email, institution = self.project_file_content[0]
 
-    field_list     = "project, title, project_description, rev_project_name, funding, owner_user_id, public"
+    field_list     = "project, title, project_description, rev_project_name, funding, owner_user_id, public, active, user_project"
     insert_values  = ', '.join("'%s'" % key for key in [project, title, project_description])
-    insert_values += ", REVERSE('%s'), '%s', '%s', '%s'" % (project, funding, user_id, self.public)
+    insert_values += ", REVERSE('%s'), '%s', '%s', '%s'" % (project, funding, user_id, self.public,'1','1')
 
     # sql = "INSERT %s INTO %s (%s) VALUES (%s)" % ("ignore", "project", field_list, insert_values)
     # self.utils.print_array_w_title(sql, "sql")

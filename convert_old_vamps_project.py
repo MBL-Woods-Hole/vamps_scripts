@@ -231,32 +231,7 @@ def push_project(PROJECT_ID_BY_NAME):
     except:
       raise
       
-    # if args.add_project:
-   #      # q = "SELECT project_id from project where project='%s'" % (args.project)
-   #      # logging.debug(q)
-   #      # cur.execute(q)
-   #      # mysql_conn.commit()
-   #      # row = cur.fetchone()
-   #      # CONFIG_ITEMS['project_id'] = row[0]
-   #
-   #      print("ADD TO PID="+str(CONFIG_ITEMS['project_id']))
-   #      logging.debug("ADDING to project -- PID="+str(CONFIG_ITEMS['project_id']))
-   #  else:
-   #      # uncomment
-   #      # q = "INSERT into project ("+(',').join(fields)+")"
-   #      q = "INSERT IGNORE into project ("+(',').join(fields)+")"
-   #      q += " VALUES('%s','%s','%s','%s','%s','%s','%s')"
-   #      q = q % (proj,title,desc,rev,fund,id,pub)
-   #      print(q)
-   #      logging.debug(q)
-   #      cur.execute(q)
-   #      mysql_conn.commit()
-   #      last_insert_id = cur.lastrowid
-   #      if last_insert_id > 0:
-   #        CONFIG_ITEMS['project_id'] = cur.lastrowid
-   #      print("NEW PID="+str(CONFIG_ITEMS['project_id']))
-   #      logging.debug("STARTING NEW project -- PID="+str(CONFIG_ITEMS['project_id']))
-
+   
 
 def insert_project(CONFIG_ITEMS, args):
     desc = "Project Description"
@@ -266,7 +241,7 @@ def insert_project(CONFIG_ITEMS, args):
     fund = "myfunding"
     id = CONFIG_ITEMS['owner_id']
     pub = CONFIG_ITEMS['public']
-    fields = ['project','title','project_description','rev_project_name','funding','owner_user_id','public']
+    fields = ['project','title','project_description','rev_project_name','funding','owner_user_id','public','active','permanent','user_project']
   
     if args.add_project:
         # q = "SELECT project_id from project where project='%s'" % (args.project)
@@ -282,8 +257,8 @@ def insert_project(CONFIG_ITEMS, args):
         # uncomment
         # q = "INSERT into project ("+(',').join(fields)+")"
         q = "INSERT IGNORE into project ("+(',').join(fields)+")"
-        q += " VALUES('%s','%s','%s','%s','%s','%s','%s')"
-        q = q % (proj,title,desc,rev,fund,id,pub)
+        q += " VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')"
+        q = q % (proj,title,desc,rev,fund,id,pub,'1','0','1')
         print(q)
         logging.debug(q)
         cur.execute(q)

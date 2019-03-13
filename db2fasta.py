@@ -136,7 +136,7 @@ if __name__ == '__main__':
          db2fasta.py -host vamps  -sql "WHERE dataset_id=\'12342\'"
          db2fasta.py -host vamps  -sql "WHERE project like \'ICM%%\'"
          
-         For VAMPS2 Blast databases see: /groups/vampsweb/vamps_node_data/blast/README
+         For VAMPS2 Blast databases see: /groups/vampsweb/vamps/nodejs/blast/README
          db2fasta.py -host vamps -tax -sql "where public='1' and project like '%Ev9'" -o Ev9
 
   Options:  
