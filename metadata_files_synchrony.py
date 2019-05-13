@@ -419,9 +419,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     print(args)
-    annas_local_hosts = ['Annas-MacBook.local', 'Annas-MacBook-new.local', 'micrcosmexp.mbl.edu']
+    annas_local_hosts = ['Annas-MacBook.local', 'Annas-MacBook-new.local', 'AnnasMacBook.local']
     is_annas_localhost = socket.gethostname() in annas_local_hosts
-
     if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8' :
         args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         args.dbhost = 'vampsdb'
