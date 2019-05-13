@@ -654,6 +654,9 @@ if __name__ == '__main__':
     #     sys.exit()
     args = parser.parse_args()
 
+    annas_local_hosts = ['Annas-MacBook.local', 'Annas-MacBook-new.local', 'micrcosmexp.mbl.edu']
+    is_annas_localhost = socket.gethostname() in annas_local_hosts
+    
     if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8':
         args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         dbhost = 'vampsdb'
@@ -663,8 +666,7 @@ if __name__ == '__main__':
         args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         dbhost = 'bpcweb7'
-    elif args.dbhost == 'localhost' and (
-            socket.gethostname() == 'Annas-MacBook.local' or socket.gethostname() == 'Annas-MacBook-new.local'):
+    elif args.dbhost == 'localhost' and is_annas_localhost:
         args.NODE_DATABASE = 'vamps2'
         dbhost = 'localhost'
     else:
