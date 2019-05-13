@@ -110,6 +110,7 @@ def get_null_ids():
         
     for q in id_queries:
         cur.execute(q['query'])
+        #print(q['query'])
         mysql_conn.commit()
         row = cur.fetchone()
         unknowns[q['table']] = row[0]
@@ -176,7 +177,6 @@ if __name__ == '__main__':
     args = parser.parse_args()    
    
     args.datetime     = str(datetime.date.today())    
-    
     
     start_metadata_load(args)
     

@@ -296,10 +296,13 @@ def get_counts_per_tax(did_sql, units, short_list):
                 pid = pids_by_did[short_list[0]]
                 print('Error while processing project: ', pid)
                 #sys.exit()
-                continue
+                return {}
             counts_per_tax_dict[rank] = rows
         except:           
-            sys.exit("This Database Doesn't Look Right -- Exiting")
+            print('Error while processing project: ', pid)
+            print("This Database Doesn't Look Right --Returning")
+            return {}
+            #sys.exit("This Database Doesn't Look Right -- Exiting")
     
     return counts_per_tax_dict
 
@@ -320,9 +323,10 @@ def make_counts_lookup_dict(counts_per_tax_dict, counts_lookup):
 
 def make_counts_lookup_by_did(did_list_group, units):
     counts_lookup = defaultdict(dict)
-
+    print('='*40)
     for i,short_list in enumerate(did_list_group):
-        print('1)Counts PROGRESS: '+str(i+1) +'/'+str(len(did_list_group)))
+        #print('1)Counts PROGRESS: '+str(i+1) +'/'+str(len(did_list_group)))
+        print('Chunk '+str(i+1)+'/'+str(len(did_list_group)))
         did_sql = ', '.join(short_list)
         counts_per_tax_dict = get_counts_per_tax(did_sql, units, short_list)
         counts_lookup = make_counts_lookup_dict(counts_per_tax_dict, counts_lookup)
@@ -333,11 +337,9 @@ def make_counts_lookup_by_did(did_list_group, units):
 def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
     metadata_lookup = defaultdict(dict)
     metadata_errors = defaultdict(list)
-
     for i,short_list in enumerate(pid_list_group):
-        print('2)Metadata PROGRESS: '+str(i+1) +'/'+str(len(pid_list_group)))
+        #print('2)Metadata PROGRESS: '+str(i+1) +'/'+str(len(pid_list_group)))
         for pid in short_list:
-            print("PID: %s" % pid)
             dids = all_dids_per_pid_dict[pid]
             (metadata_lookup, metadata_errors) = go_custom_metadata(dids, pid, metadata_lookup, metadata_errors)
 

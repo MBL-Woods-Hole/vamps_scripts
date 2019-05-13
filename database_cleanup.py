@@ -107,10 +107,10 @@ def clean(args):
     print (q)
     cur.execute(q)
 
-    q = "DELETE from generic_taxonomy_info"
-    q += " WHERE dataset_id in ('"+ "','".join(dids) +"')"
-    print (q)
-    cur.execute(q)
+    # q = "DELETE from generic_taxonomy_info"
+#     q += " WHERE dataset_id in ('"+ "','".join(dids) +"')"
+#     print (q)
+#     cur.execute(q)
     
     q = "DELETE from matrix_taxonomy_info"
     q += " WHERE dataset_id in ('"+ "','".join(dids) +"')"
