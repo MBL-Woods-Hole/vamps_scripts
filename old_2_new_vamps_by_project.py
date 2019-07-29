@@ -120,7 +120,7 @@ class Mysql_util:
             self.cursor = self.conn.cursor()
             # self.escape = self.conn.escape()
 
-        except MySQLdb.Error(e):
+        except MySQLdb.Error as e:
             self.utils.print_both("Error %d: %s" % (e.args[0], e.args[1]))
             raise
         except:                       # catch everything
@@ -209,7 +209,7 @@ class Mysql_util:
 class Utils:
     def __init__(self):
         self.chunk_split = 100
-        self.min_seqs = 50000  #300000
+        self.min_seqs = 10000 #50000  #300000
         pass
 
     def is_local(self):
@@ -658,7 +658,7 @@ class Project:
 
     field_list     = "project, title, project_description, rev_project_name, funding, owner_user_id, public, active, user_project"
     insert_values  = ', '.join("'%s'" % key for key in [project, title, project_description])
-    insert_values += ", REVERSE('%s'), '%s', '%s', '%s'" % (project, funding, user_id, self.public,'1','1')
+    insert_values += ", REVERSE('%s'), '%s', '%s', '%s', '%s', '%s'" % (project, funding, user_id, self.public,'1','1')
 
     # sql = "INSERT %s INTO %s (%s) VALUES (%s)" % ("ignore", "project", field_list, insert_values)
     # self.utils.print_array_w_title(sql, "sql")
@@ -1712,8 +1712,11 @@ if __name__ == '__main__':
   to_database = 'vamps2'
   if args.host == 'vamps' or args.host == 'vampsdb':
       host_prod = "vampsdb"
-  else:
+  elif args.host=='vampsdev':
       host_prod = "bpcweb7"
+  else:  ## localhost
+      host_prod = "localhost"
+      to_database = "vamps_development"
   if (args.write_files == True):
      csv_files = CSV_files()
 # 
@@ -1764,7 +1767,7 @@ if __name__ == '__main__':
 
   print("metadata_csv_file_name = %s, seq_csv_file_name = %s, project_csv_file_name = %s, dataset_csv_file_name = %s, user_contact_csv_file_name = %s" % (metadata_csv_file_name, seq_csv_file_name, project_csv_file_name, dataset_csv_file_name, user_contact_csv_file_name))
   
-  mysql_util = Mysql_util(host = host_prod, db = 'vamps2')
+  mysql_util = Mysql_util(host = host_prod, db = to_database)
   print('reading seqs')
   seq_csv_parser = Seq_csv(seq_csv_file_name, mysql_util)
   taxonomy       = Taxonomy(seq_csv_parser.taxa, mysql_util)

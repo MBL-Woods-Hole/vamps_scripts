@@ -112,10 +112,6 @@ def clean(args):
 #     print (q)
 #     cur.execute(q)
     
-    q = "DELETE from matrix_taxonomy_info"
-    q += " WHERE dataset_id in ('"+ "','".join(dids) +"')"
-    print (q)
-    cur.execute(q)
     #DELETE from common_name_required_metadata_info_temp WHERE dataset_id in ('1120','1121','1122','1123')
     #DELETE from elevation_required_metadata_info_temp WHERE dataset_id in ('1120','1121','1122','1123')
     #DELETE from required_metadata_info_copy_before_big_changes WHERE dataset_id in ('1120','1121','1122','1123')
