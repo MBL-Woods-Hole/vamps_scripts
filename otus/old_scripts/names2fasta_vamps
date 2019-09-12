@@ -1,0 +1,317 @@
+#!/bioware/perl/bin/perl
+
+#########################################
+#
+# names2fasta: converts the CROP otus *.fa file to a matrix
+#
+# Author: AAV
+#
+# Date: Fri Aug 19 09:49:26 EDT 2011
+#
+# Copyright (C) 2011 Marine Biological Laborotory, Woods Hole, MA
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# For a copy of the GNU General Public License, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# or visit http://www.gnu.org/copyleft/gpl.html
+#
+# Keywords: otu otupipe crop cluster matrix mtx
+# 
+# Assumptions: 
+#
+# Revisions:
+#
+# Programming Notes:
+#
+########################################
+use strict;
+use warnings;
+use DBI;
+#######################################
+#
+# Set up usage statement
+#
+#######################################
+my $script_help = "
+ names2fasta - reads a names file and produces a fasta file from vamps 
+              Used for vamps slp clusters
+              
+              -i input file name 
+              -o outfile name prefix [default: FASTA]
+              -prefix prefix for OTUs names [default: just use numbers in order]
+              -site vamps or vampsdev
+              
+\n";
+
+my $usage = "
+   Usage:  names2fasta -i slp.slp.names -o OUTPREFIX
+       
+\n";
+# Options:  
+#           -i  the readmap.uc or equivalent output from otupipe.bash
+#           -o  new output otu - dataset matrix file
+# CROP files: 
+#   .cluster
+#        First line= # of OTUs
+#        then read_id <tab> cluster_size <tab> std_dev
+#   .list
+#		Contents of each cluster
+#   .fasta
+# 		sequences
+# plan: use .cluster file
+# ask for an otu prefix
+
+#######################################
+#
+# Definition statements
+#
+#######################################
+#Commandline parsing
+my $verbose = 0;
+my $self_cmd = join(" ", $0, @ARGV);
+
+#Runtime variables
+#my $db_host = "jbpcdb";
+#my $db_host = "newbpcdb2";
+
+
+#my $db_name = "env454";
+my $db_name = "vamps";
+#my $reads_table = 'trimseq as t join dataset as d using(dataset_id) join project as p using(project_id)';
+my $reads_table_bpc = 'vamps_sequences';
+my $reads_table_user = 'vamps_sequences_pipe';
+my $id_field = 'rep_id';
+
+#my $log_filename = "./" . $0 . ".log";
+my $log_filename = $0;
+$log_filename =~ s/^.*\///;
+$log_filename = "./" . $log_filename . ".log";
+my $otu_prefix = '';
+my $out_filename_prefix='FASTA';
+my $in_filename;
+my $site='';
+my $db_hostname;
+my $dbName;
+my $db_source ='all';
+my $web_user;
+my $home;
+#######################################
+#
+# Test for commandline arguments
+#
+#######################################
+
+if (! $ARGV[0] ) 
+{
+	print $script_help;
+	print $usage;
+	exit -1;
+} 
+
+
+while ((scalar @ARGV > 0) && ($ARGV[0] =~ /^-/)) 
+{
+	if ($ARGV[0] =~ /-h/) 
+	{
+		print $script_help;
+		print $usage;
+		exit 0;
+#	} elsif ($ARGV[0] eq "-i") {
+#		shift @ARGV;
+#		$in_filename = shift @ARGV;
+	} elsif ($ARGV[0] eq "-prefix") {
+		shift @ARGV;
+		$otu_prefix = shift @ARGV;
+	} elsif ($ARGV[0] eq "-o") {
+		shift @ARGV;
+		$out_filename_prefix = shift @ARGV;
+	} elsif ($ARGV[0] eq "-dbsource") {
+        shift @ARGV;
+        $db_source = shift @ARGV;
+    } elsif ($ARGV[0] eq "-i") {
+		shift @ARGV;
+		$in_filename = shift @ARGV;
+	}   elsif ($ARGV[0] eq "-v") {
+		$verbose = 1;
+		shift @ARGV;
+	} elsif ($ARGV[0] eq "-site") {
+		shift @ARGV;
+		$site = shift @ARGV;
+	} elsif ($ARGV[0] =~ /^-/) { #unknown parameter, just get rid of it
+		print "Unknown commandline flag \"$ARGV[0]\".\n";
+		print $usage;
+		exit -1;
+	}
+}
+
+if ($site eq 'vamps' ){
+  
+   # for vamps:
+   $db_hostname = "vampsdb";
+   $dbName = 'vamps';
+   $web_user = "vampshttpd";
+   
+   #$cluster_path= "/groups/vampsweb/vamps";
+   $home = "/groups/vampsweb/vamps/";
+}elsif($site eq 'vampsdev' ){
+
+   # for vampsdev
+   $db_hostname = "vampsdev";
+   $dbName = 'vamps';
+   $web_user = "vampsdevhttpd";
+   
+   #$cluster_path= "/groups/vampsweb/vampsdev";
+   $home = "/groups/vampsweb/vampsdev/";
+}else{
+    print "No useful database host selected: $site exiting\n";
+    exit;
+}
+#######################################
+#
+# Parse commandline arguments, ARGV
+#
+#######################################
+
+# Test for both files specified
+if (! $in_filename) 
+{
+	print "Incorrect number of arguments.\n";
+	print "$usage\n";
+	exit;
+} 
+
+# Test validity of commandline arguments
+if ( ! -f $in_filename)  
+{
+	print "Unable to locate input crop list file: $in_filename.\n";
+	exit -1;
+}
+
+open(LOG, ">>$log_filename")  || warn "Unable to open log file, $log_filename, for writing.  Skipping...\n";
+print LOG "$self_cmd\n";
+
+#######################################
+#
+# Open the files
+#
+#######################################
+
+
+open(IN, "<$in_filename") || die("Unable to read input file: $in_filename.  Exiting.\n");
+
+
+my $fasta_filename=$out_filename_prefix.'.fa';
+
+open(OUT, ">$fasta_filename") || die("Unable to open fasta file: $fasta_filename.  Exiting.\n");
+
+#######################################
+#
+# Connect to the database
+#
+#######################################
+
+require("/groups/vampsweb/".$site."/apps/mysql_connection_vamps");
+my ($vampsdbh, $userdbh) = get_connection($home, $db_hostname, $dbName);
+
+
+#######################################
+#
+# SQL statements
+#
+#######################################
+
+#Select
+my $select_query;
+if($db_source eq 'user'){
+	$select_query = "SELECT sequence,seq_count FROM $reads_table_user WHERE $id_field = ?";
+}elsif($db_source eq 'bpc'){
+	$select_query = "SELECT sequence,seq_count FROM $reads_table_bpc WHERE $id_field = ?";
+}else{
+	$select_query = "SELECT sequence,seq_count FROM $reads_table_bpc WHERE $id_field = ?
+					UNION
+					SELECT sequence,seq_count FROM $reads_table_user WHERE $id_field = ?";
+}
+
+#my $select_query_index = "SELECT project, dataset, sequence, taxonomy FROM $reads_table WHERE $id_field = ?";
+my $select_query_h = $vampsdbh->prepare($select_query) or die "Unable to prepare statement: $select_query. Error: " . $vampsdbh->errstr . "\n";
+#my $select_query_index_h = $vampsdbh->prepare($select_query_index) or die "Unable to prepare statement: $select_query_index. Error: " . $vampsdbh->errstr . "\n";
+#######################################
+#
+# Step through the hits and assign to OTUs
+#
+#######################################
+
+
+# Load the OTU assignments for each read
+# because reads can map to more than one OTU, 
+# we have to map all reads to a single OTU before we can tally by dataset
+my $count=1;
+my @id_array;
+my $read_count = 1;
+my @IDnCount;
+while (my $line = <IN>) 
+{
+
+    #
+    # Parse the line
+    # line one is the otu count
+    # 0 = read id,  1 = otu size, 2 = std dev
+    #
+    # for OTUs: AB_SAND_Bv6--HS124--EJ2ODMS01BT9HF
+    
+    
+    
+	chomp $line;
+    if ($line =~ /^#/) {next;}  # Skip comment lines at the top
+    my @line_data = split(/\t/, $line);
+    my $id = $line_data[0];
+    @id_array = split('--',$id);
+    my $project = $id_array[0];
+    my $dataset = $id_array[1];
+    @IDnCount = split('_',$id_array[2]);
+    my $read_id = $IDnCount[0];
+    $read_count = $IDnCount[1];
+    #my $read_id = $id_array[2];
+    
+    my $cid;
+    if($otu_prefix){
+        $cid = $otu_prefix.'_'.$count;
+    }else{
+        $cid = $count;
+    }
+    if($db_source eq 'user' || $db_source eq 'bpc'){
+    	$select_query_h->execute($read_id) or die "Unable to execute SQL statement: $select_query.  Error: " . $select_query_h->errstr . "\n";
+    }else{
+    	$select_query_h->execute($read_id,$read_id) or die "Unable to execute SQL statement: $select_query.  Error: " . $select_query_h->errstr . "\n";
+    }
+    if ($select_query_h->rows == 0) 
+    {
+        my $warning = "Read $read_id was not found in the database, and was included in the matrix as dataset \"Unknown\"\n";
+        warn $warning;
+        print LOG $warning;
+        
+        
+    } else {
+        my ($sequence) = $select_query_h->fetchrow();
+        for (my $i = 1; $i <= $read_count; $i++)
+	    {
+        print OUT ">".$cid.'|'.$read_id."_".$i."\n";
+        print OUT $sequence."\n";
+        }
+    }
+    
+
+    $count++;
+}
+
+close(IN);
+close(OUT);

@@ -1,0 +1,408 @@
+#!/bin/env perl
+
+###############################################################
+#
+# db2fasta_vamps
+#      This is part of the vamps pipeline.
+#      See the README.pipeline file in this directory.
+#
+###############################################################
+
+#########################################
+#
+# db2fasta: export sequences from a database to a fasta file
+#
+# Author: Susan Huse, shuse@mbl.edu  
+# Date: 2006
+#
+# Copyright (C) 2006 Marine Biological Laborotory, Woods Hole, MA
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# For a copy of the GNU General Public License, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# or visit http://www.gnu.org/copyleft/gpl.html
+#
+#
+# Keywords: database convert export
+# 
+# Assumptions: 
+#
+# Revisions:
+#
+# Programming Notes:
+#
+########################################
+
+use strict;
+#use Bio::Seq;
+#use Bio::SeqIO;
+#use Bio::Seq::PrimaryQual;
+use IO::String;
+use DBI;
+
+#######################################
+#
+# Set up usage statement
+#
+#######################################
+my $usage = 
+" Usage:  db2fasta_vamps -rc -q -d database_name -o output_fasta -sql sql_select_string -id id_field -seq sequence_field 
+         db2fasta_vamps -rc -d database_name -o output_fasta -t sequence_table -id id_field -seq sequence_field
+         db2fasta_vamps -d database_name -o output_fasta -id id_field -f sql_file
+         db2fasta_vamps -d database_name -o output_fasta -sql \"select read_id, sequence from vamps_upload_rawseq where run='191752'\"
+
+  Options:  -d   database [default = vamps]
+            -id  id field name [default = read_id]
+            -seq sequence field name [default = sequence]
+            -o   output fasta file
+            -f   file containing valid SQL statement
+            -t   table if you want to export all records from one table
+            -site vamps OR vampsdev
+            -sql sql statement if you want do use join or where clauses
+            -expand 
+\n";
+
+my $scripthelp = "
+ db2fasta - exports sequence information from a database to a fasta file.  
+            All records in a table may be exported, specifying the table, 
+            id field and sequence data field.  
+            Or, an sql select statement can be used to export a subset
+            of the sequence data.
+
+            Inclusion of the -rc flag will return the reverse complement 
+            of the sequences.
+			
+            The -q flag warns db2fasta that the output sequences are quality
+            scores not nucleotide sequences.\n
+";
+#  2012-06-28
+#   This script now only accesses the vamps_user_uploads database and NOT the vamps or vampsdev db
+#   called from gast.py
+#######################################
+#
+# Definition statements
+#
+#######################################
+#Commandline parsing
+my $argNum = 0;
+#my $minargNum = 2;
+#my $maxargNum = 4;
+my $verbose = 0;
+
+#Runtime variables
+my $site = "";
+my $dbName_user = "";
+
+# NEW database to use: vamps or user
+my $database = 'vamps';
+my $db_hostname_user;
+my $dbName_vamps = "";
+my $db_hostname_vamps;
+my $db_user;
+my $db_password;
+my $outFilename;
+my $sqlString;
+my $tableName;
+my $idField    = "read_id";
+my $seqField   = "sequence";
+my $countField = "seq_count";
+my $expand = 0;
+my $inFilename = "";
+my $cluster_path;
+my $seqinfobin_path;
+my $otu_method;
+my $DEBUG = 1;
+#/######################################
+#
+# Test for commandline arguments
+#
+#######################################
+
+if (! $ARGV[0] ) {
+	print $scripthelp;
+	print $usage;
+	exit -1;
+} 
+
+while ((scalar @ARGV > 0) && ($ARGV[0] =~ /^-/))
+{
+	if ($ARGV[0] =~ /-h/) {
+		print $scripthelp;
+		print $usage;
+		exit 0;
+	} elsif ($ARGV[0] =~ /^-o/) {
+		shift @ARGV;
+		$outFilename = $ARGV[0];
+		shift @ARGV;
+	} elsif ($ARGV[0] =~ /^-sql/) {
+		shift @ARGV;
+		$sqlString = $ARGV[0];
+		shift @ARGV;
+	} elsif ($ARGV[0] =~ /^-t/) {
+		shift @ARGV;
+		$tableName = $ARGV[0];
+		shift @ARGV;
+	}elsif ($ARGV[0] =~ /^-db/) {
+		shift @ARGV;
+		$database = $ARGV[0];
+		shift @ARGV;
+	} elsif ($ARGV[0] =~ /^-id/) {
+		shift @ARGV;
+		$idField = $ARGV[0];
+		shift @ARGV;
+	} elsif ($ARGV[0] =~ /^-seq/) {
+		shift @ARGV;
+		$seqField = $ARGV[0];
+		shift @ARGV;
+	} elsif ($ARGV[0] =~ /^-site/) {
+		shift @ARGV;
+		$site = shift @ARGV;	
+	} elsif ($ARGV[0] =~ /^-d/) {
+		shift @ARGV;
+		$dbName_vamps = shift @ARGV;	
+	} elsif ($ARGV[0] eq "-f") {
+		shift @ARGV;
+		$inFilename = $ARGV[0];
+		shift @ARGV;
+	} elsif ($ARGV[0] eq "-expand") {
+		$expand = 1;
+		shift @ARGV;
+    }  elsif ($ARGV[0] eq "--method") {
+		shift @ARGV;
+		$otu_method = shift @ARGV;
+    } elsif ($ARGV[0] eq "-v") {
+		$verbose = 1;
+		shift @ARGV;
+    } elsif ($ARGV[0] =~ /^-/) { #unknown parameter, just get rid of it
+        print "Unknown commandline flag \"$ARGV[0]\".\n";
+        print $usage;
+        exit -1;
+	}
+}
+if ($site eq 'vamps'){
+  
+   # for vamps:
+   $db_hostname_user = "bpcdb2";
+   $dbName_user = "vamps_user_uploads";
+   $db_hostname_vamps = "vampsdb";
+   $dbName_vamps = "vamps";
+   $cluster_path = "/groups/vampsweb/vamps";
+   $seqinfobin_path = "/groups/vampsweb/vamps/seqinfobin";
+   
+}elsif($site eq 'vampsdev'){
+
+   # for vampsdev
+   $db_hostname_user = "bpcdb2";
+   $dbName_user = "vampsdev_user_uploads";
+   $db_hostname_vamps = "bpcweb7";
+   $dbName_vamps = "vamps";
+   $cluster_path= "/groups/vampsweb/vampsdev/";
+   $seqinfobin_path = "/groups/vampsweb/vampsdev/seqinfobin/";
+   
+}else{
+    print "No useful site selected: $site exiting\n";
+    exit;
+}
+push @INC,$cluster_path;
+push @INC,$seqinfobin_path;
+require("status_vamps");
+
+
+########################################
+#
+# Connect to the database
+#
+#######################################
+
+require("apps/mysql_connection_vamps");
+#print "SQL CONN: $cluster_path $db_hostname_vamps, $dbName_vamps, $db_hostname_user, $dbName_user\n";
+my ($vampsdbh, $userdbh) = get_connection($cluster_path, $db_hostname_vamps, $dbName_vamps, $db_hostname_user, $dbName_user);
+# my $dbconf = "${cluster_path}/.dbconf";
+# my $userconf = `echo $dbconf`;
+# chomp ($userconf);
+# if (-f $userconf)
+# {
+# 	open (CONF, "<$userconf");
+# 	$db_user = <CONF>;
+# 	chomp($db_user);
+# 	$db_password = <CONF>;
+# 	chomp($db_password);
+# } else {
+# 	warn "\nUnable to connect to the database, please contact your database administrator for access privileges5\n";
+# 	exit -2
+# }
+# my $vampsdsn = "dbi:mysql:$dbName:$db_hostname";
+# $DEBUG && print  "DEBUG: Connecting to database...\n";
+# my $userdbh = DBI->connect($vampsdsn, $db_user, $db_password) or die "Unable to connect to $dbName database\n";
+
+if (scalar @ARGV != 0) {print "Unrecognized option: $ARGV[0]\n"; exit;}
+
+if ((scalar @ARGV != $argNum) || (! $dbName_vamps ) || (! $outFilename) || (! $idField) || (! $seqField) ) 
+{
+	print "\n Specify a database, an output fasta file, an id field and a sequence field.\n\n";
+	print "$usage\n";
+	exit;
+} 
+
+
+
+if ( ($inFilename) && (! -f $inFilename) )
+{
+	print "\Error unable to locate input SQL file: $inFilename.  Exiting.\n\n";
+	print "$usage\n";
+	exit;
+}
+
+
+#######################################
+#
+# Prepare the database and SELECT statement
+#
+#######################################
+
+my $max_h;
+if($database eq 'user'){
+    $max_h = $userdbh->prepare("set session group_concat_max_len = 10000000");
+}else{
+    $max_h = $vampsdbh->prepare("set session group_concat_max_len = 10000000");
+}
+$max_h->execute;
+
+#Select statement
+if ($tableName) 
+{
+	print "table: $tableName\n";
+	#my $sqlString = "SELECT $idField as id, $seqField as seq FROM $tableName";
+	$sqlString = "SELECT $idField, $seqField FROM $tableName";
+} elsif ($inFilename) {
+	open (IN, "<$inFilename") || die ("Unable to read input SQL file: $inFilename.  Exiting.\n");
+	
+	while (my $line = <IN>)
+	{
+		chomp $line;
+		$line =~ s/^\s+//;
+		$line =~ s/\s+$//;
+		my @sqlData = split ("#", $line);
+		if (exists $sqlData[0]) {$sqlString .= " " . $sqlData[0];}
+	}
+}elsif($sqlString){
+   # here sqlstring is complete sql select statement
+   #print "sqlstring: $sqlString\n"
+}
+
+
+my $select_query_h;
+print "database: $database -- $vampsdbh";
+if($database eq 'user'){
+    $select_query_h = $userdbh->prepare($sqlString);
+}else{
+    $select_query_h = $vampsdbh->prepare($sqlString);
+}
+if ($verbose) 
+{
+	print "Running db2fasta on $dbName_vamps writing to $outFilename
+    and SQL statement: $sqlString\n"
+};
+
+
+#Check for data
+$select_query_h->execute;
+if ($select_query_h->rows < 1) 
+{
+	print "Sorry, in db2fasta_vamps: no data found using query: $sqlString\n";
+	exit 1;
+}
+
+#######################################
+#
+# Write out the data to the fasta file
+#
+#######################################
+
+#Open the fasta file for writing
+
+open(OUT, ">$outFilename") || die ("Unable to write to output fasta file: $outFilename.  Exiting...\n");
+
+my $badSequences=0;
+my $project = '';
+print "\n$sqlString\n";
+while (my $row = $select_query_h->fetchrow_hashref) 
+{ 
+	if (! exists($row->{$idField})) {print "\nField $idField not found in:\n\"$sqlString\"\n\n"; exit;}
+	
+	my $def = $row->{$idField}; 
+	my @data = split(/ /, $row->{$idField});
+	my $id = $data[0];
+	my $desc = "";
+	if (scalar @data > 1) 
+	{
+		for (my $i=1; $i<=$#data; $i++) 
+		{
+			$desc .= " $data[$i]"; 
+		}
+	}
+	my $seq = $row->{$seqField}; 
+	if ((! $id) || (! $seq))
+	{
+		print "Sorry.  Your sql statement is not yielding expected id and sequence information.  Please try again.\n\n";
+		exit;
+	}
+	if ($otu_method eq 'slp' && length($seq) > 200){
+	    print "Sorry.  You cannot use slp wth long sequences.  Please try another method.\n\n";
+		exit;
+	}
+	chomp ($id);
+	chomp($seq);
+	$seq =~ s/^\s+//g;
+	$seq =~ s/\s+$//g;
+    if (exists($row->{'project'})){
+	    $project = $row->{'project'};
+	    my @pparts = split(/_/, $project);
+	    # for MBL projects only:
+	    if($pparts[2]=='Bv6v4'){
+	       #$seq = substr($seq,0,20);
+	    }
+	}
+	if ((! $id) || (! $seq))
+	{
+		$badSequences++;
+		next;
+	}
+
+	#print($row->{'seq_count'}."\n");
+	# to expand this fasta the -expand key needs to be in the CL AND
+	#  seq count must come from sql cmd.
+	#Create a sequence object and write it to $outFilename
+	if($expand && exists($row->{'seq_count'})){
+	    if($row->{'seq_count'} == 1){
+	        print OUT ">${id}_1\n";
+            print OUT "$seq\n";
+	    }elsif($row->{'seq_count'} > 1){
+	        for(my $n=1;$n<=$row->{'seq_count'};$n++){
+	            #my $new_id = "${id}_$n";
+	            print OUT ">${id}_$n\n";
+                print OUT "$seq\n";
+	        }
+	    }
+	}else{    
+        print OUT ">$id\n";
+        print OUT "$seq\n";
+    }
+    #print ">$id\n$seq\n";
+
+}
+
+if ($badSequences) 
+{
+	print "$badSequences records did not have either an id or a sequence and were not written to $outFilename\n";
+}
+# close out

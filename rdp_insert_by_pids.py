@@ -24,7 +24,7 @@ import csv
 from time import sleep
 import rdp.rdp as rdp
 import datetime
-import logging
+
 today = str(datetime.date.today())
 import subprocess
 import pymysql as MySQLdb
@@ -105,14 +105,14 @@ def start(args):
     RANK_COLLECTOR={}
     #TAX_ID_BY_RANKID_N_TAX = {}
     #SUMMED_TAX_COLLECTOR = {}
-    logging.info('CMD> '+' '.join(sys.argv))
+    
     print('CMD> ',sys.argv)
 
     global mysql_conn, cur    
 
     get_ranks()
 
-    logging.info("running get_pid_data")
+    
     print("running get_pid_data")
     for pid in args.pids:
         # collects seqs project-by-project
@@ -157,34 +157,19 @@ def start(args):
                 gene = args.gene
             rdp.run_rdp( unique_file, rdp_out_file, args.path_to_classifier, gene )
             n += 1
-        logging.info("starting taxonomy")
+        
         print("starting taxonomy")
         push_taxonomy(pid, args)
 
-        logging.info("starting sequences")
+        
         print("starting sequences")
         push_sequences(pid, args)
 
-    # logging.info("projects")
-    
     # push_project()
-
-    # logging.info("datasets")
-    
     # push_dataset()
-
     #push_summed_counts()
-    # logging.info("starting push_pdr_seqs")
    
     # push_pdr_seqs(args)
-
-    
-    #pp.pprint(CONFIG_ITEMS)
-    logging.info("Finished "+os.path.basename(__file__))
-    print("Finished "+os.path.basename(__file__))
-
-
-
 
 
 def get_ranks():
@@ -193,7 +178,7 @@ def get_ranks():
     global mysql_conn, cur
 
     q = "SELECT rank_id,rank from rank"
-    logging.info(q)
+    
     cur.execute(q)
     rows = cur.fetchall()
     for row in rows:
@@ -222,8 +207,7 @@ def push_taxonomy(pid, args):
             run_rdp_tax_file(args, did, tax_file, unique_file)
 
 
-    #logging.info( 'SUMMED_TAX_COLLECTOR')
-    #logging.info( SUMMED_TAX_COLLECTOR )
+   
 #
 #
 #
@@ -312,9 +296,7 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
     row = cur.fetchone()
 
     SEQ_COLLECTOR[did][seq]['rank_id'] = row[0]
-    logging.info(rank+' - '+tax_string)
-
-
+    
     sumtax = ''
     for i in range(0,8):
 
@@ -367,31 +349,24 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
 
 
             q2 = "INSERT ignore into `"+rank_name+"` (`"+rank_name+"`) VALUES('"+t+"')"
-            logging.info(q2)
+            
             cur.execute(q2)
             mysql_conn.commit()
             tax_id = cur.lastrowid
             if tax_id == 0:
                 q3 = "select "+rank_name+"_id from `"+rank_name+"` where `"+rank_name+"` = '"+t+"'"
-                logging.info( q3 )
+                
                 cur.execute(q3)
                 mysql_conn.commit()
                 row = cur.fetchone()
                 tax_id=row[0]
             ids_by_rank.append(str(tax_id))
-            #else:
-            #logging.info( 'rank_id,t,tax_id',rank_id,t,tax_id  )
-            # if rank_id in TAX_ID_BY_RANKID_N_TAX:
-            #     TAX_ID_BY_RANKID_N_TAX[rank_id][t] = tax_id
-            # else:
-            #     TAX_ID_BY_RANKID_N_TAX[rank_id]={}
-            #     TAX_ID_BY_RANKID_N_TAX[rank_id][t] = tax_id
-            #ids_by_rank.append('1')
-        logging.info(  ids_by_rank )
+           
+        
         q4 =  "INSERT ignore into rdp_taxonomy ("+','.join(tax_ids)+",created_at)"
         q4 += " VALUES("+','.join(ids_by_rank)+",CURRENT_TIMESTAMP())"
         #
-        logging.info(q4)
+        
         print(q4)
         cur.execute(q4)
         mysql_conn.commit()
@@ -403,7 +378,7 @@ def finish_tax(did, rank, distance, seq, seq_count, tax_items, boot):
                 vals += ' '+tax_ids[i]+"="+ids_by_rank[i]+' and'
             q5 = q5 + vals[0:-3] + ')'
             
-            logging.info(q5)
+            
             cur.execute(q5)
             mysql_conn.commit()
             row = cur.fetchone()
@@ -442,7 +417,7 @@ def push_sequences(pid, args):
 				rdp_tax_id = str(SEQ_COLLECTOR[did][seq]['rdp_tax_id'])
 				seqid = SEQ_COLLECTOR[did][seq]['seqid']
 				boot = SEQ_COLLECTOR[did][seq]['boot']
-				#logging.info( did,seq, silva_tax_id)
+				
 				rank_id = str(SEQ_COLLECTOR[did][seq]['rank_id'])
                 
 				print('did:',str(did),'seqid',str(seqid),'seq:',seq)
@@ -491,7 +466,7 @@ def push_sequences(pid, args):
 				q4 += " WHERE sequence_id='%s'"
 				q4 = q4 % (str(rdp_tax_seq_id), str(seqid) )
 				print(q4)
-				logging.info(q4)
+				
 				cur.execute(q4)
 				mysql_conn.commit()
         ## don't see that we need to save uniq_ids
@@ -619,3 +594,6 @@ if __name__ == '__main__':
 
 
     start(args)
+    #pp.pprint(CONFIG_ITEMS)
+    print("Finished "+os.path.basename(__file__))
+    print("Now run rebuild_vamps_file.py -units rdp2.6 -host -pids")

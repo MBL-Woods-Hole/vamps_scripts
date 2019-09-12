@@ -49,9 +49,9 @@ def clean(args):
     dids = []
     if not cur.rowcount:
 
-        print ("No datasets found -- This might not work")
+        print ("No datasets found -- This might not work -- will try anyway.")
         pid = args.pid
-
+    print ("Deleting Files...")
     for row in cur.fetchall():
         did = str(row[0])
         dids.append(did)
@@ -62,6 +62,7 @@ def clean(args):
         
         file_not_deleted = False
         removed_file = did_file1
+        
         try:
             os.remove(did_file1)
             file_not_deleted = False
@@ -84,12 +85,16 @@ def clean(args):
         
         #if file_not_deleted:
             #print("File Not Found: "+did_file3)
-
+    print ("Now Database...")
     q = "DELETE from required_metadata_info"
     q += " WHERE dataset_id in ('"+ "','".join(dids) + "')"
     print (q)
     cur.execute(q)
-
+    q = "DELETE from required_metadata_info_copy"
+    q += " WHERE dataset_id in ('"+ "','".join(dids) + "')"
+    print (q)
+    cur.execute(q)
+    
     q_drop = "DROP TABLE if exists %s"
     q = q_drop % ('custom_metadata_'+str(pid))
     print (q)
@@ -112,6 +117,10 @@ def clean(args):
 #     print (q)
 #     cur.execute(q)
     
+    q = "DELETE from generic_taxonomy_info"
+    q += " WHERE dataset_id in ('"+ "','".join(dids) +"')"
+    print (q)
+    cur.execute(q)
     #DELETE from common_name_required_metadata_info_temp WHERE dataset_id in ('1120','1121','1122','1123')
     #DELETE from elevation_required_metadata_info_temp WHERE dataset_id in ('1120','1121','1122','1123')
     #DELETE from required_metadata_info_copy_before_big_changes WHERE dataset_id in ('1120','1121','1122','1123')

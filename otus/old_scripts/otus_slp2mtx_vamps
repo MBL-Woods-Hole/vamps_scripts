@@ -1,0 +1,186 @@
+#!/bioware/perl/bin/perl
+
+use strict;
+use warnings;
+use Cwd;
+ 
+my $scriptHelp = "
+ otus_slp2mtx_vamps - runs slp pipeline (mothur) to produce mtx and taxonomy files.
+\n";
+
+my $usage = "
+   Usage: $0 myprefix site
+            where the input fasta filename = myprefix.fa
+            and site is either vamps or vampsdev
+
+\n";
+
+if (! $ARGV[0] ) 
+{
+	print $scriptHelp;
+	print $usage;
+	exit -1;
+}
+my $test = 0;
+my $list_file;
+my $names_file;
+my $width;
+my $site            = $ARGV[0];     # vamps or vampsdev
+my $otu_size        = $ARGV[1];     # 3, 6 or 10
+my $cluster_prefix  = $ARGV[2];     # user_code: ie avoorhis_32725096
+my $db_source       = $ARGV[3];     # all, bpc or user
+$test               = $ARGV[4];
+
+
+my $local_seqinfobin = "/groups/vampsweb/$site/seqinfobin/";
+my $reference= $local_seqinfobin."core_set_aligned.fasta.imputed";
+
+if($db_source eq ''){
+	$db_source = 'all';
+}
+
+my $clusterslp_cmd = join(" ", $0, @ARGV);
+my $use_cluster = 1;
+ 
+#my $use_cluster = 0; # testing
+#print "$clusterslp_cmd\n";
+
+#-- get current directory
+my $pwd = cwd();
+print "pwd= $pwd\n";
+my $working_dir = '/groups/vampsweb/'.$site.'/otus/'.$cluster_prefix;
+chdir($working_dir);
+print "pwd= $pwd\n";
+my $FASTA="slp.fa";
+
+if ( ( ! -e $FASTA) ){
+    #They are missing the input file, it doesn't exist.
+       print "Error: Invalid fasta file specification \"$FASTA\"";
+       print $usage;
+       exit 1;
+}
+my $status = 0;
+my $webuser = 'vampsdevhttpd';
+if($site eq 'vamps'){
+    $webuser = 'vampshttpd';
+}
+if( ! $otu_size ){
+   $otu_size = '3';
+}
+ 
+if($otu_size eq '10' ){
+    $otu_size = '0.10';
+}elsif($otu_size eq '6'){
+    $otu_size = '0.06';
+}else{
+    $otu_size = '0.03';
+}   
+    
+system($local_seqinfobin."mothur \"#unique.seqs(fasta=$FASTA)\"");
+system($local_seqinfobin."mothur \"#align.seqs(reference=$reference, fasta=slp.unique.fa, processors=4)\"");
+# align.seqs output: slp.unique.align
+system($local_seqinfobin."mothur \"#pre.cluster(fasta=slp.unique.align, name=slp.names, diffs=2, processors=4)\"");
+# pre.cluster output: slp.unique.precluster.align slp.unique.precluster.names
+system($local_seqinfobin."mothur \"#dist.seqs(fasta=slp.unique.precluster.align, processors=4)\"");
+# dist.seqs output: slp.unique.precluster.dist
+# method=average (default)
+# do not use cutoff=$otu_size it may have unique line only
+#system($local_seqinfobin."mothur \"#cluster(column=slp.unique.precluster.dist, cutoff=0.5, name=slp.unique.precluster.names, method=average)\"");
+system($local_seqinfobin."mothur \"#cluster(column=slp.unique.precluster.dist, cutoff=1.0, name=slp.unique.precluster.names, method=average)\"");
+
+# cluster output:   slp.unique.precluster.an.sabund
+#                   slp.unique.precluster.an.rabund
+#                   slp.unique.precluster.an.list
+
+#$list_file = "slp.nn03.list";
+$list_file = "slp.unique.precluster.an.list";
+#$names_file = "slp.slp.names";
+$names_file = "slp.unique.precluster.names";
+    
+
+
+`/groups/vampsweb/$site/apps/doturlist2matrix_vamps -l $list_file -w $otu_size -f project,dataset -site $site -prefix $cluster_prefix -dbsource $db_source > slp.mtx`; 
+`/groups/vampsweb/$site/apps/otu2tax_vamps -l $list_file -w $otu_size -site $site -prefix $cluster_prefix -dbsource $db_source > slp.tax`;
+`/groups/vampsweb/$site/apps/names2fasta_vamps -i $names_file -o slp_otus -site $site -prefix $cluster_prefix -dbsource $db_source`;
+#if the .dist file exists delete it
+# delete slp.fa; but keep and show slp.unique.fa and slp.names
+# delete mothur log files
+# delete slp.unique.precluster.align, slp.unique.align.report, slp.unique.flip.accnos, slp.unique.precluster.map
+my $del = 0;
+
+if(-e "slp_otus.fa" && $del){
+    `rm -rf slp.unique.precluster.dist`;
+    `rm -rf mothur.*`;
+    `rm -rf slp.unique.precluster.align`;
+    `rm -rf slp.unique.align`;
+    `rm -rf slp.unique.align.report`;
+    `rm -rf slp.unique.flip.accnos`;
+    `rm -rf slp.unique.precluster.map`;
+}
+
+##################################################
+
+# not used in this script 20130820-AAV
+sub check_cluster()
+{
+    use List::Util qw(first);
+    my @id_array = @_;
+    my @qstatid_array;
+    my $wait_interval = 5; #secs
+    my $SECS_PER_DAY = 86400;
+    my $max_time = $SECS_PER_DAY * 5;  # 5 days= 60s/m x 60m/h x 24 h/d x 5d == 432,000 secs
+    my $max_iters= $max_time / $wait_interval; # == 86400
+    my $iter = 0;
+    my $qstat_cmd = "qstat -u $webuser";
+    my @qstat_res;
+    my $index = 0;
+    while(@id_array)
+    {
+        if($iter >= $max_iters){
+           return 0;
+        }
+        print "ID array: @id_array\n";
+        #go thru idarray and if id is NOT in qstat array then remove from idarray
+        @qstat_res = `$qstat_cmd`;
+        @qstatid_array =();
+        foreach my $qstatline (@qstat_res){
+            
+            $qstatline =~ s/^\s+//;  
+            $qstatline =~ s/\s+$//;  
+            #$qstatline =~ s/[^\s+,\s+$]//;  
+            my @lineary = split(/\s+/,$qstatline);
+            my $qstatid = $lineary[0]; 
+            # need to get only the numbers here or @id_array will never go to zero
+            #if($qstatid ne 'job-ID' and $qstatid[0] ne '-'){
+            if($qstatid ne 'job-ID' and substr($qstatid, 0, 5) ne '-----'){
+                push(@qstatid_array,$qstatid);
+                #print "qstatid: $qstatid\n";
+            }
+            
+        }
+        #print "QStat array: @qstatid_array\n";
+        foreach my $id (@id_array){
+        #@res = `$qstat_cmd`;
+            #print "line $qstatline\n";
+            #my @lineary = split(/ /,$qstatline);
+            #my $lineid = $lineary[0];
+            #print "lineid $lineid\n";
+            my $index = first { $id_array[$_] eq $id } 0 .. $#id_array;
+            if (grep {$_ eq $id} @qstatid_array) {
+                print "Element '$id' found at index $index\n" ;
+            }else{
+               print "Removing Element '$id'\n" ;
+               splice(@id_array,$index,1);
+               
+            }
+        }
+        
+        sleep($wait_interval);
+        $iter++;
+    }
+    
+    return 1;
+    #print "RES @res\n";   
+   
+    
+}
