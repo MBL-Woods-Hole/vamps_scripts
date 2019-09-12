@@ -1,0 +1,138 @@
+#!/bioware/perl/bin/perl
+
+use strict;
+use warnings;
+use Cwd;
+ 
+my $script_help = "
+ otus_crop2mtx - runs crop and creates matrix and tax files for vamps.
+\n";
+
+my $usage = "
+   Usage: $0 myprefix site
+            where the input fasta filename = myprefix.fa
+            and site is either vamps or vampsdev
+
+\n";
+
+if (! $ARGV[0] ) 
+{
+	print $script_help;
+	print $usage;
+	exit -1;
+} 
+
+my $in_filename;
+my $outfile;
+my $out_dir='';
+my $e='';
+my $b='';
+my $z='';
+my $l='';
+my $u='';
+my $g=0;
+my $s=0;
+my $site='';
+my $verbose=0;
+my $size_str;
+my $prefix = 'crop_otu_';
+my $db_source = 'all';
+my $tax_available=0;
+
+while ((scalar @ARGV > 0) && ($ARGV[0] =~ /^-/)) 
+{
+	if ($ARGV[0] =~ /-h/) 
+	{
+		print $script_help;
+		print $usage;
+		exit 0;
+	}  elsif ($ARGV[0] eq "-i") {
+		shift @ARGV;
+		$in_filename = shift @ARGV;
+	}  elsif ($ARGV[0] eq "-e") {
+		shift @ARGV;
+		$e = shift @ARGV;
+	} elsif ($ARGV[0] eq "-prefix") {
+		shift @ARGV;
+		$prefix = shift @ARGV;
+	} elsif ($ARGV[0] eq "-dir") {
+		shift @ARGV;
+		$out_dir = shift @ARGV;
+	} elsif ($ARGV[0] eq "-dbsource") {
+		shift @ARGV;
+		$db_source = shift @ARGV;
+	} elsif ($ARGV[0] eq "-tax") {
+		shift @ARGV;
+		$tax_available = shift @ARGV;
+	} elsif ($ARGV[0] eq "-b") {
+		shift @ARGV;
+		$b = shift @ARGV;
+	} elsif ($ARGV[0] eq "-z") {
+		shift @ARGV;
+		$z = shift @ARGV;
+	} elsif ($ARGV[0] eq "-l") {
+		shift @ARGV;
+		$l = shift @ARGV;
+	}elsif ($ARGV[0] eq "-u") {
+		shift @ARGV;
+		$u = shift @ARGV;
+	}elsif ($ARGV[0] eq "-g") {
+		shift @ARGV;
+		$g = 1;
+	}elsif ($ARGV[0] eq "-s") {
+		shift @ARGV;
+		$s = 1;
+	}elsif ($ARGV[0] eq "-site") {
+		shift @ARGV;
+		$site = shift @ARGV;
+	} elsif ($ARGV[0] eq "-v") {
+	    shift @ARGV;
+		$verbose = 1;
+	} elsif ($ARGV[0] =~ /^-/) { #unknown parameter, just get rid of it
+		print "Unknown commandline flag \"$ARGV[0]\".\n";
+		print $usage;
+		exit -1;
+	}
+}
+#-g, -s, -l and -u: These parameters specify the similarity level of CROP’s clustering. –g corresponds to 95% , -s corresponds to 97% and –l and -u allows user to define their own restriction intervals, where -l and -u correspond to lower and upper bound, respectively.
+
+if($g){
+    $size_str = "-g";
+}elsif($s){
+    $size_str = "-s";
+}else{
+    $size_str = "-l $l -u $u";
+}
+
+
+my $crop2mtx = join(" ", $0, @ARGV);
+print "command line: $crop2mtx\n";
+
+
+
+if ( ( ! -e $in_filename) ){
+    #They are missing the input file, it doesn't exist.
+       print "Error: Invalid fasta file specification \"$in_filename\"";
+       print $usage;
+       exit 1;
+}
+
+my $crop_cmd = "/bioware/crop/crop.sh -i $in_filename -o ${out_dir}crop_otus.fa $size_str -z $z -e $e -b $b";
+print "crop_cmd=$crop_cmd\n";  
+
+my $crop2mtx_cmd = "/groups/vampsweb/$site/apps/crop2mtx_vamps -i ${out_dir}crop_otus.fa.cluster.list -o ${out_dir}crop -t -p $prefix -base $out_dir -site $site -dbsource $db_source -tax $tax_available";
+print "crop2mtx_cmd=$crop2mtx_cmd\n";
+
+
+
+# run the commands:
+if( $verbose == 0){
+    `$crop_cmd`;
+    `$crop2mtx_cmd`;
+}else{
+    print "verbose=$verbose\n";
+}
+
+    
+
+  

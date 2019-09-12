@@ -159,11 +159,10 @@ query_core_join_silva119 += " JOIN silva_taxonomy USING(silva_taxonomy_id)"
 query_core_join_rdp = " JOIN rdp_taxonomy_info_per_seq USING(sequence_id)"
 query_core_join_rdp += " JOIN rdp_taxonomy USING(rdp_taxonomy_id)"
 
-query_coreA_generic = " FROM generic_taxonomy_info"
-#query_core_join_generic = " JOIN generic_taxonomy_info USING(dataset_id)"
-query_core_join_generic = " JOIN generic_taxonomy USING(generic_taxonomy_id)"
+#query_coreA_generic = " FROM generic_taxonomy_info"
+#query_core_join_generic = " JOIN generic_taxonomy USING(generic_taxonomy_id)"
 
-query_coreA_matrix     = " FROM  matrix_taxonomy_info"
+query_coreA_matrix     = " FROM  generic_taxonomy_info"
 query_core_join_matrix = " JOIN generic_taxonomy USING(generic_taxonomy_id)"
 
 where_part = " WHERE dataset_id in (%s)"
@@ -276,15 +275,13 @@ def make_list_chunks(my_list, chunk_size):
 
 def get_counts_per_tax(did_sql, units, short_list):
     counts_per_tax_dict = {}
-    for q in queries:
-        if units == 'silva119':
-            query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
-        elif units == 'rdp2.6':
+    for q in queries:            
+        if units == 'rdp2.6':
             query = q["queryA"] + query_coreA + query_core_join_rdp + q["queryB"] % did_sql + end_group_query
-        elif units == 'generic':
-            query = q["queryA"] + query_coreA_generic + query_core_join_generic + q["queryB"] % did_sql + end_group_query
-        elif units == 'matrix':
-            query = q["queryA"] + query_coreA_matrix +  query_core_join_matrix +  q["queryB"] % did_sql + end_group_query
+        elif units == 'generic' or args.units == 'matrix':
+            query = q["queryA"] + query_coreA_matrix + query_core_join_matrix + q["queryB"] % did_sql + end_group_query
+        else:
+            query = q["queryA"] + query_coreA + query_core_join_silva119 + q["queryB"] % did_sql + end_group_query
         print(query)
         try:
             rows = myconn.execute_fetch_select(query)

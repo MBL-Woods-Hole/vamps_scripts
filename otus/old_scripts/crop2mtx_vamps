@@ -1,0 +1,461 @@
+#!/bioware/perl/bin/perl
+
+#########################################
+#
+# crop2mtx: converts the CROP otus *.fa file to a matrix
+#
+# Author: AAV
+#
+# Date: Fri Aug 19 09:49:26 EDT 2011
+#
+# Copyright (C) 2011 Marine Biological Laborotory, Woods Hole, MA
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# For a copy of the GNU General Public License, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# or visit http://www.gnu.org/copyleft/gpl.html
+#
+# Keywords: otu otupipe crop cluster matrix mtx
+# 
+# Assumptions: 
+#
+# Revisions:
+#
+# Programming Notes:
+#
+########################################
+use strict;
+use warnings;
+use DBI;
+#######################################
+#
+# Set up usage statement
+#
+#######################################
+my $script_help = "
+ crop2mtx - reads the CROP output *.cluster.list file and 
+              creates a new matrix file mapping each otu to its occurrence in 
+              the available datasets. Also prints an otu fasta file
+              
+              -i input file (crop.cluster.list)
+              -o output file prefix (for both mtx and tax files: default: 'crop')
+              -p prefix for OTUs names [default 'OTU_']
+              -t also print out taxonomy file
+              -site vamps or vampsdev
+              
+\n";
+
+my $usage = "
+   Usage:  crop2mtx -p MYOTUPREFIX -i crop.cluster.list -o OUTPREFIX
+       
+\n";
+# Options:  
+#           -i  the readmap.uc or equivalent output from otupipe.bash
+#           -o  new output otu - dataset matrix file
+# CROP files: 
+#   .cluster
+#        First line= # of OTUs
+#        then read_id <tab> cluster_size <tab> std_dev
+#   .list
+#		Contents of each cluster
+#   .fasta
+# 		sequences
+# plan: use .cluster file
+# ask for an otu prefix
+
+#######################################
+#
+# Definition statements
+#
+#######################################
+#Commandline parsing
+my $verbose = 0;
+my $self_cmd = join(" ", $0, @ARGV);
+
+#Runtime variables
+#my $db_host = "jbpcdb";
+#my $db_host = "newbpcdb2";
+
+
+#my $db_name = "env454";
+my $db_name = "vamps";
+#my $reads_table = 'trimseq as t join dataset as d using(dataset_id) join project as p using(project_id)';
+
+
+my $id_field = 'read_id';
+
+#my $log_filename = "./" . $0 . ".log";
+my $log_filename = $0;
+$log_filename =~ s/^.*\///;
+$log_filename = "./" . $log_filename . ".log";
+my $otu_prefix = 'OTU_';
+my $outfile_prefix = 'crop';
+my $in_filename;
+my $tax_file=0;
+my $site = 'vampsdev';
+my $db_hostname;
+my $dbName;
+my $web_user;
+my $home;
+my $db_source = 'all';
+my $tax_available=0;
+my $base='';
+#######################################
+#
+# Test for commandline arguments
+#
+#######################################
+
+if (! $ARGV[0] ) 
+{
+	print $script_help;
+	print $usage;
+	exit -1;
+} 
+
+
+while ((scalar @ARGV > 0) && ($ARGV[0] =~ /^-/)) 
+{
+	if ($ARGV[0] =~ /-h/) 
+	{
+		print $script_help;
+		print $usage;
+		exit 0;
+#	} elsif ($ARGV[0] eq "-i") {
+#		shift @ARGV;
+#		$in_filename = shift @ARGV;
+	} elsif ($ARGV[0] eq "-p") {
+		shift @ARGV;
+		$otu_prefix = shift @ARGV;
+	} elsif ($ARGV[0] eq "-i") {
+		shift @ARGV;
+		$in_filename = shift @ARGV;
+	}  elsif ($ARGV[0] eq "-o") {
+		shift @ARGV;
+		$outfile_prefix = shift @ARGV;
+	} elsif ($ARGV[0] eq "-t") {
+		shift @ARGV;
+		$tax_file = 1;
+	} elsif ($ARGV[0] eq "-v") {
+		$verbose = 1;
+		shift @ARGV;
+	} elsif ($ARGV[0] eq "-site") {
+		shift @ARGV;
+		$site = shift @ARGV;
+	} elsif ($ARGV[0] eq "-dbsource") {
+		shift @ARGV;
+		$db_source = shift @ARGV;
+	}elsif ($ARGV[0] eq "-base") {
+		shift @ARGV;
+		$base = shift @ARGV;
+	} elsif ($ARGV[0] eq "-tax") {
+		shift @ARGV;
+		$tax_available = shift @ARGV;
+	} elsif ($ARGV[0] =~ /^-/) { #unknown parameter, just get rid of it
+		print "Unknown commandline flag \"$ARGV[0]\".\n";
+		print $usage;
+		exit -1;
+	}
+}
+
+if ($site eq 'vamps' ){
+  
+   # for vamps:
+   $db_hostname = "vampsdb";
+   $dbName = 'vamps';
+   $web_user = "vampshttpd";
+   
+   #$cluster_path= "/groups/vampsweb/vamps";
+   $home = "/groups/vampsweb/vamps/";
+}elsif($site eq 'vampsdev' ){
+
+   # for vampsdev
+   $db_hostname = "vampsdev";
+   $dbName = 'vamps';
+   $web_user = "vampsdevhttpd";
+   
+   #$cluster_path= "/groups/vampsweb/vampsdev";
+   $home = "/groups/vampsweb/vampsdev/";
+}else{
+    print "No useful database host selected: $site exiting\n";
+    exit;
+}
+#######################################
+#
+# Parse commandline arguments, ARGV
+#
+#######################################
+
+# Test for both files specified
+if (! $in_filename) 
+{
+	print "Incorrect number of arguments.\n";
+	print "$usage\n";
+	exit;
+} 
+
+# Test validity of commandline arguments
+if ( ! -f $in_filename)  
+{
+	print "Unable to locate input crop list file: $in_filename.\n";
+	exit -1;
+}
+
+open(LOG, ">>$log_filename")  || warn "Unable to open log file, $log_filename, for writing.\n";
+print LOG "$self_cmd\n";
+
+#######################################
+#
+# Open the files
+#
+#######################################
+
+
+open(IN, "<$in_filename") || die("Unable to read input file: $in_filename.  Exiting.\n");
+
+my $mtx_filename=$outfile_prefix.'.mtx';
+my $tax_filename=$outfile_prefix.'.tax';
+my $fasta_filename=$outfile_prefix.'.fasta';
+open(MTX, ">$mtx_filename") || die("Unable to open mtx file: $mtx_filename.  Exiting.\n");
+open(FASTA, ">$fasta_filename") || die("Unable to open fasta file: $fasta_filename.  Exiting.\n");
+if($tax_file){
+    open(TAX, ">$tax_filename") || die("Unable to open tax file: $tax_filename.  Exiting.\n");
+}
+#######################################
+#
+# Connect to the database
+#
+#######################################
+
+require("/groups/vampsweb/".$site."/apps/mysql_connection_vamps");
+my ($vampsdbh, $userdbh) = get_connection($home, $db_hostname, $dbName);
+
+
+#######################################
+#
+# SQL statements
+#
+#######################################
+
+#Select
+
+
+my $select_query;
+my $select_query_index;
+my $reads_table1 = 'vamps_export_pipe';
+my $reads_table2 = 'vamps_export';
+if($db_source eq 'user'){   
+    #$select_query = "SELECT project, dataset FROM $reads_table1 WHERE $id_field = ? and project= ? and dataset= ?";
+    $select_query_index = "SELECT project, dataset, sequence, taxonomy FROM $reads_table1 WHERE $id_field = ? and project= ? and dataset= ?";
+}elsif($db_source eq 'bpc'){
+    #$select_query = "SELECT project, dataset FROM $reads_table2 WHERE $id_field = ?";
+    $select_query_index = "SELECT project, dataset, sequence, taxonomy FROM $reads_table2 WHERE $id_field = ? and project= ? and dataset= ?";
+}else{
+    #$select_query = "SELECT project, dataset FROM $reads_table1 WHERE $id_field = ?
+    #                UNION
+    #                SELECT project, dataset FROM $reads_table2 WHERE $id_field = ?";
+    $select_query_index = "SELECT project, dataset, sequence, taxonomy FROM $reads_table1 WHERE $id_field = ? and project= ? and dataset= ?
+                    UNION
+                    SELECT project, dataset, sequence, taxonomy FROM $reads_table2 WHERE $id_field = ? and project= ? and dataset= ?";
+}
+#my $select_query_h = $vampsdbh->prepare($select_query) or die "Unable to prepare statement: $select_query. Error: " . $vampsdbh->errstr . "\n";
+my $select_query_index_h = $vampsdbh->prepare($select_query_index) or die "Unable to prepare statement: $select_query_index. Error: " . $vampsdbh->errstr . "\n";
+#######################################
+#
+# Step through the hits and assign to OTUs
+#
+#######################################
+my %otu_counts; # otu counts by dataset dictionary
+my $total_otu_count;
+my %closest_otu; # for each read the best matching OTU
+my %closest_otu_size; # for each read size of the best matching OTU (used for ties)
+my %dataset_names;  # list of otu names
+my %key_id;
+my %tax_hash;
+my %size;
+my %seqs;
+my %reads;
+# Load the OTU assignments for each read
+# because reads can map to more than one OTU, 
+# we have to map all reads to a single OTU before we can tally by dataset
+my $count=1;
+my @id_array;
+my $read_id;
+print "\nStarting crop2tax\n";
+while (my $line = <IN>) 
+{
+
+    #
+    # Parse the line
+    # line one is the otu count
+    # 0 = read id,  1 = otu size, 2 = std dev
+    #
+	chomp $line;
+    if ($line =~ /^#/) {next;}  # Skip comment lines at the top
+    my @line_data = split(/\t/, $line);
+    my $key = $line_data[0];
+    print "KEY $key\n";
+    my @this_otu_reads = split(/,/, $line_data[1]);
+    my $otu_size = scalar @this_otu_reads;
+    my $otu = $otu_prefix.$count;
+    $key_id{$otu} = $key;
+    $size{$otu} = $otu_size;
+    foreach my $id (@this_otu_reads){
+        
+        $closest_otu{$id} = $otu;
+        #$closest_otu_size{$read_id} = $otu_size;
+    }
+    
+ 
+    
+
+    $count++;
+}
+
+#
+# Close the files, release the hashes
+#
+if ($in_filename ne "stdin") {close(IN);}
+
+#undef %closest_otu_size;
+
+#######################################
+#
+# Tally the OTU Counts by Dataset
+#
+#######################################
+print "Starting otus\n";
+@id_array=[];
+foreach my $id (keys %closest_otu)
+{
+    my $otu = $closest_otu{$id};
+
+    #
+    # look up project and dataset for each read
+    #
+    my $project_dataset;
+    my $taxonomy;
+    my $sequence;
+    
+    @id_array = split('--',$id);
+    my $project = $id_array[0];
+    my $dataset = $id_array[1];
+    my $read_id = $id_array[2];
+    if($tax_available && $tax_file && $key_id{$otu} eq  $id){
+        #print "$read_id\n";
+        if($db_source ne 'user' && $db_source ne 'bpc'){
+            $select_query_index_h->execute($read_id,$project,$dataset,$read_id,$project,$dataset) or die "Unable to execute SQL statement: $select_query_index.  Error: " . $select_query_index_h->errstr . "\n";
+        }else{
+            $select_query_index_h->execute($read_id,$project,$dataset) or die "Unable to execute SQL statement: $select_query_index.  Error: " . $select_query_index_h->errstr . "\n";
+        }
+        
+        if ($select_query_index_h->rows == 0) 
+        {
+            my $warning = "Read $read_id was not found in the database, and was included in the matrix as dataset \"Unknown\"\n";
+            warn $warning;
+            print LOG $warning;
+            $project_dataset = "Unknown--Unknown";
+            $taxonomy = "Unknown";
+            $seqs{$otu} = 'Unknown';
+            
+        } else {
+            
+            ($project, $dataset, $sequence, $taxonomy) = $select_query_index_h->fetchrow();
+            print "$project, $dataset $read_id\n";
+            $project_dataset = $project . "--" . $dataset;
+            $seqs{$otu} = $sequence;
+            
+        }
+        #print "$otu $project_dataset $taxonomy\n";
+        $reads{$otu} = $read_id;
+        $tax_hash{$otu} = $taxonomy;
+    }else{
+        
+        if($db_source ne 'user' && $db_source ne 'bpc'){
+            #$select_query_h->execute($read_id,$read_id) or die "Unable to execute SQL statement: $select_query.  Error: " . $select_query_h->errstr . "\n";
+        }else{
+            #$select_query_h->execute($read_id) or die "Unable to execute SQL statement: $select_query.  Error: " . $select_query_h->errstr . "\n";
+        }
+        
+#        if ($select_query_h->rows == 0) 
+#        {
+#            my $warning = "Read $read_id was not found in the database, and was included in the matrix as dataset \"Unknown\"\n";
+#            warn $warning;
+#            print LOG $warning;
+#            $project_dataset = "Unknown--Unknown";
+#        } else {
+#            my ($project, $dataset) = $select_query_h->fetchrow();
+            $project_dataset = $project . "--" . $dataset;
+#        }
+    }
+    
+
+    
+    $otu_counts{$otu}{total}++;
+    $otu_counts{$otu}{$project_dataset}++;
+    $dataset_names{$project_dataset}++;
+}
+
+
+#######################################
+#
+# Print out the results
+#
+#######################################
+if ($verbose) {exit;}
+
+# Print out the header
+print MTX join("\t", "Cluster ID", sort keys %dataset_names) . "\n";
+foreach my $o (sort keys %otu_counts) 
+{
+    #my $count_of_datasets = (scalar keys %{$otu_counts{$o}} ) - 1;
+    
+    #print MTX join("\t", $o, $otu_counts{$o}{total}, $count_of_datasets); 
+    print MTX $o;
+
+    foreach my $pd (sort keys %dataset_names)
+    {
+        if (exists $otu_counts{$o}{$pd}) 
+        {
+            print MTX "\t" . $otu_counts{$o}{$pd} ;
+        } else {
+            print MTX "\t0";
+        }
+    }
+    print MTX "\n";
+    
+    print FASTA ">".$o.'|'.$reads{$o}."\n";
+    print FASTA $seqs{$o}."\n";
+    
+}
+
+my $otu_count = scalar keys %otu_counts;
+`echo "otu_count = $otu_count" >> ${base}info.txt`;
+
+my @ranks = ('domain','phylum','class','order','family','genus','species');
+my $rank = 'unknown';
+
+if($tax_file){
+    # Cluster_ID	Taxonomy	Rank	Cluster_Size
+    print TAX "Cluster_ID\tTaxonomy\tRank\tCluster_Size\n";
+    foreach my $o (sort keys %tax_hash){
+        my @taxes = split(/;/, $tax_hash{$o});
+        $rank = $ranks[ scalar @taxes - 1 ];
+        if($tax_hash{$o} eq 'unknown' || $tax_hash{$o} eq 'Unknown'){
+            $rank = 'unknown';
+        }
+        print TAX join("\t", $o, $tax_hash{$o}, $rank, $size{$o})."\n"; 
+    }
+}
+close(MTX);
+close(TAX);
+close(FASTA);
