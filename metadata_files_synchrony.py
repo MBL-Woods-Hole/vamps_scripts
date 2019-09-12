@@ -334,7 +334,8 @@ def read_original_metadata():
             data = json.load(data_file)
     except:
         print("could not read json file",file_path,'-Exiting')
-        sys.exit(1)
+        data = {}
+        #sys.exit(1)
     return data
 
 
@@ -400,7 +401,7 @@ if __name__ == '__main__':
                 help="Not usually needed if -host is accurate")
     parser.add_argument("-host", "--host",
                 required=False,  action='store', dest = "dbhost",  default='localhost',
-                help="choices=['vampsdb','vampsdev','localhost']")
+                help="choices=['vampsdb','vampsdev','vampscloud','localhost']")
     parser.add_argument("-v", "--verbose",
                 required=False,  action='store_true',  dest = "verbose",  default=False,
                 help="")
@@ -430,6 +431,10 @@ if __name__ == '__main__':
         args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         args.dbhost = 'bpcweb7'
+    elif args.dbhost == 'vampscloud':
+        args.json_file_path = '/vol_b/vamps/json'
+        args.NODE_DATABASE = 'vamps_development'
+        args.dbhost = 'localhost'
     elif args.dbhost == 'localhost' and is_annas_localhost:
         args.NODE_DATABASE = 'vamps2'
         args.dbhost = 'localhost'

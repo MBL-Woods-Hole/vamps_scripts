@@ -114,8 +114,7 @@ class Mysql_util:
             
           # else:
           #   self.conn = MySQLdb.connect(host = host, db = db, read_default_file)
-            # self.db = MySQLdb.connect(host = "localhost", # your host, usually localhost
-            #                          read_default_file = "~/.my.cnf_node"  )
+            
             # cur = db.cursor()
             self.cursor = self.conn.cursor()
             # self.escape = self.conn.escape()

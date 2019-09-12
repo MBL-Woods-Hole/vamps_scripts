@@ -53,7 +53,7 @@ class MyConnection:
         try:
             print("host = " + str(host) + ", db = " + str(db))
             print("=" * 40)
-            read_default_file = os.path.expanduser("~/.my.cnf")
+            read_default_file = os.path.expanduser("~/.my.cnf_node")
 
             if is_local():
                 host = "127.0.0.1"
@@ -568,7 +568,8 @@ def read_original_metadata():
             data = json.load(data_file)
     except:
         print("could not read json file", file_path, '-Exiting')
-        sys.exit(1)
+        data = {}
+        #sys.exit(1)
     return data
 
 
@@ -643,7 +644,7 @@ if __name__ == '__main__':
                         help = "Not usually needed if -host is accurate")
     parser.add_argument("-host", "--host",
                         required = False, action = 'store', dest = "dbhost", default = 'localhost',
-                        help = "choices=['vampsdb', 'vampsdev', 'localhost']")
+                        help = "choices=['vampsdb', 'vampsdev', 'vampscloud', 'localhost']")
     parser.add_argument("-units", "--tax_units",
                         required = False, action = 'store', choices = ['silva119', 'rdp2.6', 'generic','matrix'], dest = "units",  default = 'silva119',
                         help = "Default: 'silva119'; only other choices available are 'rdp2.6','generic','matrix'")
@@ -669,20 +670,17 @@ if __name__ == '__main__':
         args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         dbhost = 'bpcweb7'
+    elif args.dbhost == 'vampscloud':
+        args.json_file_path = '/vol_b/vamps/json'
+        args.NODE_DATABASE = 'vamps_development'
+        dbhost = 'localhost'
     elif args.dbhost == 'localhost' and is_annas_localhost:
         args.NODE_DATABASE = 'vamps2'
         dbhost = 'localhost'
     else:
         dbhost = 'localhost'
         args.NODE_DATABASE = 'vamps_development'
-   #  if args.units == 'silva119':
-#         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_silva119")
-#     elif args.units == 'rdp2.6':
-#         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_rdp2.6")
-#     elif args.units == 'generic':
-#         args.files_prefix = os.path.join(args.json_file_path, args.NODE_DATABASE + "--datasets_generic")
-#     else:
-#         sys.exit('UNITS ERROR: ' + args.units)
+  
     print("\nARGS: dbhost  =", dbhost)
     print("\nARGS: NODE_DATABASE  =", args.NODE_DATABASE)
     print("ARGS: json_file_path =", args.json_file_path)

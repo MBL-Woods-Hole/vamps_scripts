@@ -392,7 +392,7 @@ def run_info(args, ds, files, project_count):
 
 def get_db_connection(args):
     db = MySQLdb.connect( host=args.site, db=args.database,
-             read_default_file="~/.my.cnf" # you can use another ini file, for example .my.cnf
+             read_default_file="~/.my.cnf_node" # you can use another ini file, for example .my.cnf
            )
     cur = db.cursor()
 

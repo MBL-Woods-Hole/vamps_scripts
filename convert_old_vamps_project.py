@@ -775,9 +775,7 @@ class Mysql_util:
               self.conn = MySQLdb.connect(host=host, db=db, read_default_file=os.path.expanduser("~/.my.cnf_local"))
             else:       
               self.conn = MySQLdb.connect(host=host, db=db, read_default_file=os.path.expanduser("~/.my.cnf_node"))
-              # self.db = MySQLdb.connect(host="localhost", # your host, usually localhost
-              #                          read_default_file="~/.my.cnf_node"  )
-              # cur = db.cursor()
+              
             self.cursor = self.conn.cursor()
             # self.escape = self.conn.escape()
                    
@@ -998,8 +996,7 @@ if __name__ == '__main__':
     
     #db = Mysql_util(host="localhost")
 
-    # args.db = MySQLdb.connect(host=args.dbhost, db=args.NODE_DATABASE,
-#                              read_default_file="~/.my.cnf"  )
+    
 #     args.cur = db.cursor()
     # cur.execute("SHOW databases like 'vamps%'")
 #     dbs = []

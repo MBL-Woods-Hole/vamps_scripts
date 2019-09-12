@@ -114,8 +114,7 @@ class Mysql_util:
             
           # else:
           #   self.conn = MySQLdb.connect(host = host, db = db, read_default_file)
-            # self.db = MySQLdb.connect(host = "localhost", # your host, usually localhost
-            #                          read_default_file = "~/.my.cnf_node"  )
+            
             # cur = db.cursor()
             self.cursor = self.conn.cursor()
             # self.escape = self.conn.escape()
@@ -1720,11 +1719,8 @@ if __name__ == '__main__':
   if (args.write_files == True):
      csv_files = CSV_files()
 # 
-  read_default_file_prod = "~/.my.cnf"
-  port_prod = 3306
-
-    
-    #prod_mysql_util = Mysql_util(host = host_prod, db = "vamps2", read_default_file = read_default_file_prod, port = port_prod)
+  
+  
    
 #     t0 = time.time()
 #     if args.metadata_only:

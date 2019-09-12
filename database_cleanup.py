@@ -309,7 +309,7 @@ if __name__ == '__main__':
                 help=" ")
     parser.add_argument("-host", "--host",
                 required=False,  action='store', dest = "dbhost",  default='localhost',
-                help="")
+                help="choices=['vampsdb','vampsdev','vampscloud','localhost']")
     parser.add_argument("-db", "--db",
                 required=False,  action='store',  dest = "db",  default='vamps_development',
                 help="")
@@ -334,6 +334,9 @@ if __name__ == '__main__':
         args.NODE_DATABASE = 'vamps2'
     elif args.dbhost == 'vampsdev':
         args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
+        args.NODE_DATABASE = 'vamps2'
+    elif args.dbhost == 'vampscloud':
+        args.json_file_path = '/vol_b/vamps/json'
         args.NODE_DATABASE = 'vamps2'
     else:
         args.NODE_DATABASE = args.db
