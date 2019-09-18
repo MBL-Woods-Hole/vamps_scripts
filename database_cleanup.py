@@ -351,7 +351,7 @@ if __name__ == '__main__':
         args.NODE_DATABASE = 'vamps2'
     elif args.dbhost == 'vampscloud':
         args.json_file_path = '/vol_b/vamps/json'
-        args.NODE_DATABASE = 'vamps2'
+        args.NODE_DATABASE = 'vamps_development'
     else:
         args.NODE_DATABASE = args.db
         args.dbhost = 'localhost'
