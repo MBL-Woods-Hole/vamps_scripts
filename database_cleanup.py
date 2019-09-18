@@ -90,10 +90,15 @@ def clean(args):
     q += " WHERE dataset_id in ('"+ "','".join(dids) + "')"
     print (q)
     cur.execute(q)
-    q = "DELETE from required_metadata_info_copy"
-    q += " WHERE dataset_id in ('"+ "','".join(dids) + "')"
-    print (q)
+    
+    query_table = 'required_metadata_info_copy'
+    q = "show tables like '"+query_table+"'"
     cur.execute(q)
+    if cur.rowcount > 0:
+        q = "DELETE from "+query_table
+        q += " WHERE dataset_id in ('"+ "','".join(dids) + "')"
+        print (q)
+        cur.execute(q)
     
     q_drop = "DROP TABLE if exists %s"
     q = q_drop % ('custom_metadata_'+str(pid))
