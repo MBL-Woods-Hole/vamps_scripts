@@ -1713,6 +1713,9 @@ if __name__ == '__main__':
       host_prod = "vampsdb"
   elif args.host=='vampsdev':
       host_prod = "bpcweb7"
+  elif args.host=='vampscloud':
+      host_prod = "localhost"
+      to_database = "vamps_development"
   else:  ## localhost
       host_prod = "localhost"
       to_database = "vamps_development"
