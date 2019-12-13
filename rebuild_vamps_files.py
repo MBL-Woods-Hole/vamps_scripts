@@ -342,7 +342,6 @@ def make_metadata_by_pid(pid_list_group, all_dids_per_pid_dict):
         for pid in short_list:
             dids = all_dids_per_pid_dict[pid]
             (metadata_lookup, metadata_errors) = go_custom_metadata(dids, pid, metadata_lookup, metadata_errors)
-
     return (metadata_lookup, metadata_errors)
 
 
@@ -420,7 +419,10 @@ def write_all_metadata_file(metadata_lookup, rando):
     if not args.no_backup:
         bu_file = os.path.join(args.json_file_path, NODE_DATABASE + "--metadata_" + today + '_' + str(rando) + ".json")
         print('Backing up metadata file to', bu_file)
-        shutil.copy(md_file, bu_file)
+        try:
+        	shutil.copy(md_file, bu_file)
+        except:
+        	print('NO BACKUP Of Metadata File: FILE NOT FOUND')
     # print(md_file)
     for did in metadata_lookup:
         original_metadata_lookup[did] = metadata_lookup[did]
@@ -514,7 +516,7 @@ def metadata_lookup_update(rows_dict, metadata_lookup, did_list):
         did = str(row['dataset_id'])
         if did in did_list:
             for field, val in row.items():
-                metadata_lookup[did][field] = val
+                metadata_lookup[did][field] = str(val).replace('\n',' ')  # line feeds are
     return metadata_lookup
 
 def go_custom_metadata(did_list, pid, metadata_lookup, metadata_errors):
