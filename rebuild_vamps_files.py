@@ -606,9 +606,11 @@ if __name__ == '__main__':
         -a (All project and dataset files will be updated)
         
         Optional:
-        -json_file_path  json files path [Default: ../json]
-        -host            vampsdb, vampsdev    dbhost:  [Default: localhost]
-        -units           silva119, or rdp2.6, generic   [Default:silva119]
+        -host                   vampsdb, vampsdev    dbhost:  [Default: localhost]
+        -jfp/--json_file_path   json files path [Default: ./json]
+        
+        -units                  silva119, or rdp2.6, generic   [Default:silva119]
+        -enf/--enforce_file_path Will look for json_file_path even if not default for vamps and vampsdev
 
     count_lookup_per_did[did][rank][taxid] = count
 
@@ -638,9 +640,12 @@ if __name__ == '__main__':
     parser.add_argument("-metadata_warning_only", "--metadata_warning_only",
                         required = False, action = "store_true", dest = "metadata_warning_only", default = False,
                         help = """warns of datasets with no metadata""")
-    parser.add_argument("-json_file_path", "--json_file_path",
-                        required = False, action = 'store', dest = "json_file_path", default = '../../json',
+    parser.add_argument("-jfp", "--json_file_path",
+                        required = False, action = 'store', dest = "json_file_path", default = './json',
                         help = "Not usually needed if -host is accurate")
+    parser.add_argument("-enf", "--enforce_file_path",
+                        required = False, action = 'store_true', dest = "enforce_file_path", default = False,
+                        help = "When True will allow you to write files to json_file_path that is not default")
     parser.add_argument("-host", "--host",
                         required = False, action = 'store', dest = "dbhost", default = 'localhost',
                         help = "choices=['vampsdb', 'vampsdev', 'vampscloud', 'localhost']")
@@ -661,16 +666,19 @@ if __name__ == '__main__':
     is_annas_localhost = socket.gethostname() in annas_local_hosts
     
     if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8':
-        args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
+        if not args.enforce_file_path:            
+            args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
 
     elif args.dbhost == 'vampsdev' or args.dbhost == 'bpcweb7':
-        args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
+        if not args.enforce_file_path:            
+            args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         dbhost = 'bpcweb7'
     elif args.dbhost == 'vampscloud':
-        args.json_file_path = '/vol_b/vamps/json'
+        if not args.enforce_file_path:
+            args.json_file_path = '/vol_b/vamps/json'
         args.NODE_DATABASE = 'vamps_development'
         dbhost = 'localhost'
     elif args.dbhost == 'localhost' and is_annas_localhost:
@@ -687,10 +695,9 @@ if __name__ == '__main__':
         print('** Validated json_file_path **')
     else:
         print(myusage)
-        print("Could not find json directory: '", args.json_file_path, "'-Exiting")
+        print("Could not find json directory: '", args.json_file_path, "'-Exiting\n")
         sys.exit(-1)
     print("ARGS: units = ", args.units)
-
     database = args.NODE_DATABASE
     myconn = MyConnection(dbhost, database, read_default_file = "~/.my.cnf_node")
 
