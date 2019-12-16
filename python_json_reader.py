@@ -42,7 +42,8 @@ def go(args):
             print('\ndid '+d)
             
             for i in data[d]:
-                print(' '+str(i)+'::'+str(data[d][i]))
+                if len(i) >40:
+                    print(' '+str(i)+'::'+str(data[d][i]))
     # n = 1
 #     for line in fp.readlines():
 #     #with open(infile) as fp:
