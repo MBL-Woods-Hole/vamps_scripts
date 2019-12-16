@@ -78,6 +78,9 @@ def start(args):
         hostname = 'vampsdb'
     elif args.host == 'vampsdev' or args.host == 'bpcweb7':
         hostname = 'bpcweb7'
+    elif args.host == 'vampscloud':
+        hostname = 'localhost'
+        args.NODE_DATABASE = 'vamps_development'
     else:
         hostname = 'localhost'
         args.NODE_DATABASE = 'vamps_development'

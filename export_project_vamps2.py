@@ -51,8 +51,8 @@ def start(args):
         args.NODE_DATABASE = 'vamps2'
         db_home = '/groups-2/vampsweb/vampsdev/'
     print('MySQL - Connecting to', args.NODE_DATABASE,'on',db_host)
-    args.mysql_conn = MySQLdb.connect(db = args.NODE_DATABASE, host=db_host, read_default_file=os.path.expanduser("~/.my.cnf_node")  )
-    args.cur = args.mysql_conn.cursor()
+    mysql_conn = MySQLdb.connect(db = args.NODE_DATABASE, host=db_host, read_default_file=os.path.expanduser("~/.my.cnf_node")  )
+    args.cur = mysql_conn.cursor()
     (args.project, args.datasets) = grab_project_n_datasets(args)
     
     print_project(args, args.project)
@@ -100,7 +100,7 @@ def print_project(args, project):
     f.write('"'+project['name']+'",')
     f.write('"'+project['title']+'",')
     f.write('"'+project['description']+'",')
-    f.write('"unknown","unknown","unknown","unknown","unknown"\n')
+    f.write('"unknown","unknown","unknown","unknown","unknown",\n')
     f.close()   
 
 def print_datasets(args, project, datasets):
@@ -112,7 +112,7 @@ def print_datasets(args, project, datasets):
         f.write('"'+ds['name']+'",')
         f.write('"'+ds['description']+'",')
         f.write('"unknown",')
-        f.write('"'+project['name']+'"')
+        f.write('"'+project['name']+'",')
         f.write('\n')
     f.close()  
 
@@ -153,7 +153,7 @@ def grab_n_print_sequences(args, project, datasets):
         f.write('"unknown",')
         f.write('"'+str(row[3])+'",')
         f.write('"unknown",')
-        f.write('"'+project['name']+'--'+row[0]+'"\n')
+        f.write('"'+project['name']+'--'+row[0]+'",\n')
      
     f.close() 
 
@@ -161,67 +161,33 @@ def grab_n_print_metadata(args, project, datasets):
     f = open('metadata_'+project['name']+'.csv','w')
     f.write('"dataset","parameterName","parameterValue","units","miens_units","project","units_id","structured_comment_name","method","other","notes","ts","entry_date","parameter_id","project_dataset"\n')
     # check if table exists: custom_metadata_+project['pid']
-    #
-    # need a better plan to txfr metadata from vamps2 to vampscloud
-    # than this which uses old vamps formatting
-    #
-    #
-   #  q1 = "select * from required_metadata_info"
-#     q1 += " where dataset_id in ("+','.join(project['did_list'])+")"
-#     print(q1)
-#     args.cur.execute(q1)
-#     if args.cur.rowcount > 0:
-#     	rows = args.cur.fetchall()
-#     	for row in rows:
-#         	print(row)
-#     else:
-#     	print('no required metadata')
-#         
-#     custom_table = "custom_metadata_"+str(project['pid'])
-#     q2 = 'Show tables like "'+custom_table+'"'
-#     
-#     args.cur.execute(q2)
-#     
-#     if args.cur.rowcount > 0:
-#         q3 = "select * from "+custom_table
-#         print(q3)
-#         #args.mysql_conn.commit()
-#         args.cur.execute(q3)
-#         rows = args.cur.fetchall()
-#         #print(rows)
-#         for row in rows:
-#             print(row)
-#     else:
-#         print('no custom metadata table')   
+    q1 = "select * from required_metadata_info"
+    q1 += " where dataset_id in ("+','.join(project['did_list'])+")"
+    args.cur.execute(q1)
+    rows = args.cur.fetchall()
+    for row in rows:
+        print(row)
+        
+    custom_table = "custom_metadata_"+str(project['pid'])
+    q2 = 'Show tables like "'+custom_table+'"'
+    print(q2)
+    args.cur.execute(q2)
+    if args.cur.rowcount > 0:
+        q3 = "select * from "+custom_table
+        print(q3)
+        rows = args.cur.fetchall()
+        for row in rows:
+            print(row)
+    else:
+        print('no custom table')   
     f.close() 
     
     
 def grab_n_print_user(args, project, datasets):
     f = open('user_contact_'+project['name']+'.csv','w')
     f.write('"contact","username","email","institution","first_name","last_name","active","security_level","encrypted_password"\n')
-    q = "select first_name,last_name,username,email,institution from user where user_id ='"+str(project['oid'])+"'"
-    args.cur.execute(q)
-    row = args.cur.fetchone()
-    print(row)
-    for n in row:
-    	fname = row[0]
-    	lname = row[1]
-    	contact = fname +' '+lname
-    	uname = row[2]
-    	email = row[3]
-    	inst = row[4]
-    f.write('"'+contact+'",')
-    f.write('"'+uname+'",')
-    f.write('"'+email+'",')
-    f.write('"'+inst+'",')
-    f.write('"'+fname+'",')
-    f.write('"'+lname+'",')
-    f.write('"1",')
-    f.write('"50",')
-    f.write('"XXXX"\n')
-    	
-    f.close() 
     
+    f.close() 
 if __name__ == '__main__':
     import argparse
 
