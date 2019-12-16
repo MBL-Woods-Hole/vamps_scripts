@@ -300,19 +300,16 @@ if __name__ == '__main__':
     is_annas_localhost = socket.gethostname() in annas_local_hosts
     
     if args.dbhost == 'vamps' or args.dbhost == 'vampsdb' or args.dbhost == 'bpcweb8':
-        if not args.enforce_file_path:            
-            args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
+        args.json_file_path = '/groups/vampsweb/vamps/nodejs/json'
         dbhost = 'vampsdb'
         args.NODE_DATABASE = 'vamps2'
 
     elif args.dbhost == 'vampsdev' or args.dbhost == 'bpcweb7':
-        if not args.enforce_file_path:            
-            args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
+        args.json_file_path = '/groups/vampsweb/vampsdev/nodejs/json'
         args.NODE_DATABASE = 'vamps2'
         dbhost = 'bpcweb7'
     elif args.dbhost == 'vampscloud':
-        if not args.enforce_file_path:
-            args.json_file_path = '/vol_b/vamps/json'
+        args.json_file_path = '/vol_b/vamps/json'
         args.NODE_DATABASE = 'vamps_development'
         dbhost = 'localhost'
     elif args.dbhost == 'localhost' and is_annas_localhost:
