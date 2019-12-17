@@ -39,11 +39,12 @@ def go(args):
         data = json.load(json_file)
         for d in data:
             
-            print('\ndid '+d)
+            #print('\ndid '+d)
             
             for i in data[d]:
-                if len(i) >40:
-                    print(' '+str(i)+'::'+str(data[d][i]))
+                if 'Simkus, Danielle N., et al. Variations in microbial' in str(data[d][i]):
+                    print(d)
+                    #print(' '+str(i)+'::'+str(data[d][i]))
     # n = 1
 #     for line in fp.readlines():
 #     #with open(infile) as fp:

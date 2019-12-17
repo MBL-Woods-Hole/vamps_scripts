@@ -174,7 +174,7 @@ def get_all_dids(args):
     all_db_dids = []
     for row in rows:
         all_db_dids.append(str(row[0]))
-
+    #print(all_db_dids)
     return all_db_dids
 
 
@@ -208,6 +208,7 @@ def process_individual_json_files(args, fpaths):
                     os.remove(file_to_delete)
                 n+=1
             else:
+                #print('GOOD'+did)
                 pass
         print('Deleted: '+str(n)+' Orphan files')
                 
