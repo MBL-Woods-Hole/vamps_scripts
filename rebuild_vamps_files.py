@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """ 
-  create_counts_lookup.py
+  rebuild_vamps_files.py
 
 
 """
@@ -695,7 +695,7 @@ if __name__ == '__main__':
         print('** Validated json_file_path **')
     else:
         print(myusage)
-        print("Could not find json directory: '", args.json_file_path, "'-Exiting\n")
+        print("Could not find json directory (json_file_path): '", args.json_file_path, "'-Exiting\n")
         sys.exit(-1)
     print("ARGS: units = ", args.units)
     database = args.NODE_DATABASE

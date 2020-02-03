@@ -16,7 +16,6 @@ except ImportError:
         import pymysql as mysql
     except ImportError:
         import MySQLdb as mysql
-import glob
 import json
 import shutil
 import datetime
@@ -115,57 +114,18 @@ def is_local():
     else:
         return False
 
-
 today = str(datetime.date.today())
-
-"""
-silva119 MISSING from taxcount(silva119 only) or json(silva119 or rdp2.6) files:
-ID: 416 project: DCO_ORC_Av6
-
-rdp
-ID: 284 project: KCK_NADW_Bv6
-ID: 185 project: LAZ_DET_Bv3v4
-ID: 385 project: LAZ_PPP_Bv3v5
-ID: 278 project: LAZ_SEA_Bv6v4
-ID: 213 project: LTR_PAL_Av6
-
-SELECT sum(seq_count), dataset_id, domain_id, domain
-FROM sequence_pdr_info
-JOIN sequence_uniq_info USING(sequence_id)
-JOIN silva_taxonomy_info_per_seq USING(silva_taxonomy_info_per_seq_id)
-JOIN silva_taxonomy USING(silva_taxonomy_id)
-JOIN domain USING(domain_id)
-JOIN phylum USING(phylum_id)
-where dataset_id = '426'
-GROUP BY dataset_id, domain_id
-
-SELECT sum(seq_count), dataset_id, domain_id, domain, phylum_id, phylum
-FROM sequence_pdr_info
-JOIN sequence_uniq_info USING(sequence_id)
-JOIN silva_taxonomy_info_per_seq USING(silva_taxonomy_info_per_seq_id)
-JOIN silva_taxonomy USING(silva_taxonomy_id)
-JOIN domain USING(domain_id)
-JOIN phylum USING(phylum_id)
-where dataset_id = '426'
-GROUP BY dataset_id, domain_id, phylum_id
-"""
-
-
 
 did_query = "SELECT dataset_id from dataset order by dataset_id"
 
 
-
-
-
-# 
 def make_file_paths(args):
     file_paths = {}
     file_paths['did_paths'] = []
     file_paths['did_paths'].append(os.path.join(args.json_file_path, args.NODE_DATABASE + '--datasets_silva119'))
     file_paths['did_paths'].append(os.path.join(args.json_file_path, args.NODE_DATABASE + '--datasets_rdp2.6'))
     file_paths['did_paths'].append(os.path.join(args.json_file_path, args.NODE_DATABASE + '--datasets_generic'))
-    file_paths['metadata'] = os.path.join(args.json_file_path, args.NODE_DATABASE + '--metadata.json')
+    file_paths['metadata'] =       os.path.join(args.json_file_path, args.NODE_DATABASE + '--metadata.json')
     return file_paths
 
 
@@ -179,47 +139,55 @@ def get_all_dids(args):
 
 
 
-def go_add(args, all_dids):
+def go_add(args, fpaths, all_dids):
     # we have all dids
-    #1 make paths fro json_files_dir
-    fpaths = make_file_paths(args)
+    print('\n'+'-'*40)
     # to scan each ds directory
-    print('\nRunning JSON Files')
-    process_individual_json_files(args,fpaths['did_paths'])
-    
+    print('Running INDIVIDUAL JSON FILES:')
+    process_individual_json_files(args, fpaths['did_paths'])
+    print('\n'+'-'*40)
     # open bulk metadata file and parse good ones into new object
-    print('\nRunning Metadata Bulk File')
-    process_bulk_metadata_file(args,fpaths['metadata'])
+    print('Running BULK METADATA FILE:')
+    process_bulk_metadata_file(args, fpaths['metadata'])
     
 def process_individual_json_files(args, fpaths):
     for fpath in fpaths:
         print('Directory: '+fpath)
-        n=0
+        orphan_count=0
         for f in os.listdir(fpath):
             did = str(f.split('.')[0])
             
             if did not in all_dids:
-                file_to_delete = os.path.join(fpath, did+'.json')
-                
-                if args.no_deletions:
-                    print('No deletion of orphan did file: per no_deletions CL flag '+did)
-                else:
+                # We have found an orphan did
+                file_to_delete = os.path.join(fpath, did+'.json')                
+                if args.delete_dids:
                     print('deleting orphan: '+file_to_delete)
                     os.remove(file_to_delete)
-                n+=1
+                else:
+                    #print('No deletion of orphan did file: per deletions CL flag '+did)  
+                    pass                  
+                orphan_count +=1
             else:
                 #print('GOOD'+did)
                 pass
-        print('Deleted: '+str(n)+' Orphan files')
+        if args.delete_dids:
+            if orphan_count == 0:
+                print('Found: '+str(orphan_count)+' Orphan file(s)')
+            else:
+                print('Found: '+str(orphan_count)+' Orphan file(s) -- DELETED') 
+        else:
+            if orphan_count == 0:
+                print('Found: '+str(orphan_count)+' Orphan file(s)')
+            else:
+                print('Found: '+str(orphan_count)+' Orphan file(s) -- Not Deleted')  
                 
-def process_bulk_metadata_file(args, md_file):
+def process_bulk_metadata_file(args, md_file):    
     
-    
-    if not args.no_backup:
+    if args.delete_dids and not args.no_backup:
         from random import randrange
         rando = randrange(10000, 99999)
         bu_file = os.path.join(args.json_file_path, args.NODE_DATABASE + "--metadata_" + today + '_' + str(rando) + ".json")
-        print('Backing up metadata file to', bu_file)
+        print('Backing up bulk metadata file to', bu_file)
         try:
         	shutil.copy(md_file, bu_file)
         except:
@@ -228,42 +196,58 @@ def process_bulk_metadata_file(args, md_file):
     new_metadata_object = {}    	
     with open(md_file) as json_file:
         data = json.load(json_file)
+        orphan_count=0
+        db_count = 0
         for did in data:
             #print(did)
             if did not in all_dids:
-                print('MD-Orphan: '+did)
+                # We have found an orphan did
+                #print('MD-Orphan: '+did)
+                orphan_count +=1
             else:
+                # Add good one to new Object
                 new_metadata_object[did] = data[did]
+                db_count += 1
+        if args.delete_dids:
+            if orphan_count == 0:
+                print('Found: '+str(orphan_count)+' Orphan file(s)')
+            else:
+                print('Found: '+str(orphan_count)+' Orphan file(s) -- DELETED')            
+        else:
+            if orphan_count == 0:
+                print('Found: '+str(orphan_count)+' Orphan file(s)')
+            else:
+                print('Found: '+str(orphan_count)+' Orphan file(s) -- Not Deleted')  
+        print('Found: '+str(db_count)+' Good Dataset IDs(s)')
     
     # we've backed up the original so no we want to overwrite the original name
     if len(new_metadata_object.keys()) == len(data.keys()):
-        print('No File Deletions')
+        print('No Bulk File Deletions')
     
-    if not args.no_deletions:
-        with open(md_file, 'w') as outfile:
+    if args.delete_dids:
+        with open(md_file, 'w') as outfile:  # overwrite or create new
             json.dump(new_metadata_object, outfile)
     else:
-        print('No change to bulk metadata file: per no_deletions CL flag')
-                
-
-
-
-
-
+        print('No change to bulk metadata file: per delete_dids CL flag')
+        
 
 
 if __name__ == '__main__':
     start0 = time.time()
 
     myusage = """
+    
+    This script's purpose is to check and remove orphan dataset_ids from the vamps-node.js JSON files. 
+    
         Required:
-        -host                   vampsdb, vampsdev    dbhost:  [Default: localhost]
+        -host                   vampsdb, vampsdev, localhost    dbhost:  [Default: localhost]
         
         Optional:
         
         -jfp/--json_file_path   json files path [Default: ./json]
         
-        -no_deletions           Prevent CHANGES TO FILES [Default is to overwrite!] 
+        -del/--delete_dids      When used will delete Dataset Files and modify Bulk Metadata File
+                                [Default is to NOT delete] 
         
 
 
@@ -286,9 +270,9 @@ if __name__ == '__main__':
     parser.add_argument("-host", "--host",
                         required = True, action = 'store', dest = "dbhost", default = 'localhost',
                         help = "choices=['vampsdb', 'vampsdev', 'vampscloud', 'localhost']")
-    parser.add_argument("-no_deletions", "--no_deletions",
-                        required = False, action = "store_true", dest = "no_deletions", default = False,
-                        help = """no_deletions : query only""")
+    parser.add_argument("-del", "--delete_dids",
+                        required = False, action = "store_true", dest = "delete_dids", default = False,
+                        help = """no_deletions : query the files only""")
     
 
 
@@ -323,11 +307,15 @@ if __name__ == '__main__':
     print("\nARGS: dbhost  =", dbhost)
     print("\nARGS: NODE_DATABASE  =", args.NODE_DATABASE)
     print("ARGS: json_file_path =", args.json_file_path)
-    if os.path.exists(args.json_file_path):
+    
+    #1 make paths from json_files_dir
+    fpaths = make_file_paths(args)
+    
+    if os.path.exists(args.json_file_path) and os.path.isfile(fpaths['metadata']):
         print('** Validated json_file_path **')
     else:
         print(myusage)
-        print("Could not find json directory: '", args.json_file_path, "'-Exiting\n")
+        print("Could not find json directory: '"+args.json_file_path+ "/' Or Bulk metadata file --Exiting\n")
         sys.exit(-1)
     database = args.NODE_DATABASE
     myconn = MyConnection(dbhost, database, read_default_file = "~/.my.cnf_node")
@@ -343,5 +331,9 @@ if __name__ == '__main__':
     all_dids = get_all_dids(args)
     
     
-    go_add(args, all_dids)
+    go_add(args, fpaths, all_dids)
+    if not args.delete_dids:
+        print("\n*** No Changes Occured:: to delete dids add '-del' to command line. ***\n")
+    else:
+        print('\nDone\n')
 

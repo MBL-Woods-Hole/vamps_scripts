@@ -382,6 +382,9 @@ if __name__ == '__main__':
 
     myusage = """
     
+    The purpose of this script is to assess the difference (if any) between the vamps metadata files
+    (bulk metadata and individual files) and the vamps mysql database.
+    
     metadata_files_synchrony.py
     
         -host/--host        vampsdb, vampsdev    dbhost:  [Default: localhost]
@@ -390,13 +393,13 @@ if __name__ == '__main__':
         
         -pid/--pid       will check a single pid for file consistancy
         
-        -json_file_path/--json_file_path
+        -jfp/--json_file_path
         
         -s/--search_seqs  
     
     """
 
-    parser.add_argument("-json_file_path", "--json_file_path",
+    parser.add_argument("-jfp", "--json_file_path",
                 required=False,  action='store', dest = "json_file_path",  default='json',
                 help="Not usually needed if -host is accurate")
     parser.add_argument("-host", "--host",
