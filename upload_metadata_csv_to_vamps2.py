@@ -306,11 +306,18 @@ class Metadata:
         temp_list_of_dict.append(temp_dict)
       return temp_list_of_dict
 
+  def get_transposed_vals(self):
+    list_of_metadata_lists = Metadata.csv_file_content_list[1]
+    without_empty_lists = [l for l in list_of_metadata_lists if not len(l) == 0]
+    transposed_vals = list(map(list, zip(*without_empty_lists)))
+    return transposed_vals
+
   def check_for_empty_fields(self):
     removed_fields = []
     clean_matrix = []
     good_fields = []
-    transposed_vals = list(map(list, zip(*Metadata.csv_file_content_list[1])))
+    transposed_vals = self.get_transposed_vals()
+
     for idx, vals_l in enumerate(transposed_vals):
       all_val_for1_field = set(vals_l)
       field_name = Metadata.csv_file_fields[idx]
