@@ -305,7 +305,7 @@ class Mysql_util:
         rows = self.execute_fetch_select(query)
         return list(self.utils.extract(rows[0]))
 
-    def get_field_names(self, table_name):
+    def get_field_names_by_table_name(self, table_name):
         query = "SHOW columns FROM %s" % table_name
         return self.execute_fetch_select(query)
 
