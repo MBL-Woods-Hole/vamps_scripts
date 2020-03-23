@@ -330,6 +330,17 @@ class Metadata:
 
     return not_empty_csv_content_dict
 
+  def get_dataset_id(self, d):
+    try:
+      dataset_id = d['dataset_id']
+    except:
+      where_part = """WHERE dataset = "%s" 
+      AND project_id = 
+        (SELECT project_id from project WHERE project = "%s")""" % (d['dataset'], d['project'])
+      dataset_info = mysql_utils.get_all_name_id("dataset", where_part = where_part)
+      dataset_id = dataset_info[0][1]
+    return dataset_id
+
   # def check_for_duplicate_field_names(self):
   #   all_names_cnt = defaultdict(int)
   #   all_names_dup = defaultdict(list)
@@ -428,17 +439,6 @@ class RequiredMetadata(Metadata):
     self.fill_required_metadata_update()
     self.get_required_fields()
 
-  def get_dataset_id(self, d):
-    try:
-      dataset_id = d['dataset_id']
-    except:
-      where_part = """WHERE dataset = "%s" 
-      AND project_id = 
-        (SELECT project_id from project WHERE project = "%s")""" % (d['dataset'], d['project'])
-      dataset_info = mysql_utils.get_all_name_id("dataset", where_part = where_part)
-      dataset_id = dataset_info[0][1]
-    return dataset_id
-
   def fill_required_metadata_update(self):
     intersection = list(set(self.required_metadata_fields_to_update) & set(self.fields))
     # print(intersection)
@@ -446,7 +446,7 @@ class RequiredMetadata(Metadata):
     # Metadata.not_empty_csv_content_dict
     for d in Metadata.csv_file_content_dict:
       temp_dict = {}
-      dataset_id =  self.get_dataset_id(d)
+      dataset_id = self.get_dataset_id(d)
 
       temp_dict = {your_key: d[your_key]
                    for your_key in intersection
@@ -593,7 +593,7 @@ class CustomMetadata(Metadata):
     # print(self.fields_to_add_to_db)
 
     for d in Metadata.csv_file_content_dict:
-      dataset_id = d['dataset_id']
+      dataset_id = self.get_dataset_id(d)
       temp_keys = list(set(d.keys()) & set(all_custom_fields))
       self.custom_metadata_update[dataset_id] = {your_key: (d[your_key]
                                                             if (d[your_key].lower() not in Metadata.empty_equivalents)
@@ -618,7 +618,7 @@ class CustomMetadata(Metadata):
     return int(project_id[0][1])
 
   def get_custom_fields_from_db(self):
-    custom_metadata_fields_t = mysql_utils.get_field_names('vamps2', str(self.custom_metadata_table_name))
+    custom_metadata_fields_t = mysql_utils.get_field_names('vamps2', self.custom_metadata_table_name)
     return list(zip(*custom_metadata_fields_t[0]))
 
 
