@@ -18,3 +18,4 @@ stefanthiele/
 *.txt
 metadata_conversion.README
 
+venv/
