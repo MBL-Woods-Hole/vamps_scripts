@@ -294,18 +294,10 @@ class Metadata:
         res_l.append(f2)
     return res_l
 
-  def get_transposed_values_from_all(self):
-    keys = self.csv_file_content_list[0]
-    transposed_values = list(map(list, zip(*Metadata.csv_file_content_dict.values())))
-    return transposed_values
-
   def format_not_empty_dict(self):
       temp_list_of_dict = []
-      if len(Metadata.not_empty_csv_content_dict) == 0:
-         self.get_transposed_values_from_all()
-      else:
-        keys = list(Metadata.not_empty_csv_content_dict.keys())
-        transposed_values = list(map(list, zip(*Metadata.not_empty_csv_content_dict.values())))
+      keys = list(Metadata.not_empty_csv_content_dict.keys())
+      transposed_values = list(map(list, zip(*Metadata.not_empty_csv_content_dict.values())))
       for l in transposed_values:
         temp_dict = {}
         for idx, v in enumerate(l):
@@ -597,21 +589,9 @@ class CustomMetadata(Metadata):
       # set(['formation_name', 'env_biome', 'microbial_biomass_FISH', 'pH', 'investigation_type', 'dataset_id', 'target_gene', 'env_feature', 'sample_size_vol', 'samp_store_temp', 'sodium', 'sulfate', 'samp_store_dur', 'sample_name', 'chloride', 'elevation', 'temperature', 'depth_subseafloor', 'depth_subterrestrial', 'isol_growth_cond', 'manganese', 'calcium', 'iron'])
       # TODO: env_feature is not in term?
 
-  def project_names_from_csv_list(self):
-    projects = []
-    project_ind = self.csv_file_content_list[0].index("project")
-    for all_lists in self.csv_file_content_list[1:]:
-      for curr_list in all_lists:
-        projects.append(curr_list[project_ind])
-    return list(set(projects))
-
-
   def get_project_id(self):
     projects = [d['project'] for d in Metadata.csv_file_content_dict]
-    try:
-      project  = list(set(projects))[0]
-    except:
-      project = self.project_names_from_csv_list()
+    project  = list(set(projects))[0]
     print('project =')
     print(project)
     where_part = 'WHERE project = "%s"' % project
