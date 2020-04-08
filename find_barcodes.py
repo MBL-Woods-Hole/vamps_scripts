@@ -68,10 +68,18 @@ class Sequences:
     return all_freq
 
   def find_dist(self):
+    """
+      curr_dict = defaultdict()
+      curr_dict["freq"] = int(line_items[0])
+      curr_dict["seq"] = line_items[1]
+
+      self.all_seq.append(curr_dict)
+
+    """
+
     reversed_fr_seq_d_arr = self.all_seq[::-1]
     curr_length = 0
     for i, d in enumerate(reversed_fr_seq_d_arr):
-      curr_dist_dict = defaultdict()
       full_seq1 = reversed_fr_seq_d_arr[i]["seq"]
       try:
         full_seq2 = reversed_fr_seq_d_arr[i+1]["seq"]
@@ -83,16 +91,20 @@ class Sequences:
           total_length = 30
 
           for l in range(3, total_length):
+            curr_dist_dict = defaultdict()
+            curr_dist_dict["freq1"] = reversed_fr_seq_d_arr[i]["freq"]
+            curr_dist_dict["freq2"] = reversed_fr_seq_d_arr[i + 1]["freq"]
+
             seq1 = full_seq1[0:l]
             seq2 = full_seq2[0:l]
 
-            dist = self.levenshtein(seq1, seq2)
             curr_dist_dict["len"] = l
-            curr_dist_dict["dist"] = dist
             curr_dist_dict["seq1"] = seq1
             curr_dist_dict["seq2"] = seq2
-            curr_dist_dict["freq1"] = reversed_fr_seq_d_arr[i]["freq"]
-            curr_dist_dict["freq2"] = reversed_fr_seq_d_arr[i+1]["freq"]
+
+            dist = self.levenshtein(seq1, seq2)
+            curr_dist_dict["dist"] = dist
+
             self.distances.append(curr_dist_dict)
             # print(curr_dist_dict)
       except:
