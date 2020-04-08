@@ -42,6 +42,8 @@ class Plots:
       plt.axvline(140000, color = "red", label = this_label)
       # plt.scatter(data["freq_sum"], data["dist"], marker = 'o')
       plt.plot(data["freq_sum"], data["dist"])
+      plt.legend(loc = 0)
+
       # add labels
 
       if len_arr == 5:
