@@ -13,30 +13,38 @@ from collections import defaultdict
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 class Plots:
   def __init__(self, distances_dict_arr):
     self.distances_dict_arr = distances_dict_arr
     """defaultdict(None, {'len': 29, 'dist': 2.0, 'seq1': 'TGGGGAATATTGCACAATGGGGGAAACCC', 'seq2': 'TAGGGAATATTGGACAATGGGGGAAACCC', 'freq1': 1178, 'freq2': 1178})"""
-    """defaultdict(<class 'dict'>, {'len': 29, 'dist': 7.0, 'max_freq': 2044})"""
-    data = {"len": [], "dist": [], "label": []}
+    data = {"max_freq": [], "dist": [], "label": []}
     # for label, coord in test.items():
-    for dict in self.distances_dict_arr:
-      data["len"].append(dict["max_freq"])
-      data["dist"].append(dict["dist"])
-      data["label"].append(dict["len"])
+    pp = PdfPages('multipage.pdf')
 
-    plt.figure(figsize = (10, 8))
-    plt.title('Scatter Plot', fontsize = 20)
-    plt.xlabel('len', fontsize = 15)
-    plt.ylabel("dist", fontsize = 15)
-    plt.scatter(data["len"], data["dist"], marker = 'o')
+    for len_arr in self.distances_dict_arr:
+      for curr_dict in self.distances_dict_arr[len_arr]:
+        """defaultdict(<class 'dict'>, {'len': 13, 'dist': 1.0, 'max_freq': 236489})"""
+        data["max_freq"].append(curr_dict["max_freq"])
+        data["dist"].append(curr_dict["dist"])
+        # data["label"].append(curr_dict["len"])
 
-    # add labels
-    # for label, x, y in zip(data["label"], data["len"], data["dist"]):
-    #   plt.annotate(label, xy = (x, y))
 
-    plt.show()
+      plt.figure(figsize = (10, 8))
+      plt.title(curr_dict["len"], fontsize = 20)
+      plt.xlabel('max_freq', fontsize = 15)
+      plt.ylabel("dist", fontsize = 15)
+      plt.scatter(data["max_freq"], data["dist"], marker = 'o')
+
+      # add labels
+      # for label, x, y in zip(data["label"], data["len"], data["dist"]):
+      #   plt.annotate(label, xy = (x, y))
+
+      # plt.show()
+      plt.savefig(pp, format='pdf')
+
+    pp.close()
 
 
 class Sequences:
@@ -51,7 +59,7 @@ class Sequences:
     # print("HERE")
     # print(self.distances)
     self.big_distances = []
-    self.freq_dist_dict = defaultdict(dict)
+    self.freq_dist_dict = defaultdict(list)
     self.analyse_dist()
 
   def collect_data(self, infile_text):
