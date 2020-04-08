@@ -35,8 +35,8 @@ class Plots:
       plt.title(curr_dict["len"], fontsize = 20)
       plt.xlabel('max_freq', fontsize = 15)
       plt.ylabel("dist", fontsize = 15)
-      plt.scatter(data["max_freq"], data["dist"], marker = 'o')
-
+      # plt.scatter(data["max_freq"], data["dist"], marker = 'o')
+      plt.plot(data["max_freq"], data["dist"])
       # add labels
       # for label, x, y in zip(data["label"], data["len"], data["dist"]):
       #   plt.annotate(label, xy = (x, y))

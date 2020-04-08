@@ -20,3 +20,4 @@ metadata_conversion.README
 
 venv/
 *.pyc
+*.pdf
