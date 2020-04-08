@@ -19,27 +19,28 @@ class Plots:
   def __init__(self, distances_dict_arr):
     self.distances_dict_arr = distances_dict_arr
     """defaultdict(None, {'len': 29, 'dist': 2.0, 'seq1': 'TGGGGAATATTGCACAATGGGGGAAACCC', 'seq2': 'TAGGGAATATTGGACAATGGGGGAAACCC', 'freq1': 1178, 'freq2': 1178})"""
-    data = {"max_freq": [], "dist": [], "label": []}
+    data = {"freq_sum": [], "dist": [], "label": []}
     # for label, coord in test.items():
     pp = PdfPages('multipage.pdf')
 
     for len_arr in self.distances_dict_arr:
       for curr_dict in self.distances_dict_arr[len_arr]:
-        """defaultdict(<class 'dict'>, {'len': 13, 'dist': 1.0, 'max_freq': 236489})"""
-        data["max_freq"].append(curr_dict["max_freq"])
-        data["dist"].append(curr_dict["dist"])
-        # data["label"].append(curr_dict["len"])
+        """defaultdict(<class 'dict'>, {'len': 13, 'dist': 1.0, 'freq_sum': 236489})"""
+        if curr_dict["dist"] < 3:
+          data["freq_sum"].append(curr_dict["freq_sum"])
+          data["dist"].append(curr_dict["dist"])
+          data["label"].append(curr_dict["seq1"] + "_" + curr_dict["seq2"])
 
 
       plt.figure(figsize = (10, 8))
       plt.title(curr_dict["len"], fontsize = 20)
-      plt.xlabel('max_freq', fontsize = 15)
+      plt.xlabel('freq_sum', fontsize = 15)
       plt.ylabel("dist", fontsize = 15)
-      # plt.scatter(data["max_freq"], data["dist"], marker = 'o')
-      plt.plot(data["max_freq"], data["dist"])
+      plt.scatter(data["freq_sum"], data["dist"], marker = 'o')
+      # plt.plot(data["freq_sum"], data["dist"])
       # add labels
-      # for label, x, y in zip(data["label"], data["len"], data["dist"]):
-      #   plt.annotate(label, xy = (x, y))
+      for label, x, y in zip(data["label"], data["freq_sum"], data["dist"]):
+        plt.annotate(label, xy = (x, y))
 
       # plt.show()
       plt.savefig(pp, format='pdf')
@@ -58,7 +59,7 @@ class Sequences:
     self.find_dist()
     # print("HERE")
     # print(self.distances)
-    self.big_distances = []
+    # self.big_distances = []
     self.freq_dist_dict = defaultdict(list)
     self.analyse_dist()
 
@@ -75,16 +76,8 @@ class Sequences:
     all_freq = [d["freq"] for d in self.all_seq]
     return all_freq
 
+  # add sliding window to remove random 4 nd?
   def find_dist(self):
-    """
-      curr_dict = defaultdict()
-      curr_dict["freq"] = int(line_items[0])
-      curr_dict["seq"] = line_items[1]
-
-      self.all_seq.append(curr_dict)
-
-    """
-
     reversed_fr_seq_d_arr = self.all_seq[::-1]
     curr_length = 0
     for i, d in enumerate(reversed_fr_seq_d_arr):
@@ -95,10 +88,10 @@ class Sequences:
         freq2 = reversed_fr_seq_d_arr[i+1]["freq"]
 
         if (not freq1 < 1000) and (not freq2 < 1000):
-          total_length = max(len(full_seq1), len(full_seq2))
+          # total_length = max(len(full_seq1), len(full_seq2))
           total_length = 30
 
-          for l in range(3, total_length):
+          for l in range(4, total_length):
             curr_dist_dict = defaultdict()
             curr_dist_dict["freq1"] = reversed_fr_seq_d_arr[i]["freq"]
             curr_dist_dict["freq2"] = reversed_fr_seq_d_arr[i + 1]["freq"]
@@ -149,7 +142,7 @@ class Sequences:
     for d in self.distances:
       curr_d = defaultdict(dict)
       if d["dist"] > 0:
-        self.big_distances.append(d)
+        # self.big_distances.append(d)
         freq_sum = d["freq1"] + d["freq2"]
         if max_freq < freq_sum:
           max_freq = freq_sum
@@ -159,7 +152,12 @@ class Sequences:
         # print(freq_dist_dict)
         curr_d["len"] = d["len"]
         curr_d["dist"] = d["dist"]
-        curr_d["max_freq"] = freq_sum
+        curr_d["freq_sum"] = freq_sum
+        curr_d["seq1"] = d["seq1"]
+        curr_d["seq2"] = d["seq2"]
+        curr_d["freq1"] = d["freq1"]
+        curr_d["freq2"] = d["freq2"]
+
         self.freq_dist_dict[d["len"]].append(curr_d)
 
 if __name__ == '__main__':
