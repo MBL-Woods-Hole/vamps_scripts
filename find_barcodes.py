@@ -30,7 +30,8 @@ class Plots:
         # if curr_dict["dist"] < 3:
         data["freq_sum"].append(curr_dict["freq_sum"])
         data["dist"].append(curr_dict["dist"])
-        data["label"].append(curr_dict["seq1"] + "_" + curr_dict["seq2"])
+        curr_seq = list(set([curr_dict["seq1"], curr_dict["seq2"]]))
+        data["label"].append(", ".join(curr_seq))
 
       plt.figure(figsize = (10, 8))
       plt.title(len_arr, fontsize = 20)
@@ -39,7 +40,7 @@ class Plots:
 
       this_label = ", ".join(list(set([data["label"][i] for i, fr in enumerate(data["freq_sum"]) if fr > 140000])))
       print("this_label = %s" % this_label)
-      plt.axvline(140000, color = "red", label = this_label)
+      plt.axvline(140000, color = "red", label = 'Seq with freq > then here: {}'.format(this_label))
       # plt.scatter(data["freq_sum"], data["dist"], marker = 'o')
       plt.plot(data["freq_sum"], data["dist"])
       plt.legend(loc = 0)
@@ -72,13 +73,16 @@ class Sequences:
 
     self.min_freq = 2000
     self.start_length = 4
-    self.end_length = 20
+    self.end_length = 35
 
-    self.all_freq = self.find_freq()
+    # self.all_freq = self.find_freq()
+    self.sum_freq = self.get_sum_freq()
+
     self.distances = []
     self.find_dist()
     self.freq_dist_dict = defaultdict(list)
-    self.analyse_dist()
+    perc_counter = self.analyse_dist()
+    self.get_percent(perc_counter)
 
   def collect_data(self, infile_text):
     for l in infile_text:
@@ -90,10 +94,12 @@ class Sequences:
       self.all_seq.append(curr_dict)
 
   def find_freq(self):
-    all_freq = [d["freq"] for d in self.all_seq]
-    return all_freq
+    return [d["freq"] for d in self.all_seq]
 
-  # add sliding window to remove random 4 nd?
+  def get_sum_freq(self):
+    return sum([d["freq"] for d in self.all_seq])
+
+  #TODO: add sliding window to remove random 4 nd?
   def find_dist(self):
     reversed_fr_seq_d_arr = self.all_seq[::-1]
     curr_length = 0
@@ -162,6 +168,32 @@ class Sequences:
         print(text)
 
   def analyse_dist(self):
+    perc_dict = defaultdict()
+    for d in self.distances:
+      # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
+      if d["dist"] < 2:
+        curr_seq = list(set([d["seq1"], d["seq2"]]))
+        for e_dict in self.all_seq:
+          cntr = 0
+          for s in curr_seq:
+            if e_dict["seq"].startswith(s):
+              cntr = cntr + e_dict["freq"]
+              perc_dict[s] = cntr
+    return perc_dict
+
+  def get_percent(self, perc_dict):
+    for seq, cnts in perc_dict.items():
+      perc50 = float(self.sum_freq) / 2 #701616
+      print("perc50 = {}".format(perc50))
+      if cnts > 701616:
+        perc = 100 * cnts / float(self.sum_freq)
+        print("{} {}: {}".format(seq, cnts, perc))
+      # if perc > 50:
+      #   print("{} {}: {}".format(seq, cnts, perc))
+      #     echo "scale=2;100*12850/181840" | bc
+
+
+  def analyse_dist_old(self):
     max_freq = 0
     for d in self.distances:
       curr_d = defaultdict(dict)
@@ -185,6 +217,7 @@ class Sequences:
       self.freq_dist_dict[d["len"]].append(curr_d)
 
 
+
 if __name__ == '__main__':
   # utils = util.Utils()
 
@@ -204,7 +237,7 @@ if __name__ == '__main__':
   is_verbatim = args.is_verbatim
 
   sequences = Sequences(args.input_file)
-  plots = Plots(sequences.freq_dist_dict)
+  # plots = Plots(sequences.freq_dist_dict)
   # sequences.get_seq_low_dist_dist()
 
   # if (is_verbatim):
