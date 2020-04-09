@@ -66,15 +66,16 @@ class Plots:
 
 class Sequences:
   def __init__(self, seq_file):
-    f = open(seq_file, 'r')
-    infile_text = f.readlines()
-    self.all_seq = []
-    self.collect_data(infile_text)
-
     self.min_freq = 2000
     self.start_length = 4
     self.end_length = 35
     self.min_perc = 70
+    self.max_distance = 2
+
+    f = open(seq_file, 'r')
+    infile_text = f.readlines()
+    self.all_seq = []
+    self.collect_data(infile_text)
 
     # self.all_freq = self.find_freq()
     self.sum_freq = self.get_sum_freq()
@@ -174,7 +175,7 @@ class Sequences:
     all_seq_good_dist_list = []
     for d in self.distances:
       # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
-      if d["dist"] < 2:
+      if d["dist"] < self.max_distance:
         all_seq_good_dist.add(d["seq1"])
         all_seq_good_dist.add(d["seq2"])
         all_seq_good_dist_list = sorted(all_seq_good_dist)
