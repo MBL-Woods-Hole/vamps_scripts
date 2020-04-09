@@ -222,7 +222,7 @@ class Sequences:
     res_seq = ""
     new_group = []
 
-    print('{} => {}'.format(a, b))
+    # print('{} => {}'.format(a, b))
     for i, s in enumerate(difflib.ndiff(a, b)):
       if s[0] == ' ':
         if len(new_group) > 0:
@@ -231,16 +231,11 @@ class Sequences:
         new_group = []
       elif s[0] == '-':
         new_group.append(s[-1])
-        # print(u'Delete "{}" from position {}'.format(s[-1], i))
       elif s[0] == '+':
         new_group.append(s[-1])
-        # print(u'Add "{}" to position {}'.format(s[-1], i))
     if len(new_group) > 0:
       res_seq += "[{}]".format("".join(new_group))
     return res_seq
-#     TGGGGAATATTGC => TGGGGAATATTGG
-# Delete "C" from position 12
-# Add "G" to position 13
 
 
 if __name__ == '__main__':
