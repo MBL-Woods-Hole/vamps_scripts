@@ -209,12 +209,22 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser()
 
+  """
+    make file:
+    for file in SRR*_1.fastq; do cat $file | grep -A1 "^@S"| grep -v "^@S"| grep -v "\-\-" | cut -c1-50 >>~/1_50.Hoellein2014_SRP042298.txt; done
+    time cat ~/1_50.Hoellein2014_SRP042298.txt | sort | uniq -c | sort -n >~/1_50.Hoellein2014_SRP042298.sorted.uniqed.txt
+  
+    file format:  
+         1 AAACGAATCTTACGCAAAGGGCGAAAGCCTGAGGGAGCAATGCAGCGTGAGGGAAGAAGCATTATCGATGTGTAAACACCTGACAGGGGCTATGAATACT
+    ...  
+     70841 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAGGGGA
+    165648 TGGGGAATATTGCACAATGGGGGAAACCCTGATGCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAAAGTT"""
   parser.add_argument('-f', '--file_name',
                       required = True, action = 'store', dest = 'input_file',
                       help = '''Input file name''')
   parser.add_argument("-ve", "--verbatim",
                       required = False, action = "store_true", dest = "is_verbatim",
-                      help = """Print an additional inforamtion""")
+                      help = """Print an additional information""")
 
   args = parser.parse_args()
 
