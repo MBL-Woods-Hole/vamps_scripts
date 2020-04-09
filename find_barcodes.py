@@ -261,18 +261,25 @@ class Sequences:
 
 if __name__ == '__main__':
 
-  parser = argparse.ArgumentParser()
-
-  """
-    make file:
-    for file in SRR*_1.fastq; do cat $file | grep -A1 "^@S"| grep -v "^@S"| grep -v "\-\-" | cut -c1-50 >>~/1_50.Hoellein2014_SRP042298.txt; done
-    time cat ~/1_50.Hoellein2014_SRP042298.txt | sort | uniq -c | sort -n >~/1_50.Hoellein2014_SRP042298.sorted.uniqed.txt
-  
-    file format:  
+  myusage = """%(prog)s -f FILENAME [-ve]
+  Input file format:
          1 AAACGAATCTTACGCAAAGGGCGAAAGCCTGAGGGAGCAATGCAGCGTGAGGGAAGAAGCATTATCGATGTGTAAACACCTGACAGGGGCTATGAATACT
     ...  
      70841 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAGGGGA
-    165648 TGGGGAATATTGCACAATGGGGGAAACCCTGATGCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAAAGTT"""
+    165648 TGGGGAATATTGCACAATGGGGGAAACCCTGATGCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAAAGTT
+  Usage example:
+for file in *_R1.fastq; do cat $file | grep -A1 "^@M"| grep -v "^@M"| grep -v "\-\-" | cut -c1-50 >>~/1_50.txt; done
+
+time cat ~/1_50.txt | sort | uniq -c | sort -n >~/1_50.sorted.uniqued.txt
+ 
+time python find_barcodes.py -f ~/1_50.sorted.uniqued.txt
+
+  NB. 1) If sequences have first X random nucleotides change "cut -c1-50" to "cut -cX-50"
+  2) "^@M" in the grep commands should be changed to whatever the header lines start with. 
+  """
+  parser = argparse.ArgumentParser(description="Prints out 'beginnings' with its percentage", usage=myusage)
+  # parser = argparse.ArgumentParser(prog = 'PROG', usage = '%(prog)s [options]')
+
   parser.add_argument('-f', '--file_name',
                       required = True, action = 'store', dest = 'input_file',
                       help = '''Input file name''')
