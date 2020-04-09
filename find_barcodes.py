@@ -192,9 +192,6 @@ class Sequences:
       for e_dict in self.all_seq:
         if e_dict["seq"].startswith(curr_seq):
           cntr = cntr + e_dict["freq"]
-          if curr_seq == 'TGGGGAATATTGC':
-            if cntr > 100000:
-              print('s = {}, cntr = {}, curr_freq = {}'.format(curr_seq, cntr, e_dict["freq"]))
       perc_dict[curr_seq] = cntr
     return perc_dict
 
@@ -209,28 +206,28 @@ class Sequences:
       #   print("{} {}: {}".format(seq, cnts, perc))
       #     echo "scale=2;100*12850/181840" | bc
 
-  def analyse_dist_old(self):
-    max_freq = 0
-    for d in self.distances:
-      curr_d = defaultdict(dict)
-      # if d["dist"] > 0:
-      # self.big_distances.append(d)
-      freq_sum = d["freq1"] + d["freq2"]
-      if max_freq < freq_sum:
-        max_freq = freq_sum
-      d["max_freq"] = max_freq
-      """For each length get dist and freq_sum"""
-      # self.freq_dist_dict[d["len"]][d["dist"]] = d
-      # print(freq_dist_dict)
-      curr_d["len"] = d["len"]
-      curr_d["dist"] = d["dist"]
-      curr_d["freq_sum"] = freq_sum
-      curr_d["seq1"] = d["seq1"]
-      curr_d["seq2"] = d["seq2"]
-      curr_d["freq1"] = d["freq1"]
-      curr_d["freq2"] = d["freq2"]
-
-      self.freq_dist_dict[d["len"]].append(curr_d)
+  # def analyse_dist_old(self):
+  #   max_freq = 0
+  #   for d in self.distances:
+  #     curr_d = defaultdict(dict)
+  #     # if d["dist"] > 0:
+  #     # self.big_distances.append(d)
+  #     freq_sum = d["freq1"] + d["freq2"]
+  #     if max_freq < freq_sum:
+  #       max_freq = freq_sum
+  #     d["max_freq"] = max_freq
+  #     """For each length get dist and freq_sum"""
+  #     # self.freq_dist_dict[d["len"]][d["dist"]] = d
+  #     # print(freq_dist_dict)
+  #     curr_d["len"] = d["len"]
+  #     curr_d["dist"] = d["dist"]
+  #     curr_d["freq_sum"] = freq_sum
+  #     curr_d["seq1"] = d["seq1"]
+  #     curr_d["seq2"] = d["seq2"]
+  #     curr_d["freq1"] = d["freq1"]
+  #     curr_d["freq2"] = d["freq2"]
+  #
+  #     self.freq_dist_dict[d["len"]].append(curr_d)
 
 
 if __name__ == '__main__':
