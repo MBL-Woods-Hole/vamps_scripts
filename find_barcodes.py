@@ -99,7 +99,7 @@ class Sequences:
   def get_sum_freq(self):
     return sum([d["freq"] for d in self.all_seq])
 
-  #TODO: add sliding window to remove random 4 nd?
+  # TODO: add sliding window to remove random 4 nd?
   def find_dist(self):
     reversed_fr_seq_d_arr = self.all_seq[::-1]
     curr_length = 0
@@ -164,7 +164,7 @@ class Sequences:
       curr_d = defaultdict(dict)
       if d["dist"] > 0:
         text = """len = %d, seq1 %s and seq2 %s has distance %d with freq1 %f, freq2 %f""" % (
-        d["len"], d["seq1"], d["seq2"], d["dist"], d["freq1"], d["freq2"])
+          d["len"], d["seq1"], d["seq2"], d["dist"], d["freq1"], d["freq2"])
         print(text)
 
   def get_all_seq_good_dist(self):
@@ -182,8 +182,7 @@ class Sequences:
         all_seq_good_dist_list.sort(key = len)
 
     return all_seq_good_dist_list
-      # sorted(all_seq_good_dist, key=custom_key)
-
+    # sorted(all_seq_good_dist, key=custom_key)
 
   def analyse_dist(self):
     perc_dict = defaultdict()
@@ -196,12 +195,12 @@ class Sequences:
           if curr_seq == 'TGGGGAATATTGC':
             if cntr > 100000:
               print('s = {}, cntr = {}, curr_freq = {}'.format(curr_seq, cntr, e_dict["freq"]))
-          perc_dict[curr_seq] = cntr
+      perc_dict[curr_seq] = cntr
     return perc_dict
 
   def get_percent(self, perc_dict):
     for seq, cnts in perc_dict.items():
-      perc50 = float(self.sum_freq) / 2 #701616
+      perc50 = float(self.sum_freq) / 2  # 701616
       print("perc50 = {}".format(perc50))
       if cnts > 701616:
         perc = 100 * cnts / float(self.sum_freq)
@@ -209,7 +208,6 @@ class Sequences:
       # if perc > 50:
       #   print("{} {}: {}".format(seq, cnts, perc))
       #     echo "scale=2;100*12850/181840" | bc
-
 
   def analyse_dist_old(self):
     max_freq = 0
@@ -233,7 +231,6 @@ class Sequences:
       curr_d["freq2"] = d["freq2"]
 
       self.freq_dist_dict[d["len"]].append(curr_d)
-
 
 
 if __name__ == '__main__':
