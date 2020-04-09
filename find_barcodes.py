@@ -47,7 +47,7 @@ class Plots:
 
       this_label = ", ".join(list(set([data["label"][i] for i, fr in enumerate(data["freq_sum"]) if fr > 140000])))
       print("this_label = %s" % this_label)
-      plt.axvline(140000, color = "red", label = 'Seq with freq > then here: {}'.format(this_label))
+      plt.axvline(140000, color = "red", label = 'Seq with freq > than here: {}'.format(this_label))
       # plt.scatter(data["freq_sum"], data["dist"], marker = 'o')
       plt.plot(data["freq_sum"], data["dist"])
       plt.legend(loc = 0)
@@ -67,14 +67,17 @@ class Plots:
 
 
 class Sequences:
-  def __init__(self, seq_file):
-    self.min_freq = 2000
-    self.start_length = 4
-    self.end_length = 35
-    self.min_perc = 70
-    self.max_distance = 2
+  def __init__(self, args):
 
-    f = open(seq_file, 'r')
+    self.min_freq = args.min_freq or 2000
+    self.start_length = args.start_length or 4
+    self.end_length = args.end_length or 35
+    self.min_perc = args.min_perc or 70
+    self.max_distance = args.max_distance or 2
+
+    print("self.max_distance = {}".format(self.max_distance))
+
+    f = open(args.input_file, 'r')
     infile_text = f.readlines()
     self.all_seq = []
     self.collect_data(infile_text)
@@ -261,28 +264,65 @@ class Sequences:
 
 if __name__ == '__main__':
 
-  myusage = """%(prog)s -f FILENAME [-ve]
-  Input file format:
+  myusage = """python %(prog)s -f FILENAME [optional parameters]
+
+  Prints out 'beginnings' with its total occurrence and percentage.
+==========
+Input file format:
          1 AAACGAATCTTACGCAAAGGGCGAAAGCCTGAGGGAGCAATGCAGCGTGAGGGAAGAAGCATTATCGATGTGTAAACACCTGACAGGGGCTATGAATACT
     ...  
      70841 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAGGGGA
     165648 TGGGGAATATTGCACAATGGGGGAAACCCTGATGCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAAAGTT
-  Usage example:
+  
+Usage example:
 for file in *_R1.fastq; do cat $file | grep -A1 "^@M"| grep -v "^@M"| grep -v "\-\-" | cut -c1-50 >>~/1_50.txt; done
 
 time cat ~/1_50.txt | sort | uniq -c | sort -n >~/1_50.sorted.uniqued.txt
  
 time python find_barcodes.py -f ~/1_50.sorted.uniqued.txt
 
-  NB. 1) If sequences have first X random nucleotides change "cut -c1-50" to "cut -cX-50"
-  2) "^@M" in the grep commands should be changed to whatever the header lines start with. 
-  """
-  parser = argparse.ArgumentParser(description="Prints out 'beginnings' with its percentage", usage=myusage)
+NB. 1) If sequences have first X random nucleotides change "cut -c1-50" to "cut -cX-50" in the bash command above.
+    2) "^@M" in the grep commands should be changed to whatever the header lines start with. 
+==========
+Default thresholds:
+  Do not take "beginnings" from sequences with frequency less than 2000 (min_freq)
+  Filter out "beginnings" if the Levenstein distance between them is equal or greater than 2 (max_distance)
+  Minimum "beginning" length = 4 (start_length)
+  Maximum "beginning" length = 35 (end_length)
+  Print out results if percentage is grater than 70 (min_perc)
+==========
+Output example:
+  TGGG 1155916: 82.4%%
+  TGGGG 1150625: 82.0%%
+  TGGGGA 1141747: 81.4%%
+  TGGGGAA 1135249: 80.9%%
+  TGGGGAAT 1131727: 80.7%%
+  TG[AG]GGA 1224498: 87.3%%
+==========
+"""
+
+  parser = argparse.ArgumentParser(usage=myusage)
   # parser = argparse.ArgumentParser(prog = 'PROG', usage = '%(prog)s [options]')
 
   parser.add_argument('-f', '--file_name',
                       required = True, action = 'store', dest = 'input_file',
                       help = '''Input file name''')
+  parser.add_argument('-fr', '--min_freq',
+                      required = False, action = 'store', dest = 'min_freq', default = 2000,
+                      help = '''Do not take "beginnings" from sequences with frequency less than MIN_FREQ''')
+  parser.add_argument('-st', '--start_length',
+                      required = False, action = 'store', dest = 'start_length', default = 4,
+                      help = '''Minimum "beginning" length = START_LENGTH''')
+  parser.add_argument('-en', '--end_length',
+                      required = False, action = 'store', dest = 'end_length', default = 35,
+                      help = '''Maximum "beginning" length = END_LENGTH''')
+  parser.add_argument('-mp', '--min_perc',
+                      required = False, action = 'store', dest = 'min_perc', default = 70,
+                      help = '''Print out results if percentage is grater than MIN_PERC''')
+  parser.add_argument('-ld', '--max_distance',
+                      required = False, action = 'store', dest = 'max_distance', default = 2,
+                      help = '''Filter out "beginnings" if the Levenstein distance between them is equal or greater than MAX_DISTANCE''')
+
   parser.add_argument("-ve", "--verbatim",
                       required = False, action = "store_true", dest = "is_verbatim",
                       help = """Print an additional information""")
@@ -291,7 +331,7 @@ time python find_barcodes.py -f ~/1_50.sorted.uniqued.txt
 
   is_verbatim = args.is_verbatim
 
-  sequences = Sequences(args.input_file)
+  sequences = Sequences(args)
   # plots = Plots(sequences.freq_dist_dict)
   # sequences.get_seq_low_dist_dist()
 
