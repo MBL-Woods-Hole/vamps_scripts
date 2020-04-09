@@ -74,6 +74,7 @@ class Sequences:
     self.min_freq = 2000
     self.start_length = 4
     self.end_length = 35
+    self.min_perc = 70
 
     # self.all_freq = self.find_freq()
     self.sum_freq = self.get_sum_freq()
@@ -224,11 +225,12 @@ class Sequences:
     return perc_dict
 
   def get_percent(self, perc_dict):
+    perc50 = float(self.sum_freq) / 2
     for seq, cnts in perc_dict.items():
-      perc50 = float(self.sum_freq) / 2  # 701616
       if cnts > perc50:
         perc = 100 * cnts / float(self.sum_freq)
-        print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
+        if perc > self.min_perc:
+          print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
 
   def make_new_group_str(self, new_gr_l):
     return "[{}]".format("".join(sorted(new_gr_l)))
