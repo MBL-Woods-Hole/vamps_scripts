@@ -320,7 +320,7 @@ Output example:
                       help = '''Print out results if percentage is grater than MIN_PERC''')
   parser.add_argument('-ld', '--max_distance',
                       required = False, action = 'store', dest = 'max_distance', default = 2,
-                      help = '''Filter out "beginnings" if the Levenstein distance between them is equal or greater than MAX_DISTANCE''')
+                      help = '''Filter out "beginnings" if the Levenstein distance between them is equal or greater than MAX_DISTANCE. To do only the exact match comparison with no mismatches use --max_distance 1''')
 
   parser.add_argument("-ve", "--verbatim",
                       required = False, action = "store_true", dest = "is_verbatim",
