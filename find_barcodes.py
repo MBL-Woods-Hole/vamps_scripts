@@ -198,10 +198,11 @@ class Sequences:
   def get_percent(self, perc_dict):
     for seq, cnts in perc_dict.items():
       perc50 = float(self.sum_freq) / 2  # 701616
-      print("perc50 = {}".format(perc50))
-      if cnts > 701616:
+      # print("perc50 = {}".format(perc50))
+      # perc50 = 701616.5
+      if cnts > perc50:
         perc = 100 * cnts / float(self.sum_freq)
-        print("{} {}: {}".format(seq, cnts, perc))
+        print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
       # if perc > 50:
       #   print("{} {}: {}".format(seq, cnts, perc))
       #     echo "scale=2;100*12850/181840" | bc
