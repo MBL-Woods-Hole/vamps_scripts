@@ -9,7 +9,7 @@ find lev_dist
 if lev_dist < 2
 get percent of beginnings "^seq"
 
-TODO: for all pairs with low distance get allignment and count percentage
+TODO: for all pairs with low distance get alignment and count percentage
 cat 1_100.txt | green_grep -e "^TGGGGAATATTG[AC]"
 
 """
@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-
+import difflib
 
 class Plots:
   def __init__(self, distances_dict_arr):
@@ -181,9 +181,28 @@ class Sequences:
     return all_seq_good_dist_list
     # sorted(all_seq_good_dist, key=custom_key)
 
+  def get_all_seq_good_dist_w_align(self):
+    all_seq_good_dist = set()
+    all_seq_good_dist_list = []
+    for d in self.distances:
+      # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
+      if d["dist"] < 2:
+        if d["seq1"] != d["seq2"]:
+          aligned_seq = self.align(d["seq1"], d["seq2"])
+          all_seq_good_dist.add(aligned_seq)
+        else:
+          all_seq_good_dist.add(d["seq1"])
+
+      all_seq_good_dist_list = sorted(all_seq_good_dist)
+      all_seq_good_dist_list.sort(key = len)
+
+    return all_seq_good_dist_list
+    # sorted(all_seq_good_dist, key=custom_key)
+
+
   def analyse_dist(self):
     perc_dict = defaultdict()
-    all_seq_good_dist_list = self.get_all_seq_good_dist()
+    all_seq_good_dist_list = self.get_all_seq_good_dist_w_align()
     for curr_seq in all_seq_good_dist_list:
       cntr = 0
       for e_dict in self.all_seq:
@@ -198,6 +217,30 @@ class Sequences:
       if cnts > perc50:
         perc = 100 * cnts / float(self.sum_freq)
         print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
+
+  def align(self, a, b):
+    res_seq = ""
+    new_group = []
+
+    print('{} => {}'.format(a, b))
+    for i, s in enumerate(difflib.ndiff(a, b)):
+      if s[0] == ' ':
+        if len(new_group) > 0:
+          res_seq += "[{}]".format("".join(new_group))
+        res_seq += s[-1]
+        new_group = []
+      elif s[0] == '-':
+        new_group.append(s[-1])
+        # print(u'Delete "{}" from position {}'.format(s[-1], i))
+      elif s[0] == '+':
+        new_group.append(s[-1])
+        # print(u'Add "{}" to position {}'.format(s[-1], i))
+    if len(new_group) > 0:
+      res_seq += "[{}]".format("".join(new_group))
+    return res_seq
+#     TGGGGAATATTGC => TGGGGAATATTGG
+# Delete "C" from position 12
+# Add "G" to position 13
 
 
 if __name__ == '__main__':
