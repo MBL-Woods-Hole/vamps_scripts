@@ -69,13 +69,11 @@ class Plots:
 class Sequences:
   def __init__(self, args):
 
-    self.min_freq = args.min_freq or 2000
-    self.start_length = args.start_length or 4
-    self.end_length = args.end_length or 35
-    self.min_perc = args.min_perc or 70
-    self.max_distance = args.max_distance or 2
-
-    print("self.max_distance = {}".format(self.max_distance))
+    self.min_freq = int(args.min_freq) or 2000
+    self.start_length = int(args.start_length) or 4
+    self.end_length = int(args.end_length) or 35
+    self.min_perc = int(args.min_perc) or 70
+    self.max_distance = int(args.max_distance) or 2
 
     f = open(args.input_file, 'r')
     infile_text = f.readlines()
@@ -106,7 +104,6 @@ class Sequences:
   def get_sum_freq(self):
     return sum([d["freq"] for d in self.all_seq])
 
-  # TODO: add sliding window to remove random 4 nd?
   def find_dist(self):
     reversed_fr_seq_d_arr = self.all_seq[::-1]
     for i, d in enumerate(reversed_fr_seq_d_arr):
@@ -173,6 +170,7 @@ class Sequences:
         print(text)
 
   def get_all_seq_good_dist(self):
+    """Use for complete mutch only, no alignment"""
     # def custom_key(in_str):
     #   return len(in_str), in_str.lower()
 
@@ -194,8 +192,8 @@ class Sequences:
     all_seq_good_dist_list = []
     for d in self.distances:
       # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
-      if d["dist"] < 2:
-        if d["seq1"] != d["seq2"]:
+      if d["dist"] < self.max_distance:
+        if d["seq1"] != d["seq2"]:          
           aligned_seq = self.align(d["seq1"], d["seq2"])
           all_seq_good_dist.add(aligned_seq)
         else:
@@ -209,6 +207,7 @@ class Sequences:
 
 
   def analyse_dist(self):
+    """Use for complete mutch only, no alignment"""
     perc_dict = defaultdict()
     all_seq_good_dist_list = self.get_all_seq_good_dist()
     for curr_seq in all_seq_good_dist_list:
