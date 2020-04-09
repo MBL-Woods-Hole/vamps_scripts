@@ -167,24 +167,36 @@ class Sequences:
         d["len"], d["seq1"], d["seq2"], d["dist"], d["freq1"], d["freq2"])
         print(text)
 
-  def analyse_dist(self):
-    perc_dict = defaultdict()
+  def get_all_seq_good_dist(self):
+    def custom_key(str):
+      return len(str), str.lower()
+
+    all_seq_good_dist = set()
     for d in self.distances:
       # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
       if d["dist"] < 2:
-        cntr = 0
-        curr_seq = list(set([d["seq1"], d["seq2"]]))
-        # if curr_seq[0] == 'TGGGGAATATTGC':
-        #   print(d)
+        # cntr = 0
+        all_seq_good_dist.add(d["seq1"])
+        all_seq_good_dist.add(d["seq2"])
+        all_seq_good_dist_list = sorted(all_seq_good_dist)
+        all_seq_good_dist_list.sort(key = len)
 
-        for e_dict in self.all_seq:
-          for s in curr_seq:
-            if e_dict["seq"].startswith(s):
-              cntr = cntr + e_dict["freq"]
-              if s == 'TGGGGAATATTGC':
-                if cntr > 300000:
-                  print(d)
-              perc_dict[s] = cntr
+    return all_seq_good_dist_list
+      # sorted(all_seq_good_dist, key=custom_key)
+
+
+  def analyse_dist(self):
+    perc_dict = defaultdict()
+    all_seq_good_dist_list = self.get_all_seq_good_dist()
+    for curr_seq in all_seq_good_dist_list:
+      cntr = 0
+      for e_dict in self.all_seq:
+        if e_dict["seq"].startswith(curr_seq):
+          cntr = cntr + e_dict["freq"]
+          if curr_seq == 'TGGGGAATATTGC':
+            if cntr > 100000:
+              print('s = {}, cntr = {}, curr_freq = {}'.format(curr_seq, cntr, e_dict["freq"]))
+          perc_dict[curr_seq] = cntr
     return perc_dict
 
   def get_percent(self, perc_dict):
