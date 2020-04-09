@@ -5,9 +5,13 @@
 # time python find_barcodes.py -f /Users/ashipunova/BPC/linda/1_100.sorted.txt
 
 """For each len from 4 to 30
-what frequency is by lev_dist
+find lev_dist
+if lev_dist < 2
+get percent of beginnings "^seq"
 
-then get sequences for the max len and min dist and max freq
+TODO: for all pairs with low distance get allignment and count percentage
+cat 1_100.txt | green_grep -e "^TGGGGAATATTG[AC]"
+
 """
 from collections import defaultdict
 import argparse
@@ -175,7 +179,6 @@ class Sequences:
     for d in self.distances:
       # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
       if d["dist"] < 2:
-        # cntr = 0
         all_seq_good_dist.add(d["seq1"])
         all_seq_good_dist.add(d["seq2"])
         all_seq_good_dist_list = sorted(all_seq_good_dist)
@@ -198,41 +201,11 @@ class Sequences:
   def get_percent(self, perc_dict):
     for seq, cnts in perc_dict.items():
       perc50 = float(self.sum_freq) / 2  # 701616
-      # print("perc50 = {}".format(perc50))
-      # perc50 = 701616.5
       if cnts > perc50:
         perc = 100 * cnts / float(self.sum_freq)
         print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
-      # if perc > 50:
-      #   print("{} {}: {}".format(seq, cnts, perc))
-      #     echo "scale=2;100*12850/181840" | bc
-
-  # def analyse_dist_old(self):
-  #   max_freq = 0
-  #   for d in self.distances:
-  #     curr_d = defaultdict(dict)
-  #     # if d["dist"] > 0:
-  #     # self.big_distances.append(d)
-  #     freq_sum = d["freq1"] + d["freq2"]
-  #     if max_freq < freq_sum:
-  #       max_freq = freq_sum
-  #     d["max_freq"] = max_freq
-  #     """For each length get dist and freq_sum"""
-  #     # self.freq_dist_dict[d["len"]][d["dist"]] = d
-  #     # print(freq_dist_dict)
-  #     curr_d["len"] = d["len"]
-  #     curr_d["dist"] = d["dist"]
-  #     curr_d["freq_sum"] = freq_sum
-  #     curr_d["seq1"] = d["seq1"]
-  #     curr_d["seq2"] = d["seq2"]
-  #     curr_d["freq1"] = d["freq1"]
-  #     curr_d["freq2"] = d["freq2"]
-  #
-  #     self.freq_dist_dict[d["len"]].append(curr_d)
-
 
 if __name__ == '__main__':
-  # utils = util.Utils()
 
   parser = argparse.ArgumentParser()
 
@@ -244,8 +217,6 @@ if __name__ == '__main__':
                       help = """Print an additional inforamtion""")
 
   args = parser.parse_args()
-  print('args = ')
-  print(args)
 
   is_verbatim = args.is_verbatim
 
@@ -253,7 +224,6 @@ if __name__ == '__main__':
   # plots = Plots(sequences.freq_dist_dict)
   # sequences.get_seq_low_dist_dist()
 
-  # if (is_verbatim):
-
-  # print('QQQ3 = custom_metadata_update')
-  # print(custom_metadata_update)
+  if (is_verbatim):
+    print('args = ')
+    print(args)
