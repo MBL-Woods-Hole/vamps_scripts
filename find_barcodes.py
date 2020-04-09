@@ -10,10 +10,7 @@ if lev_dist < 2
 get percent of beginnings "^seq"
 cat 1_100.txt | green_grep -e "^TGGGGAATATTG[AC]"
 
-TODO: add description and example with "for file in"
-TODO: cut from 5 if has first random nd
-
-
+TODO: add tests
 """
 from collections import defaultdict
 import argparse
@@ -170,7 +167,7 @@ class Sequences:
         print(text)
 
   def get_all_seq_good_dist(self):
-    """Use for complete mutch only, no alignment"""
+    """Use for a complete match only, no alignment"""
     # def custom_key(in_str):
     #   return len(in_str), in_str.lower()
 
@@ -203,11 +200,9 @@ class Sequences:
       all_seq_good_dist_list.sort(key = len)
 
     return all_seq_good_dist_list
-    # sorted(all_seq_good_dist, key=custom_key)
-
 
   def analyse_dist(self):
-    """Use for complete mutch only, no alignment"""
+    """Use for a complete match only, no alignment"""
     perc_dict = defaultdict()
     all_seq_good_dist_list = self.get_all_seq_good_dist()
     for curr_seq in all_seq_good_dist_list:
