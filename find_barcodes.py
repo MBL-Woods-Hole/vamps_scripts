@@ -8,9 +8,11 @@
 find lev_dist
 if lev_dist < 2
 get percent of beginnings "^seq"
-
-TODO: for all pairs with low distance get alignment and count percentage
 cat 1_100.txt | green_grep -e "^TGGGGAATATTG[AC]"
+
+TODO: add description and example with "for file in"
+TODO: cut from 5 if has first random nd
+
 
 """
 from collections import defaultdict
