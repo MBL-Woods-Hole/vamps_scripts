@@ -34,7 +34,7 @@ class Plots:
         # if curr_dict["dist"] < 3:
         data["freq_sum"].append(curr_dict["freq_sum"])
         data["dist"].append(curr_dict["dist"])
-        curr_seq = list(set([curr_dict["seq1"], curr_dict["seq2"]]))
+        curr_seq = list({curr_dict["seq1"], curr_dict["seq2"]})
         data["label"].append(", ".join(curr_seq))
 
       plt.figure(figsize = (10, 8))
@@ -56,11 +56,6 @@ class Plots:
       plt.savefig(pp, format = 'pdf')
 
     pp.close()
-
-  def toggle_plot(self):
-    # This function is called by a keypress to hide/show the figure
-    plt.set_visible(not plt.get_visible())
-    plt.draw()
 
   def add_labels(self, plt, data):
     for label, x, y in zip(data["label"], data["freq_sum"], data["dist"]):
@@ -106,7 +101,6 @@ class Sequences:
   # TODO: add sliding window to remove random 4 nd?
   def find_dist(self):
     reversed_fr_seq_d_arr = self.all_seq[::-1]
-    curr_length = 0
     for i, d in enumerate(reversed_fr_seq_d_arr):
       full_seq1 = reversed_fr_seq_d_arr[i]["seq"]
       try:
@@ -161,21 +155,21 @@ class Sequences:
             matrix[x, y - 1] + 1
           )
     # print(matrix)
-    return (matrix[size_x - 1, size_y - 1])
+    return matrix[size_x - 1, size_y - 1]
 
   def get_seq_low_dist_dist(self):
     for d in self.distances:
-      curr_d = defaultdict(dict)
       if d["dist"] > 0:
         text = """len = %d, seq1 %s and seq2 %s has distance %d with freq1 %f, freq2 %f""" % (
           d["len"], d["seq1"], d["seq2"], d["dist"], d["freq1"], d["freq2"])
         print(text)
 
   def get_all_seq_good_dist(self):
-    def custom_key(str):
-      return len(str), str.lower()
+    # def custom_key(in_str):
+    #   return len(in_str), in_str.lower()
 
     all_seq_good_dist = set()
+    all_seq_good_dist_list = []
     for d in self.distances:
       # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
       if d["dist"] < 2:
@@ -204,6 +198,7 @@ class Sequences:
       if cnts > perc50:
         perc = 100 * cnts / float(self.sum_freq)
         print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
+
 
 if __name__ == '__main__':
 
@@ -234,6 +229,6 @@ if __name__ == '__main__':
   # plots = Plots(sequences.freq_dist_dict)
   # sequences.get_seq_low_dist_dist()
 
-  if (is_verbatim):
+  if is_verbatim:
     print('args = ')
     print(args)
