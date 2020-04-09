@@ -172,12 +172,18 @@ class Sequences:
     for d in self.distances:
       # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
       if d["dist"] < 2:
+        cntr = 0
         curr_seq = list(set([d["seq1"], d["seq2"]]))
+        # if curr_seq[0] == 'TGGGGAATATTGC':
+        #   print(d)
+
         for e_dict in self.all_seq:
-          cntr = 0
           for s in curr_seq:
             if e_dict["seq"].startswith(s):
               cntr = cntr + e_dict["freq"]
+              if s == 'TGGGGAATATTGC':
+                if cntr > 300000:
+                  print(d)
               perc_dict[s] = cntr
     return perc_dict
 
