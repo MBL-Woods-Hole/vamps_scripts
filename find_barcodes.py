@@ -19,6 +19,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import difflib
+import re
 
 class Plots:
   def __init__(self, distances_dict_arr):
@@ -80,7 +81,7 @@ class Sequences:
     self.distances = []
     self.find_dist()
     self.freq_dist_dict = defaultdict(list)
-    perc_counter = self.analyse_dist()
+    perc_counter = self.analyse_dist_w_re()
     self.get_percent(perc_counter)
 
   def collect_data(self, infile_text):
@@ -202,11 +203,22 @@ class Sequences:
 
   def analyse_dist(self):
     perc_dict = defaultdict()
-    all_seq_good_dist_list = self.get_all_seq_good_dist_w_align()
+    all_seq_good_dist_list = self.get_all_seq_good_dist()
     for curr_seq in all_seq_good_dist_list:
       cntr = 0
       for e_dict in self.all_seq:
         if e_dict["seq"].startswith(curr_seq):
+          cntr = cntr + e_dict["freq"]
+      perc_dict[curr_seq] = cntr
+    return perc_dict
+
+  def analyse_dist_w_re(self):
+    perc_dict = defaultdict()
+    all_seq_good_dist_list = self.get_all_seq_good_dist_w_align()
+    for curr_seq in all_seq_good_dist_list:
+      cntr = 0
+      for e_dict in self.all_seq:
+        if e_dict["seq"].startswith(curr_seq) or re.search("^" + curr_seq, e_dict["seq"]):
           cntr = cntr + e_dict["freq"]
       perc_dict[curr_seq] = cntr
     return perc_dict
@@ -218,7 +230,11 @@ class Sequences:
         perc = 100 * cnts / float(self.sum_freq)
         print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
 
+  def make_new_group_str(self, new_gr_l):
+    return "[{}]".format("".join(sorted(new_gr_l)))
+
   def align(self, a, b):
+    # TODO: 'TG[A]G[G]' - ?
     res_seq = ""
     new_group = []
 
@@ -226,7 +242,7 @@ class Sequences:
     for i, s in enumerate(difflib.ndiff(a, b)):
       if s[0] == ' ':
         if len(new_group) > 0:
-          res_seq += "[{}]".format("".join(new_group))
+          res_seq += self.make_new_group_str(new_group)
         res_seq += s[-1]
         new_group = []
       elif s[0] == '-':
@@ -234,7 +250,7 @@ class Sequences:
       elif s[0] == '+':
         new_group.append(s[-1])
     if len(new_group) > 0:
-      res_seq += "[{}]".format("".join(new_group))
+      res_seq += self.make_new_group_str(new_group)
     return res_seq
 
 
