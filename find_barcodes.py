@@ -20,48 +20,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 import difflib
 import re
 
-class Plots:
-  def __init__(self, distances_dict_arr):
-    self.distances_dict_arr = distances_dict_arr
-    """defaultdict(None, {'len': 29, 'dist': 2.0, 'seq1': 'TGGGGAATATTGCACAATGGGGGAAACCC', 'seq2': 'TAGGGAATATTGGACAATGGGGGAAACCC', 'freq1': 1178, 'freq2': 1178})"""
-
-    pp = PdfPages('multipage.pdf')
-
-    for len_arr in self.distances_dict_arr:
-      data = {"freq_sum": [], "dist": [], "label": []}
-      for curr_dict in self.distances_dict_arr[len_arr]:
-        """defaultdict(<class 'dict'>, {'len': 13, 'dist': 1.0, 'freq_sum': 236489})"""
-        # if curr_dict["dist"] < 3:
-        data["freq_sum"].append(curr_dict["freq_sum"])
-        data["dist"].append(curr_dict["dist"])
-        curr_seq = list({curr_dict["seq1"], curr_dict["seq2"]})
-        data["label"].append(", ".join(curr_seq))
-
-      plt.figure(figsize = (10, 8))
-      plt.title(len_arr, fontsize = 20)
-      plt.xlabel('freq_sum', fontsize = 15)
-      plt.ylabel("dist", fontsize = 15)
-
-      this_label = ", ".join(list(set([data["label"][i] for i, fr in enumerate(data["freq_sum"]) if fr > 140000])))
-      print("this_label = %s" % this_label)
-      plt.axvline(140000, color = "red", label = 'Seq with freq > than here: {}'.format(this_label))
-      # plt.scatter(data["freq_sum"], data["dist"], marker = 'o')
-      plt.plot(data["freq_sum"], data["dist"])
-      plt.legend(loc = 0)
-
-      # add labels
-
-      if len_arr == 5:
-        plt.show()
-      plt.savefig(pp, format = 'pdf')
-
-    pp.close()
-
-  def add_labels(self, plt, data):
-    for label, x, y in zip(data["label"], data["freq_sum"], data["dist"]):
-      plt.annotate(label, xy = (x, y))
-    return plt
-
 
 class Sequences:
   def __init__(self, args):
@@ -130,8 +88,11 @@ class Sequences:
 
             self.distances.append(curr_dist_dict)
             # print(curr_dist_dict)
+      except IndexError:
+        print("There is only one entry: {}. That means all the sequences have the same beginning.".format(reversed_fr_seq_d_arr[i]["seq"]))
       except:
-        pass
+        raise
+        # pass
 
   def levenshtein(self, seq1, seq2):
     size_x = len(seq1) + 1
@@ -167,7 +128,7 @@ class Sequences:
         print(text)
 
   def get_all_seq_good_dist(self):
-    """Use for a complete match only, no alignment"""
+    """Use for exact match only, no alignment"""
     # def custom_key(in_str):
     #   return len(in_str), in_str.lower()
 
@@ -254,6 +215,49 @@ class Sequences:
     if len(new_group) > 0:
       res_seq += self.make_new_group_str(new_group)
     return res_seq
+
+
+class Plots:
+  def __init__(self, distances_dict_arr):
+    self.distances_dict_arr = distances_dict_arr
+    """defaultdict(None, {'len': 29, 'dist': 2.0, 'seq1': 'TGGGGAATATTGCACAATGGGGGAAACCC', 'seq2': 'TAGGGAATATTGGACAATGGGGGAAACCC', 'freq1': 1178, 'freq2': 1178})"""
+
+    pp = PdfPages('multipage.pdf')
+
+    for len_arr in self.distances_dict_arr:
+      data = {"freq_sum": [], "dist": [], "label": []}
+      for curr_dict in self.distances_dict_arr[len_arr]:
+        """defaultdict(<class 'dict'>, {'len': 13, 'dist': 1.0, 'freq_sum': 236489})"""
+        # if curr_dict["dist"] < 3:
+        data["freq_sum"].append(curr_dict["freq_sum"])
+        data["dist"].append(curr_dict["dist"])
+        curr_seq = list({curr_dict["seq1"], curr_dict["seq2"]})
+        data["label"].append(", ".join(curr_seq))
+
+      plt.figure(figsize = (10, 8))
+      plt.title(len_arr, fontsize = 20)
+      plt.xlabel('freq_sum', fontsize = 15)
+      plt.ylabel("dist", fontsize = 15)
+
+      this_label = ", ".join(list(set([data["label"][i] for i, fr in enumerate(data["freq_sum"]) if fr > 140000])))
+      print("this_label = %s" % this_label)
+      plt.axvline(140000, color = "red", label = 'Seq with freq > than here: {}'.format(this_label))
+      # plt.scatter(data["freq_sum"], data["dist"], marker = 'o')
+      plt.plot(data["freq_sum"], data["dist"])
+      plt.legend(loc = 0)
+
+      # add labels
+
+      if len_arr == 5:
+        plt.show()
+      plt.savefig(pp, format = 'pdf')
+
+    pp.close()
+
+  def add_labels(self, plt, data):
+    for label, x, y in zip(data["label"], data["freq_sum"], data["dist"]):
+      plt.annotate(label, xy = (x, y))
+    return plt
 
 
 if __name__ == '__main__':
