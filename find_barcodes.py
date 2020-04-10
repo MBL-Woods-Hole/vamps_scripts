@@ -33,10 +33,6 @@ class Sequences:
 
     self.all_seq = []
     self.get_input_data(args.input_file)
-    # f = open(args.input_file, 'r')
-    # infile_text = f.readlines()
-    # self.all_seq = []
-    # self.parse_data(infile_text)
 
     self.sum_freq = self.get_sum_freq()
 
