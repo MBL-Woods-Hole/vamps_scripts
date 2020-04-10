@@ -32,24 +32,24 @@ class Sequences:
     self.max_distance = int(args.max_distance) or 2
     self.sort_by_percent = args.sort_by_percent or True
 
+    self.input_file = args.input_file
     self.all_seq = []
-    self.get_input_data(args.input_file)
-
-    self.total_seq = self.get_sum_freq()
-
+    self.total_seq = 0
     self.distances = []
-    self.test_seq_amount_and_find_dist()
-
-    # self.freq_dist_dict = defaultdict(list)
-    perc_counter = self.analyse_dist_w_re()
-
+    self.perc_dict = defaultdict()
     self.output_list = []
-    self.get_percent(perc_counter)
-    self.print_output(self.output_list)
+    self.output_text = ""
 
+  def run_analysis(self):
+    self.get_input_data()
+    self.total_seq = self.get_sum_freq()
+    self.test_seq_amount_and_find_dist()
+    self.analyse_dist_w_re()
+    self.get_percent()
+    self.print_output()
 
-  def get_input_data(self, input_file):
-    f = open(input_file, 'r')
+  def get_input_data(self):
+    f = open(self.input_file, 'r')
     infile_text = f.readlines()
     self.parse_data(infile_text)
 
@@ -156,15 +156,13 @@ class Sequences:
     return all_seq_good_dist_list
 
   def analyse_dist_w_re(self):
-    perc_dict = defaultdict()
     all_seq_good_dist_list = self.get_all_seq_good_dist_w_align()
     for curr_seq in all_seq_good_dist_list:
       cntr = 0
       for e_dict in self.all_seq:
         if e_dict["seq"].startswith(curr_seq) or re.search("^" + curr_seq, e_dict["seq"]):
           cntr = cntr + e_dict["freq"]
-      perc_dict[curr_seq] = cntr
-    return perc_dict
+      self.perc_dict[curr_seq] = cntr
 
   def get_all_seq_good_dist(self):
     """Use for exact match only, no alignment. It is faster"""
@@ -196,9 +194,9 @@ class Sequences:
       perc_dict[curr_seq] = cntr
     return perc_dict
 
-  def get_percent(self, perc_dict):
+  def get_percent(self):
     perc50 = float(self.total_seq) / 2
-    for seq, cnts in perc_dict.items():
+    for seq, cnts in self.perc_dict.items():
       # only if more then 50%
       if cnts > perc50:
         perc = 100 * cnts / float(self.total_seq)
@@ -207,16 +205,17 @@ class Sequences:
           self.output_list.append((seq, cnts, perc))
           # print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
 
-  def print_output(self, output_list):
-    curr_output_list = output_list
+  def print_output(self):
+    curr_output_list = self.output_list
     if self.sort_by_percent:
-      curr_output_list = self.sort_by_sub_list(output_list)
-
-    for e in curr_output_list:
-      seq = e[0]
-      cnts = e[1]
-      perc = e[2]
-      print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
+      curr_output_list = self.sort_by_sub_list(self.output_list)
+    self.output_text = "\n".join(["{} {}: {:.1f}%".format(e[0], e[1], round(e[2], 1)) for e in curr_output_list])
+    print(self.output_text)
+    # for e in curr_output_list:
+    #   seq = e[0]
+    #   cnts = e[1]
+    #   perc = e[2]
+    #   print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
 
   def sort_by_sub_list(self, sub_li):
     # reverse = True (Sorts in Descending order)
@@ -295,32 +294,42 @@ class Tests:
   def __init__(self):
     self.input = ['   5382 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAGGGGT\n', '   5776 TGAGGAATATTGGGCAATGGAGGCAACTCTGACCCAGCCATGCCGCGTGCAGGAAGACTGCCCTATGGGTTGTAAACTGCTTTTATACGGGAAGAAACAC\n', '   6105 TGAGGAATATTGGACAATGGGCGGGAGCCTGATCCAGCCATGCCGCGTGCAGGATGACGGCCCTATGGGTTGTAAACTGCTTTTATACGGGAAGAAACGC\n', '   6108 TGGGGAATATTGGACAATGGGCGCAAGCCTGATCCAGCCATGCCGCGTGTGTGATGAAGGCCCTAGGGTTGTAAAGCACTTTCAACGGTGAAGATAATGA\n', '   6669 TGAGGAATCTTGGACAATGGGCGAAAGCCTGATCCAGCCATGCCGCGTGAATGATGAAGGCCTTAGGGTTGTAAAATTCTTTCAGCAGGGAAGATAATGA\n', '   7195 TAGGGAATATTGGTCAATGGGCGAGAGCCTGAACCAGCCATGCCGCGTGCAGGAAGACGGCCTTCTGGGTTGTAAACTGCTTTTATCAGGGAACAAAAAG\n', '   7645 TGGGGAATCTTAGACAATGGGCGCAAGCCTGATCTAGCCATGCCGCGTGAGTGACGAAGGCCTTAGGGTCGTAAAGCTCTTTCGCCTGTGATGATAATGA\n', '   8548 TGAGGAATATTGGACAATGGTCGCAAGACTGATCCAGCCATGCCGCGTGCAGGAAGACTGCCCTATGGGTTGTAAACTGCTTTTATATGGGAAGAATAAG\n', '   8807 TGGGGAATCTTGGACAATGGGGGAAACCCTGATCCAGCCATGCCGCGTGAGTGATGAAGGCCTTAGGGTCGTAAAGCTCTTTCAGCTGGGAAGATAATGA\n', '  10321 TAAGGAATATTGGACAATGGGCGCAAGCCTGATCCAGCTATCCCGCGTGCAGGATGACGGCCCTATGGGTTGTAAACTGCTTTTGTACAGGAAGAAACGC\n', '  10465 TCGAGAATCTTCTGCAATGAACGCAAGTTTGACAGAGCGACGCCGCGTGTAGGATTGAAGGCCCTTGGGTTGTAAACTACTGTTACAGGTTAAGAAATAT\n', '  10689 TCGAGAATCTTCCGCAATGGGCGAAAGCCTGACGGAGCGACACCGCGTGCAGGATGAAGGCCTTCGGGTTGTAAACTGCTGTCACGTTTCTAGGAAATGC\n', '  11251 TGGGGAATCTTGGACAATGGGGGAAACCCTGATCCAGCCATGCCGCGTGAATGATGAAGGCCTTAGGGTTGTAAAATTCTTTCAGCAGGGAAGATAATGA\n', '  11326 TGGGGAATATTGCGCAATGGGGGAAACCCTGACGCAGCCATGCCGCGTGTGTGAAGAAGGCTTTCGGGTTGTAAAGCACTTTCAATAGGGAGGAAAGGTT\n', '  11894 TAACGAATCTTCCGCAATGGGCGAAAGCCTGACGGAGCAATGCCGCGTGTGGGATGAAGCATCTTCGATGTGTAAACCACTGTCAGGGTCTAGGAATACT\n', '  13205 TGGGGAATCTTAGACAATGGGCGCAAGCCTGATCTAGCCATGCCGCGTGAGTGATGAAGGCCTTAGGGTCGTAAAACTCTTTCGCCAGGGATGATAATGA\n', '  13489 TGGGGAATATTGGACAATGGGCGCAAGCCTGATCCAGCCATGCCGCGTGAGTGATGAAGGCCTTAGGGTTGTAAAGCTCTTTCGCCGGGGAAGATAATGA\n', '  13752 TGGGGAATCTTGGACAATGGGCGCAAGCCTGATCCAGCCATGCCGCGTGAGTGATGAAGGCCTTAGGGTCGTAAAGCTCTTTCGCCTGTGATGATAATGA\n', '  22521 TGGGGAATATTGGGCAATGGGCGCAAGCCTGACCCAGCCATGCCGCGTGTGTGAAGAAGGCTTTCGGGTTGTAAAGCACTTTAAGTTGGGAGGAAGGCTG\n', '  25220 TGGGGAATATTGCACAATGGGCGCAAGCCTGATGCAGCCATGCCGCGTGTGTGATGAAGGCCTTAGGGTTGTAAAACACTTTCATCGGTGAAGATAATGA\n', '  25620 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCTTTCGGGTTGTAAAGCACTTTCAGTGAGGAGGAAAAGTT\n', '  28544 TGGGGAATATTGGACAATGGGCGAAAGCCTGATCCAGCAATTCCGCGTGTGTGAAGAAGGCCTTAGGGTTGTAAAGCACTTTAGTTCGGGAAGAAAAAGC\n', '  31834 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCTTTCGGGTTGTAAAGCACTTTCAGTGAGGAGGAAAACCT\n', '  32941 TGGGGAATCTTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTAGGGAGGAAGGCTT\n', '  37331 TGGGGAATCTTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGCAGGGAGGAAGGCTT\n', '  44645 TGGGGAATCTTAGACAATGGGCGCAAGCCTGATCTAGCGATGCCGCGTGAGTGATGAAGGCCTTAGGGTCGTAAAGCTCTTTCGCCTGTGAAGATAATGA\n', '  50525 TGGGGAATCTTGCACAATGGGCGAAAGCCTGATGCAGCCATGCCGCGTGAATGATGAAGGCCTTAGGGTTGTAAAATTCTTTCGCTAGGGATGATAATGA\n', '  69978 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGAGTGAAGAAGGCCTTCGGGTTGTAAAGCTCTTTCAGATGCGAAGATGATGA\n', '  70841 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAGGGGA\n', ' 165648 TGGGGAATATTGCACAATGGGGGAAACCCTGATGCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAAAGTT\n']
 
-    self.output = [('TG[AG]GGA', 723711, 93.46950372929514), ('TG[AG]GGAA', 723711, 93.46950372929514), ('TG[AG]GGAAT', 723711, 93.46950372929514), ('TG[AG]GGA', 723711, 93.46950372929514), ('TG[AG]GGAA', 723711, 93.46950372929514), ('TG[AG]GGAAT', 723711, 93.46950372929514), ('T[AG]GGGA', 703808, 90.89897000419748), ('T[AG]GGGAA', 703808, 90.89897000419748), ('T[AG]GGGAAT', 703808, 90.89897000419748), ('T[AG]GGGA', 703808, 90.89897000419748), ('T[AG]GGGAA', 703808, 90.89897000419748), ('T[AG]GGGAAT', 703808, 90.89897000419748), ('TGGG', 696613, 89.969713603048), ('TGGGG', 696613, 89.969713603048), ('TGGGGA', 696613, 89.969713603048), ('TGGGGAA', 696613, 89.969713603048), ('TGGGGAAT', 696613, 89.969713603048), ('TGGGGAAT[AC]', 696613, 89.969713603048), ('TGGGGAAT[AC]T', 696613, 89.969713603048), ('TGGGGAAT[AC]TT', 696613, 89.969713603048), ('TGGG', 696613, 89.969713603048), ('TGGGG', 696613, 89.969713603048), ('TGGGGA', 696613, 89.969713603048), ('TGGGGAA', 696613, 89.969713603048), ('TGGGGAAT', 696613, 89.969713603048), ('TGGGGAAT[AC]', 696613, 89.969713603048), ('TGGGGAAT[AC]T', 696613, 89.969713603048), ('TGGGGAAT[AC]TT', 696613, 89.969713603048), ('TGGGGAAT[AC]TTG', 631118, 81.51083271447483), ('TGGGGAAT[AC]TTG', 631118, 81.51083271447483)]
+    self.output = """TG[AG]GGA 723711: 93.5%
+TG[AG]GGAA 723711: 93.5%
+TG[AG]GGAAT 723711: 93.5%
+T[AG]GGGA 703808: 90.9%
+T[AG]GGGAA 703808: 90.9%
+T[AG]GGGAAT 703808: 90.9%
+TGGG 696613: 90.0%
+TGGGG 696613: 90.0%
+TGGGGA 696613: 90.0%
+TGGGGAA 696613: 90.0%
+TGGGGAAT 696613: 90.0%
+TGGGGAAT[AC] 696613: 90.0%
+TGGGGAAT[AC]T 696613: 90.0%
+TGGGGAAT[AC]TT 696613: 90.0%
+TGGGGAAT[AC]TTG 631118: 81.5%"""
 
 
   def test_res(self):
     test_sequences = Sequences(args)
-    test_sequences.min_freq = int(args.min_freq) or 2000
-    test_sequences.start_length = int(args.start_length) or 4
-    test_sequences.end_length = int(args.end_length) or 35
-    test_sequences.min_perc = int(args.min_perc) or 70
-    test_sequences.max_distance = int(args.max_distance) or 2
-    test_sequences.sort_by_percent = args.sort_by_percent or True
+    # test_sequences.min_freq = int(args.min_freq) or 2000
+    # test_sequences.start_length = int(args.start_length) or 4
+    # test_sequences.end_length = int(args.end_length) or 35
+    # test_sequences.min_perc = int(args.min_perc) or 70
+    # test_sequences.max_distance = int(args.max_distance) or 2
+    # test_sequences.sort_by_percent = args.sort_by_percent or True
 
-    test_sequences.all_seq = []
     test_sequences.parse_data(self.input)
     test_sequences.total_seq = test_sequences.get_sum_freq()
 
-    test_sequences.distances = []
     test_sequences.test_seq_amount_and_find_dist()
 
-    # test_sequences.freq_dist_dict = defaultdict(list)
-    perc_counter = test_sequences.analyse_dist_w_re()
-    test_sequences.get_percent(perc_counter)
+    test_sequences.analyse_dist_w_re()
+    test_sequences.get_percent()
+    test_sequences.print_output()
 
-    test_output = test_sequences.output_list
-
-    assert test_output == self.output, "{} should be {}".format(test_output, self.output)
+    assert test_sequences.output_text == self.output, "{} should be {}".format(test_sequences.output_text, self.output)
 
 
 class Usage:
@@ -419,6 +428,7 @@ if __name__ == '__main__':
     print(args)
 
   sequences = Sequences(args)
+  sequences.run_analysis()
   tests = Tests()
   tests.test_res()
   # plots = Plots(sequences.freq_dist_dict)
