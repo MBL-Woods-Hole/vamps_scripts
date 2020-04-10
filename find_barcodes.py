@@ -43,6 +43,11 @@ class Sequences:
     perc_counter = self.analyse_dist_w_re()
     self.get_percent(perc_counter)
 
+  def get_input_data(self, input_file):
+    f = open(input_file, 'r')
+    infile_text = f.readlines()
+    self.parse_data(infile_text)
+
   def parse_data(self, infile_text):
     for l in infile_text:
       line_items = l.strip().split()
@@ -51,11 +56,6 @@ class Sequences:
       curr_dict["seq"] = line_items[1]
 
       self.all_seq.append(curr_dict)
-
-  def get_input_data(self, input_file):
-    f = open(input_file, 'r')
-    infile_text = f.readlines()
-    self.parse_data(infile_text)
 
   def get_sum_freq(self):
     return sum([d["freq"] for d in self.all_seq])
@@ -77,8 +77,6 @@ class Sequences:
           freq2 = reversed_fr_seq_d_arr[i + 1]["freq"]
 
           if (not freq1 < self.min_freq) and (not freq2 < self.min_freq):
-            # end_length = max(len(full_seq1), len(full_seq2))
-
             for l in range(self.start_length, self.end_length):
               curr_dist_dict = defaultdict()
               curr_dist_dict["freq1"] = reversed_fr_seq_d_arr[i]["freq"]
@@ -128,29 +126,12 @@ class Sequences:
     return matrix[size_x - 1, size_y - 1]
 
   def get_seq_low_dist_dist(self):
+    # used for debugging
     for d in self.distances:
       if d["dist"] > 0:
         text = """len = %d, seq1 %s and seq2 %s has distance %d with freq1 %f, freq2 %f""" % (
           d["len"], d["seq1"], d["seq2"], d["dist"], d["freq1"], d["freq2"])
         print(text)
-
-  def get_all_seq_good_dist(self):
-    """Use for exact match only, no alignment"""
-    # def custom_key(in_str):
-    #   return len(in_str), in_str.lower()
-
-    all_seq_good_dist = set()
-    all_seq_good_dist_list = []
-    for d in self.distances:
-      # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
-      if d["dist"] < self.max_distance:
-        all_seq_good_dist.add(d["seq1"])
-        all_seq_good_dist.add(d["seq2"])
-        all_seq_good_dist_list = sorted(all_seq_good_dist)
-        all_seq_good_dist_list.sort(key = len)
-
-    return all_seq_good_dist_list
-    # sorted(all_seq_good_dist, key=custom_key)
 
   def get_all_seq_good_dist_w_align(self):
     all_seq_good_dist = set()
@@ -169,18 +150,6 @@ class Sequences:
 
     return all_seq_good_dist_list
 
-  def analyse_dist(self):
-    """Use for a complete match only, no alignment"""
-    perc_dict = defaultdict()
-    all_seq_good_dist_list = self.get_all_seq_good_dist()
-    for curr_seq in all_seq_good_dist_list:
-      cntr = 0
-      for e_dict in self.all_seq:
-        if e_dict["seq"].startswith(curr_seq):
-          cntr = cntr + e_dict["freq"]
-      perc_dict[curr_seq] = cntr
-    return perc_dict
-
   def analyse_dist_w_re(self):
     perc_dict = defaultdict()
     all_seq_good_dist_list = self.get_all_seq_good_dist_w_align()
@@ -192,7 +161,38 @@ class Sequences:
       perc_dict[curr_seq] = cntr
     return perc_dict
 
+  def get_all_seq_good_dist(self):
+    """Use for exact match only, no alignment. It is faster"""
+    # def custom_key(in_str):
+    #   return len(in_str), in_str.lower()
+
+    all_seq_good_dist = set()
+    all_seq_good_dist_list = []
+    for d in self.distances:
+      # defaultdict(None, {'freq1': 165648, 'freq2': 70841, 'len': 4, 'seq1': 'TGGG', 'seq2': 'TGGG', 'dist': 0.0})
+      if d["dist"] < self.max_distance:
+        all_seq_good_dist.add(d["seq1"])
+        all_seq_good_dist.add(d["seq2"])
+        all_seq_good_dist_list = sorted(all_seq_good_dist)
+        all_seq_good_dist_list.sort(key = len)
+
+    return all_seq_good_dist_list
+    # sorted(all_seq_good_dist, key=custom_key)
+
+  def analyse_dist(self):
+    """Use for exact match only, no alignment. It is faster"""
+    perc_dict = defaultdict()
+    all_seq_good_dist_list = self.get_all_seq_good_dist()
+    for curr_seq in all_seq_good_dist_list:
+      cntr = 0
+      for e_dict in self.all_seq:
+        if e_dict["seq"].startswith(curr_seq):
+          cntr = cntr + e_dict["freq"]
+      perc_dict[curr_seq] = cntr
+    return perc_dict
+
   def get_percent(self, perc_dict):
+    output_list = []
     perc50 = float(self.total_seq) / 2
     for seq, cnts in perc_dict.items():
       # only if more then 50%
@@ -200,11 +200,26 @@ class Sequences:
         perc = 100 * cnts / float(self.total_seq)
         # only if more then our threshold
         if perc > self.min_perc:
-          self.print_output(seq, cnts, perc)
+          output_list.append((seq, cnts, perc))
+    self.print_output(output_list)
           # print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
 
-  def print_output(self, seq, cnts, perc):
-    print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
+  def print_output(self, output_list):
+    curr_output_list = output_list
+    if self.sort_by_percent:
+      curr_output_list = self.sort_by_sub_list(output_list)
+
+    for e in curr_output_list:
+      seq = e[0]
+      cnts = e[1]
+      perc = e[2]
+      print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
+
+  def sort_by_sub_list(self, sub_li):
+    # reverse = True (Sorts in Descending order)
+    # key is set to sort using third element of sub_li (percentage)
+    sub_li.sort(key = lambda x: x[2], reverse = True)
+    return sub_li
 
   def make_new_group_str(self, new_gr_l):
     return "[{}]".format("".join(sorted(new_gr_l)))
@@ -291,6 +306,17 @@ for file in *_R1.fastq; do cat $file | grep -A1 "^@M"| grep -v "^@M"| grep -v "\
 time cat ~/1_50.txt | sort | uniq -c | sort -n >~/1_50.sorted.uniqued.txt
  
 time python find_barcodes.py -f ~/1_50.sorted.uniqued.txt
+
+Usage example for each file separately (useful if each file has a different adapter in front of a common primer. Note we skip the first 5 nd):
+for file in *R1.fastq; 
+do 
+echo $file 
+echo $file >> ~/6_50.res.txt;
+time cat $file | grep -A1 "^@M"| grep -v "^@M"| grep -v "\-\-" | cut -c6-50 | sort | uniq -c | sort -n >~/6_50.$file.sorted.uniqued.txt;
+
+time python find_barcodes.py -f ~/6_50.$file.sorted.uniqed.txt >> ~/6_50.res.txt;
+done
+
 
 NB. 1) If sequences have first X random nucleotides change "cut -c1-50" to "cut -cX-50" in the bash command above.
     2) "^@M" in the grep commands should be changed to whatever the header lines start with. 
