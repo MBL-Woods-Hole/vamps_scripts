@@ -34,11 +34,12 @@ class Sequences:
     self.all_seq = []
     self.get_input_data(args.input_file)
 
-    self.sum_freq = self.get_sum_freq()
+    self.total_seq = self.get_sum_freq()
 
     self.distances = []
-    self.find_dist()
-    self.freq_dist_dict = defaultdict(list)
+    self.test_seq_amount_and_find_dist()
+
+    # self.freq_dist_dict = defaultdict(list)
     perc_counter = self.analyse_dist_w_re()
     self.get_percent(perc_counter)
 
@@ -59,37 +60,46 @@ class Sequences:
   def get_sum_freq(self):
     return sum([d["freq"] for d in self.all_seq])
 
+  def test_seq_amount_and_find_dist(self):
+    if len(self.all_seq) == 1:
+      print("There is only one entry: {}. That means all the sequences have the same beginning.".format(
+        self.all_seq[0]["seq"]))
+    else:
+      self.find_dist()
+
   def find_dist(self):
-    reversed_fr_seq_d_arr = self.all_seq[::-1]
-    for i, d in enumerate(reversed_fr_seq_d_arr):
-      full_seq1 = reversed_fr_seq_d_arr[i]["seq"]
-      try:
-        full_seq2 = reversed_fr_seq_d_arr[i + 1]["seq"]
-        freq1 = reversed_fr_seq_d_arr[i]["freq"]
-        freq2 = reversed_fr_seq_d_arr[i + 1]["freq"]
+      reversed_fr_seq_d_arr = self.all_seq[::-1]
+      for i, d in enumerate(reversed_fr_seq_d_arr):
+        full_seq1 = reversed_fr_seq_d_arr[i]["seq"]
+        try:
+          full_seq2 = reversed_fr_seq_d_arr[i + 1]["seq"]
+          freq1 = reversed_fr_seq_d_arr[i]["freq"]
+          freq2 = reversed_fr_seq_d_arr[i + 1]["freq"]
 
-        if (not freq1 < self.min_freq) and (not freq2 < self.min_freq):
-          # end_length = max(len(full_seq1), len(full_seq2))
+          if (not freq1 < self.min_freq) and (not freq2 < self.min_freq):
+            # end_length = max(len(full_seq1), len(full_seq2))
 
-          for l in range(self.start_length, self.end_length):
-            curr_dist_dict = defaultdict()
-            curr_dist_dict["freq1"] = reversed_fr_seq_d_arr[i]["freq"]
-            curr_dist_dict["freq2"] = reversed_fr_seq_d_arr[i + 1]["freq"]
+            for l in range(self.start_length, self.end_length):
+              curr_dist_dict = defaultdict()
+              curr_dist_dict["freq1"] = reversed_fr_seq_d_arr[i]["freq"]
+              curr_dist_dict["freq2"] = reversed_fr_seq_d_arr[i + 1]["freq"]
 
-            seq1 = full_seq1[0:l]
-            seq2 = full_seq2[0:l]
+              seq1 = full_seq1[0:l]
+              seq2 = full_seq2[0:l]
 
-            curr_dist_dict["len"] = l
-            curr_dist_dict["seq1"] = seq1
-            curr_dist_dict["seq2"] = seq2
+              curr_dist_dict["len"] = l
+              curr_dist_dict["seq1"] = seq1
+              curr_dist_dict["seq2"] = seq2
 
-            dist = self.levenshtein(seq1, seq2)
-            curr_dist_dict["dist"] = dist
+              dist = self.levenshtein(seq1, seq2)
+              curr_dist_dict["dist"] = dist
 
-            self.distances.append(curr_dist_dict)
-            # print(curr_dist_dict)
-      except IndexError:
-        print("There is only one entry: {}. That means all the sequences have the same beginning.".format(reversed_fr_seq_d_arr[i]["seq"]))
+              self.distances.append(curr_dist_dict)
+              # print(curr_dist_dict)
+        except IndexError:
+          pass
+        except:
+          raise
 
   def levenshtein(self, seq1, seq2):
     size_x = len(seq1) + 1
@@ -183,12 +193,18 @@ class Sequences:
     return perc_dict
 
   def get_percent(self, perc_dict):
-    perc50 = float(self.sum_freq) / 2
+    perc50 = float(self.total_seq) / 2
     for seq, cnts in perc_dict.items():
+      # only if more then 50%
       if cnts > perc50:
-        perc = 100 * cnts / float(self.sum_freq)
+        perc = 100 * cnts / float(self.total_seq)
+        # only if more then our threshold
         if perc > self.min_perc:
-          print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
+          self.print_output(seq, cnts, perc)
+          # print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
+
+  def print_output(self, seq, cnts, perc):
+    print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
 
   def make_new_group_str(self, new_gr_l):
     return "[{}]".format("".join(sorted(new_gr_l)))
