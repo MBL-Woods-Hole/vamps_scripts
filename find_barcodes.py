@@ -24,18 +24,20 @@ import re
 class Sequences:
   def __init__(self, args):
 
+    # defaults:
     self.min_freq = int(args.min_freq) or 2000
     self.start_length = int(args.start_length) or 4
     self.end_length = int(args.end_length) or 35
     self.min_perc = int(args.min_perc) or 70
     self.max_distance = int(args.max_distance) or 2
 
-    f = open(args.input_file, 'r')
-    infile_text = f.readlines()
     self.all_seq = []
-    self.collect_data(infile_text)
+    self.get_input_data(args.input_file)
+    # f = open(args.input_file, 'r')
+    # infile_text = f.readlines()
+    # self.all_seq = []
+    # self.parse_data(infile_text)
 
-    # self.all_freq = self.find_freq()
     self.sum_freq = self.get_sum_freq()
 
     self.distances = []
@@ -44,7 +46,7 @@ class Sequences:
     perc_counter = self.analyse_dist_w_re()
     self.get_percent(perc_counter)
 
-  def collect_data(self, infile_text):
+  def parse_data(self, infile_text):
     for l in infile_text:
       line_items = l.strip().split()
       curr_dict = defaultdict()
@@ -53,8 +55,10 @@ class Sequences:
 
       self.all_seq.append(curr_dict)
 
-  def find_freq(self):
-    return [d["freq"] for d in self.all_seq]
+  def get_input_data(self, input_file):
+    f = open(input_file, 'r')
+    infile_text = f.readlines()
+    self.parse_data(infile_text)
 
   def get_sum_freq(self):
     return sum([d["freq"] for d in self.all_seq])
@@ -90,9 +94,6 @@ class Sequences:
             # print(curr_dist_dict)
       except IndexError:
         print("There is only one entry: {}. That means all the sequences have the same beginning.".format(reversed_fr_seq_d_arr[i]["seq"]))
-      except:
-        raise
-        # pass
 
   def levenshtein(self, seq1, seq2):
     size_x = len(seq1) + 1
