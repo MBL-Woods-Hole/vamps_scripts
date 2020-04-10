@@ -30,6 +30,7 @@ class Sequences:
     self.end_length = int(args.end_length) or 35
     self.min_perc = int(args.min_perc) or 70
     self.max_distance = int(args.max_distance) or 2
+    self.sort_by_percent = args.sort_by_percent or True
 
     self.all_seq = []
     self.get_input_data(args.input_file)
@@ -308,15 +309,17 @@ time cat ~/1_50.txt | sort | uniq -c | sort -n >~/1_50.sorted.uniqued.txt
 time python find_barcodes.py -f ~/1_50.sorted.uniqued.txt
 
 Usage example for each file separately (useful if each file has a different adapter in front of a common primer. Note we skip the first 5 nd):
+cd /xraid2-2/g454/run_new_pipeline/miseq/20200227/lane_1_B/analysis
+
 for file in *R1.fastq; 
 do 
 echo $file 
 echo $file >> ~/6_50.res.txt;
 time cat $file | grep -A1 "^@M"| grep -v "^@M"| grep -v "\-\-" | cut -c6-50 | sort | uniq -c | sort -n >~/6_50.$file.sorted.uniqued.txt;
 
-time python find_barcodes.py -f ~/6_50.$file.sorted.uniqed.txt >> ~/6_50.res.txt;
+time python /xraid/bioware/linux/seqinfo/bin/find_barcodes.py -f ~/6_50.$file.sorted.uniqued.txt >> ~/6_50.res.txt;
 done
-
+mail_done
 
 NB. 1) If sequences have first X random nucleotides change "cut -c1-50" to "cut -cX-50" in the bash command above.
     2) "^@M" in the grep commands should be changed to whatever the header lines start with. 
@@ -327,6 +330,7 @@ Default thresholds:
   Minimum "beginning" length = 4 (start_length)
   Maximum "beginning" length = 35 (end_length)
   Print out results if percentage is grater than 70 (min_perc)
+  Results are printed sorted by percentage, the greatest percentage first (sort_by_percent)
 ==========
 Output example:
   TGGG 1155916: 82.4%%
@@ -343,26 +347,29 @@ Output example:
 
   parser.add_argument('-f', '--file_name',
                       required = True, action = 'store', dest = 'input_file',
-                      help = '''Input file name''')
+                      help = '''Input file name.''')
   parser.add_argument('-fr', '--min_freq',
                       required = False, action = 'store', dest = 'min_freq', default = 2000,
-                      help = '''Do not take "beginnings" from sequences with frequency less than MIN_FREQ''')
+                      help = '''Do not take "beginnings" from sequences with frequency less than MIN_FREQ.''')
   parser.add_argument('-st', '--start_length',
                       required = False, action = 'store', dest = 'start_length', default = 4,
-                      help = '''Minimum "beginning" length = START_LENGTH''')
+                      help = '''Minimum "beginning" length = START_LENGTH.''')
   parser.add_argument('-en', '--end_length',
                       required = False, action = 'store', dest = 'end_length', default = 35,
-                      help = '''Maximum "beginning" length = END_LENGTH''')
+                      help = '''Maximum "beginning" length = END_LENGTH.''')
   parser.add_argument('-mp', '--min_perc',
                       required = False, action = 'store', dest = 'min_perc', default = 70,
-                      help = '''Print out results if percentage is grater than MIN_PERC''')
+                      help = '''Print out results if percentage is grater than MIN_PERC.''')
   parser.add_argument('-ld', '--max_distance',
                       required = False, action = 'store', dest = 'max_distance', default = 2,
-                      help = '''Filter out "beginnings" if the Levenstein distance between them is equal or greater than MAX_DISTANCE. To do only the exact match comparison with no mismatches use --max_distance 1''')
+                      help = '''Filter out "beginnings" if the Levenstein distance between them is equal or greater than MAX_DISTANCE. To do only the exact match comparison with no mismatches use --max_distance 1.''')
+  parser.add_argument('-ps', '--sort_by_percent',
+                      required = False, action = 'store_false', dest = 'sort_by_percent',
+                      help = '''By default the output is sorted by percent. If this option is provided the output is printed sorted by length.''')
 
   parser.add_argument("-ve", "--verbatim",
                       required = False, action = "store_true", dest = "is_verbatim",
-                      help = """Print an additional information""")
+                      help = """Print an additional information.""")
 
   args = parser.parse_args()
 
