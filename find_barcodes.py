@@ -212,11 +212,6 @@ class Sequences:
 
     self.output_text = "\n".join(["{} {}: {:.1f}%".format(e[0], e[1], round(e[2], 1)) for e in curr_output_list])
     print(self.output_text)
-    # for e in curr_output_list:
-    #   seq = e[0]
-    #   cnts = e[1]
-    #   perc = e[2]
-    #   print("{} {}: {:.1f}%".format(seq, cnts, round(perc, 1)))
 
   def sort_by_sub_list(self, sub_li):
     # reverse = True (Sorts in Descending order)
@@ -311,14 +306,9 @@ TG[AG]GGA 723711: 93.5%
 TGGGG 696613: 90.0%
 T[AG]GGGA 703808: 90.9%"""
 
-
   def test_res(self):
     test_sequences = Sequences(args)
-    # test_sequences.min_freq = int(args.min_freq) or 2000
-    # test_sequences.start_length = int(args.start_length) or 4
-    # test_sequences.end_length = int(args.end_length) or 35
-    # test_sequences.min_perc = int(args.min_perc) or 70
-    # test_sequences.max_distance = int(args.max_distance) or 2
+
     test_sequences.sort_by_percent = False
 
     test_sequences.parse_data(self.input)
@@ -328,6 +318,7 @@ T[AG]GGGA 703808: 90.9%"""
 
     test_sequences.analyse_dist_w_re()
     test_sequences.get_percent()
+    print("===== Test output =====")
     test_sequences.print_output()
 
     assert test_sequences.output_text == self.output, "{} should be {}".format(test_sequences.output_text, self.output)
@@ -356,16 +347,16 @@ class Usage:
   
     time python find_barcodes.py -f ~/1_50.sorted.uniqued.txt
   
-    Usage example for each file separately (useful if each file has a different adapter in front of a common primer. Note we skip the first 5 nd):
+    Usage example for each file separately (useful if each file has a different adapter in front of a common primer):
     cd /xraid2-2/g454/run_new_pipeline/miseq/20200227/lane_1_B/analysis
   
     for file in *R1.fastq; 
     do 
     echo $file 
-    echo $file >> ~/6_50.res.txt;
-    time cat $file | grep -A1 "^@M"| grep -v "^@M"| grep -v "\-\-" | cut -c6-50 | sort | uniq -c | sort -n >~/6_50.$file.sorted.uniqued.txt;
+    echo $file >> ~/1_50.res.txt;
+    time cat $file | grep -A1 "^@M"| grep -v "^@M"| grep -v "\-\-" | cut -c1-50 | sort | uniq -c | sort -n >~/1_50.$file.sorted.uniqued.txt;
   
-    time python /xraid/bioware/linux/seqinfo/bin/find_barcodes.py -f ~/6_50.$file.sorted.uniqued.txt >> ~/6_50.res.txt;
+    time python /xraid/bioware/linux/seqinfo/bin/find_barcodes.py -f ~/1_50.$file.sorted.uniqued.txt >> ~/1_50.res.txt;
     done
     mail_done
   
@@ -437,8 +428,8 @@ if __name__ == '__main__':
   else:
     sequences = Sequences(args)
     sequences.run_analysis()
-    tests = Tests()
-    tests.test_res()
+    # tests = Tests()
+    # tests.test_res()
   # plots = Plots(sequences.freq_dist_dict)
   # sequences.get_seq_low_dist_dist()a
 
