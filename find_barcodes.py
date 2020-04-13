@@ -340,9 +340,15 @@ class Usage:
         ...  
          70841 TGGGGAATATTGGACAATGGGGGCAACCCTGATCCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAGGGGA
         165648 TGGGGAATATTGCACAATGGGGGAAACCCTGATGCAGCCATGCCGCGTGTGTGAAGAAGGCCTTCGGGTTGTAAAGCACTTTCAGTTGTGAGGAAAAGTT
-  
+   
     Usage example:
-    for file in *_R1.fastq; do cat $file | grep -A1 "^@M"| grep -v "^@M"| grep -v "\-\-" | cut -c1-50 >>~/1_50.txt; done
+    1) First look at the file names and the header line and change "*_R1.fastq" and "^@M" accordingly in the command line below. 
+    2) The second line will print out sequences only each cut down to the first 50 nd. 
+    3) If sequences have first X random nucleotides change "cut -c1-50" to "cut -cX-50" in the bash command above.
+    
+    for file in *_R1.fastq; 
+    do cat $file | grep -A1 "^@M" | grep -v "^@M" | grep -v "\-\-" | cut -c1-50 >>~/1_50.txt; 
+    done
   
     time cat ~/1_50.txt | sort | uniq -c | sort -n >~/1_50.sorted.uniqued.txt
   
@@ -361,8 +367,6 @@ class Usage:
     done
     mail_done
   
-    NB. 1) If sequences have first X random nucleotides change "cut -c1-50" to "cut -cX-50" in the bash command above.
-        2) "^@M" in the grep commands should be changed to whatever the header lines start with. 
     ==========
     Default thresholds:
       Do not take "beginnings" from sequences with frequency less than 2000 (min_freq)
