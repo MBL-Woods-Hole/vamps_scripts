@@ -343,7 +343,7 @@ class Usage:
    
     Usage example:
     1) First look at the file names and the header line and change "*_R1.fastq" and "^@M" accordingly in the command line below. 
-    2) The second line will print out sequences only each cut down to the first 50 nd. 
+    2) The second line will print out sequences only, each cut down to the first 50 nd. 
     3) If sequences have first X random nucleotides change "cut -c1-50" to "cut -cX-50" in the bash command above.
     
     for file in *_R1.fastq; 
