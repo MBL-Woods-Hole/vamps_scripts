@@ -14,6 +14,7 @@ TODO: add tests
 """
 from collections import defaultdict
 import argparse
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
@@ -411,6 +412,10 @@ class Usage:
     parser.add_argument("-ve", "--verbatim",
                         required = False, action = "store_true", dest = "is_verbatim",
                         help = """Print an additional information.""")
+    if len(sys.argv) == 1:
+      parser.print_help(sys.stderr)
+      sys.exit(1)
+
     return parser.parse_args()
 
 
