@@ -25,7 +25,13 @@ import configparser as ConfigParser
 import datetime
 today = str(datetime.date.today())
 import subprocess
-import pymysql as MySQLdb
+try:
+    import mysqlclient as mysql
+except ImportError:
+    try:
+        import pymysql as mysql
+    except ImportError:
+        import MySQLdb as mysql
 import json
 
 """
@@ -115,6 +121,8 @@ def load_mdata_file(args):
     data = {}
     print
     print('Loading metadata from file')
+    print("args.infile_type: ")
+    print(args.infile_type)
     if args.infile_type == 'json':
         with open(args.file_path) as data_file:
             data = json.load(data_file)
@@ -122,7 +130,7 @@ def load_mdata_file(args):
         lol = list(csv.reader(open(args.file_path, 'r'), delimiter=','))
         TMP_METADATA_ITEMS = {}
     
-        #print lol
+        # print lol
         keys = lol[0]
         print(keys)
         dname_index  = 0   # update
@@ -340,7 +348,7 @@ def run_mysql_query(q):
         cur.execute(q)
         db.commit()
         return 0
-    except MySQLdb.Error as e:
+    except mysql.Error as e:
         try:
             print("MySQL Error [%d]: %s" % (e.args[0], e.args[1]))
         except IndexError:
@@ -428,13 +436,14 @@ if __name__ == '__main__':
         args.json_file_path = os.path.join(args.process_dir,'public','json')
         args.NODE_DATABASE = args.db
         hostname = 'localhost'
-        if os.path.isdir(args.json_file_path):
-            print('json_file_path VALIDATED')
-        else:
-            print('json_file_path DID NOT VALIDATE:',args.json_file_path)
-            sys.exit('Exiting')
+        if args.infile_type == 'json':        
+          if os.path.isdir(args.json_file_path):
+              print('json_file_path VALIDATED')
+          else:
+              print('json_file_path DID NOT VALIDATE:', args.json_file_path)
+              sys.exit('Exiting')
 
-    db = MySQLdb.connect(db = args.NODE_DATABASE, host=hostname, read_default_file=os.path.expanduser("~/.my.cnf_node")  )
+    db = mysql.connect(db = args.NODE_DATABASE, host=hostname, read_default_file=os.path.expanduser("~/.my.cnf_node")  )
     cur = db.cursor()
     cur.execute("SHOW databases")
     dbs = []

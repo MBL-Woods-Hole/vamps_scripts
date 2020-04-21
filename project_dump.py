@@ -411,7 +411,7 @@ class LongTables:
 
         table_data["table_name"] = table_name
         table_data["id_name"] = table_name + "_id"
-        table_data["fields"] = curr_conn_obj.mysql_utils_in.get_field_names(table_name)
+        table_data["fields"] = curr_conn_obj.mysql_utils_in.get_field_names_by_table_name(table_name)
         table_data["fields_str"] = ", ".join([x[0] for x in table_data["fields"][0]])
         table_data["unique_fields"] = curr_conn_obj.mysql_utils_in.get_uniq_index_columns(curr_conn_obj.db_info_dict["db_in"], table_name)
         table_data["unique_fields_str"] = ", ".join(table_data["unique_fields"])
