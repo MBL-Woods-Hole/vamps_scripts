@@ -50,7 +50,7 @@ required_id_metadata_fields2= [  "env_biome_id", "env_feature_id", "env_material
 
 #required_id_metadata_fields= [  "env_biome_id", "env_feature_id", "env_material_id","env_package_id","geo_loc_name_id", "dna_region_id",'adapter_sequence_id','sequencing_platform_id','target_gene_id','domain_id','illumina_index_id','primer_suite_id', 'run_id' ];
 
-req_first_col = ['#SampleID','sample_name','dataset_name','dataset','datasets']
+req_first_col = ['#SampleID','sample_name','dataset_name','dataset','datasets','sample name']
 #test = ('434','0','y','1/27/14','0','GAZ:Canada','167.5926056','ENVO:urban biome','ENVO:human-associated habitat','ENVO:feces','43.119339','-79.2458198','y',
 #'408170','human gut metagenome','American Gut Project Stool sample')
 #test7 = ('434','ENVO:urban biome','ENVO:human-associated habitat','ENVO:feces','43.119339','-79.2458198','y')
@@ -62,7 +62,7 @@ id_queries = [
     {"table":"sequencing_platform","query": "SELECT sequencing_platform_id FROM sequencing_platform WHERE sequencing_platform = 'unknown'"},
     {"table":"target_gene","query": "SELECT target_gene_id FROM target_gene WHERE target_gene = 'unknown'"},
     {"table":"domain","query": "SELECT domain_id FROM domain WHERE domain = 'unknown'"},
-    {"table":"illumina_index","query": "SELECT illumina_index_id FROM illumina_index WHERE illumina_index = 'unknown'"},
+    {"table":"illumina_index","query": "SELECT illumina_index_id FROM illumina_index WHERE illumina_index = 'none'"},
     {"table":"primer_suite","query": "SELECT primer_suite_id FROM primer_suite WHERE primer_suite = 'unknown'"},
     {"table":"run","query": "SELECT run_id FROM run WHERE run = 'unknown'"}
 ]
@@ -87,6 +87,7 @@ def start_metadata_load_from_file(args):
     
     csv_infile =   os.path.join(args.project_dir,args.metadata_file)
     get_config_data(args)  
+    unknowns = get_null_ids()
     if os.path.isfile(csv_infile):
         cur.execute("USE "+args.NODE_DATABASE)    
           
@@ -101,7 +102,7 @@ def start_metadata_load_from_file(args):
             print('NO CUSTOM METADATA')
         
         if len(REQ_METADATA_ITEMS.keys()) > 2:
-            put_required_metadata()
+            put_required_metadata(unknowns)
         else:
             print('NO REQUIRED METADATA')
         
@@ -109,7 +110,6 @@ def start_metadata_load_from_file(args):
         print("Could not find csv_file:",csv_infile)
         # no metadata -- should enter defaults
         print("Using 'unknown' Defaults")
-        defaults = get_null_ids()
         # must get dids
         
         #{'term': 6191, 'dna_region': 1, 'adapter_sequence': 1, 'sequencing_platform': 5, 'target_gene': 3, 'domain': 1, 'illumina_index': 83, 'primer_suite': 35, 'run': 5543}
@@ -122,9 +122,9 @@ def start_metadata_load_from_file(args):
             for id_label in required_id_metadata_fields:
                 #print(id_label)
                 if id_label == 'env_material' or id_label == 'env_feature' or id_label == 'env_biome' or id_label == 'geo_loc_name':
-                    entry = str(defaults['term'])
+                    entry = str(unknownss['term'])
                 else:
-                    entry = str(defaults[id_label])
+                    entry = str(unknowns[id_label])
                 q += ","+entry
             
             q += "),"
@@ -146,8 +146,10 @@ def get_null_ids():
     print('unknown IDs',unknowns)
     return unknowns
     
-def put_required_metadata():
+def put_required_metadata(unknowns):
     global mysql_conn, cur
+    print('Starting put_required_metadata')
+    print(args.update_or_insert)
     if args.update_or_insert == 'update':
     
         for i,did in enumerate(REQ_METADATA_ITEMS['dataset_id']):
@@ -179,11 +181,20 @@ def put_required_metadata():
                         else:
                             search = 'unknown'
                         q2 = "select "+newitem+" from "+newitem[:-3]+" where "+newitem[:-3]+"='"+search+"'"
+                    
                     print(q2)
                     cur.execute(q2)
-                    row = cur.fetchone()
-                    print(row[0])
-                    q3 += newitem+"='"+str(row[0])+"',"
+                    if cur.rowcount > 0:
+                        row = cur.fetchone()
+                        print(row[0])
+                        q3 += newitem+"='"+str(row[0])+"',"
+                    else:
+                        print('unknowns')
+                        print(unknowns)
+                        try:
+                            q3 += newitem+"='"+str(unknowns[item])+"',"
+                        except:
+                            q3 += newitem+"='"+str(unknowns[newitem])+"'," 
                     
                
             q3 = q3[:-1] + " WHERE dataset_id='"+str(did)+"'"
@@ -192,7 +203,7 @@ def put_required_metadata():
             cur.execute(q3)
             mysql_conn.commit()
             
-    else:
+    else:   # insert: this is default
     
         q = "INSERT IGNORE into required_metadata_info (dataset_id,"+','.join(required_metadata_fields_with_ids)+")"
         q = q+" VALUES("
@@ -201,15 +212,16 @@ def put_required_metadata():
             vals = "'"+str(did)+"',"
             
             for item in required_metadata_fields:
+                print('item: '+item)
                 if item+'_id' in required_id_metadata_fields2:
                     newitem=item+'_id'                    
                 else:
                     newitem=item
-                
+                # newitem is item with '_id' if needed                
                 if newitem in REQ_METADATA_ITEMS:
                     vals += "'"+str(REQ_METADATA_ITEMS[newitem][i])+"',"
                 else:
-                    print(newitem)
+                    print('newitem: '+newitem)
                     
                     
                     if newitem in ['env_biome_id','env_feature_id','env_material_id','geo_loc_name_id']:
@@ -225,20 +237,31 @@ def put_required_metadata():
                             search = 'unknown'
                         q2 = "select run_key_id from run_key where run_key='"+search+"'" 
                     else:
+                        print(REQ_METADATA_ITEMS)
                         if item in REQ_METADATA_ITEMS:
                             search = REQ_METADATA_ITEMS[item][i]
                         else:
-                            search = 'unknown'
+                            if newitem == 'illumina_index_id':
+                                search = 'none'
+                            else:
+                                search = 'unknown'
                         q2 = "select "+newitem+" from "+newitem[:-3]+" where "+newitem[:-3]+"='"+search+"'"
                     
                 
                     
                     print(q2)
                     cur.execute(q2)
-                    row = cur.fetchone()
-                    print(row[0])
-                    vals += "'"+str(row[0])+"',"
-                    
+                    if cur.rowcount > 0:
+                        row = cur.fetchone()
+                        print(row[0])
+                        vals += "'"+str(row[0])+"',"
+                    else:
+                        print('unknowns')
+                        print(unknowns)
+                        try:
+                            vals += "'"+str(unknowns[item])+"',"
+                        except:
+                            vals += "'"+str(unknowns[newitem])+"',"
                     
             q3 = q + vals[:-1] + ")"  
             print(q3)
@@ -345,21 +368,25 @@ def get_metadata(indir, csv_infile):
     TMP_METADATA_ITEMS = {}
     
     
-    keys = lol[0]
+    keys = [k.lower() for k in lol[0]]
+    print('keys')
+    print(keys)
     for i,key in enumerate(keys):
         TMP_METADATA_ITEMS[key] = []
         for line in lol[1:]:
-            TMP_METADATA_ITEMS[key].append(line[i])
+            if line:
+                TMP_METADATA_ITEMS[key].append(line[i])
     saved_indexes = []    
-    
-    #if CONFIG_ITEMS['fasta_type']=='multi':           
+ 
+   #if CONFIG_ITEMS['fasta_type']=='multi':           
     for ds in CONFIG_ITEMS['datasets']:
         
         found = False
         for samp_head_name in req_first_col:
-            #print('samp_head_name',samp_head_name)
+            print('samp_head_name',samp_head_name)
             if samp_head_name in TMP_METADATA_ITEMS:
                 found = True                
+                print('found')
                 try:
                     saved_indexes.append(TMP_METADATA_ITEMS[samp_head_name].index(ds))
                     dataset_header_name = samp_head_name
@@ -498,6 +525,9 @@ if __name__ == '__main__':
     parser.add_argument("-in", "--infile",    
                 required=False,  action="store",   dest = "metadata_file", default='metadata_clean.csv',
                 help = 'config file name') 
+    parser.add_argument("-ds", "--dataset_name_header",
+                required=False,  action="store",   dest = "dataset_name_header", default='dataset',
+                help = 'column to use for dataset name')
     parser.add_argument("-delim","--delimiter",
                 required=False,  action="store",   dest = "delim", default='comma',
                 help="""METADATA: comma or tab""")
