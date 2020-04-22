@@ -161,8 +161,12 @@ def put_required_metadata(unknowns):
                     newitem=item+'_id'                    
                 else:
                     newitem=item
+                #if newitem == 'latitude' and (str(REQ_METADATA_ITEMS[newitem][i]) =='0' or str(REQ_METADATA_ITEMS[newitem][i])==''):
                 if newitem in REQ_METADATA_ITEMS:
-                    q3 += newitem+"='"+str(REQ_METADATA_ITEMS[newitem][i])+"',"
+                    if newitem in ['latitude','longitude'] and (str(REQ_METADATA_ITEMS[newitem][i]) =='0' or str(REQ_METADATA_ITEMS[newitem][i])==''):
+                        q3 += newitem+"=null,"
+                    else:
+                        q3 += newitem+"='"+str(REQ_METADATA_ITEMS[newitem][i])+"',"
                 else:
                     print(newitem)
                     if newitem in ['env_biome_id','env_feature_id','env_material_id','geo_loc_name_id']:
