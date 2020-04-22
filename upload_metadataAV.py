@@ -279,19 +279,19 @@ def put_custom_metadata():
     print('starting put_custom_metadata')
     cust_keys_array = CUST_METADATA_ITEMS.keys()
     custom_table = 'custom_metadata_'+str(CONFIG_ITEMS['project_id'])
-    
-    if args.insert_or_update == 'update':
+    # for insert[Default] and update delete then recreate custom table
+    #if args.insert_or_update == 'update':
         # delete custom table 
         
-        q = "DROP TABLE IF EXISTS `"+ custom_table +"`"
-        cur.execute(q)
-        print(q)
-        mysql_conn.commit()
-        # delete dataset_ids from 
-        q = "DELETE from custom_metadata_fields WHERE project_id='"+str(CONFIG_ITEMS['project_id'])+"'"
-        print(q)
-        cur.execute(q)
-        mysql_conn.commit()
+	q = "DROP TABLE IF EXISTS `"+ custom_table +"`"
+	cur.execute(q)
+	print(q)
+	mysql_conn.commit()
+	# delete dataset_ids from 
+	q = "DELETE from custom_metadata_fields WHERE project_id='"+str(CONFIG_ITEMS['project_id'])+"'"
+	print(q)
+	cur.execute(q)
+	mysql_conn.commit()
 
     # TABLE-1 === custom_metadata_fields
     for key in CUST_METADATA_ITEMS:
@@ -387,11 +387,11 @@ def get_metadata(indir, csv_infile):
             #print('samp_head_name',samp_head_name)
             if samp_head_name in TMP_METADATA_ITEMS:
                 found = True                
-                print('found: '+samp_head_name)
+                #print('found: '+samp_head_name)
                 try:
                     saved_indexes.append(TMP_METADATA_ITEMS[samp_head_name].index(ds))
                     dataset_header_name = samp_head_name
-                    print('USING: '+dataset_header_name)
+                    print('USING: "'+dataset_header_name+'"')
                 except:
                     pass
             
@@ -504,8 +504,8 @@ if __name__ == '__main__':
             -p/--project
             -site/--site                DEFAULT: local
             -config/--config            name only
-            -in/--infile                name only [DEFAULT: `metadata_clean.csv`]
-	        -iou/--insert_or_update  [DEFAULT: insert]   
+			-in/--infile                name only [DEFAULT: `metadata_clean.csv`]
+			-iou/--insert_or_update  [DEFAULT: insert]   
     """
     parser = argparse.ArgumentParser(description="" ,usage=myusage)                 
     
