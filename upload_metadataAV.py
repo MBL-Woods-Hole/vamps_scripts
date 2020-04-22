@@ -282,16 +282,16 @@ def put_custom_metadata():
     # for insert[Default] and update delete then recreate custom table
     #if args.insert_or_update == 'update':
         # delete custom table 
-        
-	q = "DROP TABLE IF EXISTS `"+ custom_table +"`"
-	cur.execute(q)
-	print(q)
-	mysql_conn.commit()
-	# delete dataset_ids from 
-	q = "DELETE from custom_metadata_fields WHERE project_id='"+str(CONFIG_ITEMS['project_id'])+"'"
-	print(q)
-	cur.execute(q)
-	mysql_conn.commit()
+
+    q = "DROP TABLE IF EXISTS `"+ custom_table +"`"
+    cur.execute(q)
+    print(q)
+    mysql_conn.commit()
+    # delete dataset_ids from 
+    q = "DELETE from custom_metadata_fields WHERE project_id='"+str(CONFIG_ITEMS['project_id'])+"'"
+    print(q)
+    cur.execute(q)
+    mysql_conn.commit()
 
     # TABLE-1 === custom_metadata_fields
     for key in CUST_METADATA_ITEMS:
