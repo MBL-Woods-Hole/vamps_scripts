@@ -150,9 +150,10 @@ def get_null_ids():
 def put_required_metadata(unknowns):
     global mysql_conn, cur
     print('Starting put_required_metadata')
-    print(args.insert_or_update)
-    if args.insert_or_update == 'update':
-    
+    print('args.update')
+    print(args.update)
+    if args.update:
+        # UPDATE
         for i,did in enumerate(REQ_METADATA_ITEMS['dataset_id']):
             q3 = "UPDATE required_metadata_info set "   #(dataset_id,"+','.join(required_metadata_fields)+")"
             for item in required_metadata_fields:
@@ -205,7 +206,7 @@ def put_required_metadata(unknowns):
             mysql_conn.commit()
             
     else:   # insert: this is default
-    
+        # INSERT
         q = "INSERT IGNORE into required_metadata_info (dataset_id,"+','.join(required_metadata_fields_with_ids)+")"
         q = q+" VALUES("
     
@@ -504,8 +505,8 @@ if __name__ == '__main__':
             -p/--project
             -site/--site                DEFAULT: local
             -config/--config            name only
-			-in/--infile                name only [DEFAULT: `metadata_clean.csv`]
-			-iou/--insert_or_update  [DEFAULT: insert]   
+            -in/--infile                name only [DEFAULT: `metadata_clean.csv`]
+            -u/--update                 Update will overwrite! [DEFAULT: insert/ no overwrite]   
     """
     parser = argparse.ArgumentParser(description="" ,usage=myusage)                 
     
@@ -535,8 +536,8 @@ if __name__ == '__main__':
                 required=False,  action="store",   dest = "delim", default='comma',
                 help="""METADATA: comma or tab""")
     
-    parser.add_argument("-iou","--insert_or_update",
-                required=False,  action="store",   dest = "insert_or_update", default='insert',
+    parser.add_argument("-u","--update",
+                required=False,  action="store_true",   dest = "update", default=False,
                 help="""insert or update""")
                 
     args = parser.parse_args()    
