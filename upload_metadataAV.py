@@ -132,6 +132,7 @@ def start_metadata_load_from_file(args):
         print(q)
         cur.execute(q)
     mysql_conn.commit()
+    return CONFIG_ITEMS['project_id']
 
 def get_null_ids():
     global mysql_conn, cur
@@ -149,8 +150,8 @@ def get_null_ids():
 def put_required_metadata(unknowns):
     global mysql_conn, cur
     print('Starting put_required_metadata')
-    print(args.update_or_insert)
-    if args.update_or_insert == 'update':
+    print(args.insert_or_update)
+    if args.insert_or_update == 'update':
     
         for i,did in enumerate(REQ_METADATA_ITEMS['dataset_id']):
             q3 = "UPDATE required_metadata_info set "   #(dataset_id,"+','.join(required_metadata_fields)+")"
@@ -279,7 +280,7 @@ def put_custom_metadata():
     cust_keys_array = CUST_METADATA_ITEMS.keys()
     custom_table = 'custom_metadata_'+str(CONFIG_ITEMS['project_id'])
     
-    if args.update_or_insert == 'update':
+    if args.insert_or_update == 'update':
         # delete custom table 
         
         q = "DROP TABLE IF EXISTS `"+ custom_table +"`"
@@ -383,18 +384,20 @@ def get_metadata(indir, csv_infile):
         
         found = False
         for samp_head_name in req_first_col:
-            print('samp_head_name',samp_head_name)
+            #print('samp_head_name',samp_head_name)
             if samp_head_name in TMP_METADATA_ITEMS:
                 found = True                
-                print('found')
+                print('found: '+samp_head_name)
                 try:
                     saved_indexes.append(TMP_METADATA_ITEMS[samp_head_name].index(ds))
                     dataset_header_name = samp_head_name
+                    print('USING: '+dataset_header_name)
                 except:
-                    print('COULD NOT FIND Dataset: '+ds)
+                    pass
             
         if not found:
-            sys.exit('ERROR: Could not find "dataset" or "sample_name" in matadata file')
+            print(req_first_col)
+            sys.exit('ERROR: Could not find "dataset" column in file')
                                 
     
     # now get the data from just the datasets we have in CONFIG.ini
@@ -532,8 +535,8 @@ if __name__ == '__main__':
                 required=False,  action="store",   dest = "delim", default='comma',
                 help="""METADATA: comma or tab""")
     
-    parser.add_argument("-update_or_insert","--update_or_insert",
-                required=False,  action="store",   dest = "update_or_insert", default='insert',
+    parser.add_argument("-iou","--insert_or_update",
+                required=False,  action="store",   dest = "insert_or_update", default='insert',
                 help="""insert or update""")
                 
     args = parser.parse_args()    
@@ -541,7 +544,8 @@ if __name__ == '__main__':
     args.datetime     = str(datetime.date.today())    
     
     
-    start_metadata_load_from_file(args)
+    pid = start_metadata_load_from_file(args)
+    print('Finished PID:'+str(pid))
     #sys.exit('END: vamps_script_upload_metadata.py')
     
         
