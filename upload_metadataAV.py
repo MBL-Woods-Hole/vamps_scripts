@@ -505,7 +505,7 @@ if __name__ == '__main__':
             -site/--site                DEFAULT: local
             -config/--config            name only
             -in/--infile                name only [DEFAULT: `metadata_clean.csv`]
-   
+	        -iou/--insert_or_update  [DEFAULT: insert]   
     """
     parser = argparse.ArgumentParser(description="" ,usage=myusage)                 
     
