@@ -200,9 +200,10 @@ def put_required_metadata(unknowns):
                         try:
                             q3 += newitem+"='"+str(unknowns[item])+"',"
                         except KeyError:
-                            q3 += newitem+"='"+str(unknowns[newitem])+"'," 
-                        else:
-                            q3 += newitem+"='',"
+                            try:
+                                q3 += newitem+"='"+str(unknowns[newitem])+"',"
+                            except:     
+                                q3 += newitem+"='',"
                     
                
             q3 = q3[:-1] + " WHERE dataset_id='"+str(did)+"'"
