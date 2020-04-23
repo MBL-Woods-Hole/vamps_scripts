@@ -201,6 +201,8 @@ def put_required_metadata(unknowns):
                             q3 += newitem+"='"+str(unknowns[item])+"',"
                         except:
                             q3 += newitem+"='"+str(unknowns[newitem])+"'," 
+                        finally:
+                            q3 += newitem+"='',"
                     
                
             q3 = q3[:-1] + " WHERE dataset_id='"+str(did)+"'"
