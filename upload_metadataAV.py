@@ -199,7 +199,7 @@ def put_required_metadata(unknowns):
                         print(unknowns)
                         try:
                             q3 += newitem+"='"+str(unknowns[item])+"',"
-                        except:
+                        except KeyError:
                             q3 += newitem+"='"+str(unknowns[newitem])+"'," 
                         except:
                             q3 += newitem+"='',"
