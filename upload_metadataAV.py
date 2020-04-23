@@ -201,7 +201,7 @@ def put_required_metadata(unknowns):
                             q3 += newitem+"='"+str(unknowns[item])+"',"
                         except:
                             q3 += newitem+"='"+str(unknowns[newitem])+"'," 
-                        else:
+                        except:
                             q3 += newitem+"='',"
                     
                
